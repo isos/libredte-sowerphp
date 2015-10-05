@@ -18,7 +18,7 @@ Licencia
 
 Este software se encuentra bajo los términos de la licencia GPL 3 que puedes
 encontrar en el archivo
-[COPYING](https://raw.githubusercontent.com/LibreDTE/libredte-webapp/master/COPYING).
+[COPYING](https://raw.githubusercontent.com/LibreDTE/libredte-sowerphp/master/COPYING).
 
 Contribuir al proyecto
 ----------------------
