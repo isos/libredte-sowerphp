@@ -313,7 +313,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el XML de los DTEs solicitados
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-20
+     * @version 2015-11-21
      */
     public function _api_generar_xml_POST()
     {
@@ -325,7 +325,7 @@ class Controller_Documentos extends \Controller_App
         // verificar que se hayan pasado los índices básicos
         foreach (['Emisor', 'Receptor', 'documentos', 'folios', 'firma'] as $key) {
             if (!isset($this->Api->data[$key]))
-                $this->Api->send('Debes enviar índice '.$key, 500);
+                $this->Api->send('Falta índice/variable '.$key.' por POST', 500);
         }
         // recuperar folios y definir ambiente
         $folios = [];
