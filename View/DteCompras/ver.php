@@ -1,3 +1,5 @@
+<a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC" class="pull-right"><span class="btn btn-default">Volver a IEC</span></a>
+
 <h1>Libro de compras período <?=$DteCompra->periodo?></h1>
 <p>Esta es la página del libro de compras del período <?=$DteCompra->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>
 

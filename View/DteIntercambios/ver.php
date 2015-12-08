@@ -1,3 +1,5 @@
+<a href="<?=$_base?>/dte/dte_intercambios" title="Volver a la bandeja de intercambio de DTE" class="pull-right"><span class="btn btn-default">Volver a bandeja intercambio</span></a>
+
 <h1>Intercambio N° <?=$DteIntercambio->codigo?></h1>
 <p>Esta es la página del intercambio N° <?=$DteIntercambio->codigo?> de la empresa <?=$Emisor->razon_social?>.</p>
 

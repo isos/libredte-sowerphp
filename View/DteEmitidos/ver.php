@@ -1,3 +1,5 @@
+<a href="<?=$_base?>/dte/dte_emitidos" title="Volver a los documentos emitidos" class="pull-right"><span class="btn btn-default">Volver a DTE emitidos</span></a>
+
 <h1>DTE T<?=$DteEmitido->dte?>F<?=$DteEmitido->folio?></h1>
 <p>Esta es la página del DTE <?=$DteEmitido->getTipo()->tipo?> (<?=$DteEmitido->dte?>) folio número <?=$DteEmitido->folio?> de la empresa <?=$Emisor->razon_social?>.</p>
 
