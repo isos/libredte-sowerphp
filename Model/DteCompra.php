@@ -151,7 +151,7 @@ class Model_DteCompra extends \Model_App
     /**
      * Método que guarda el estado del envío del libro al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2015-12-08
      */
     public function saveRevision($xml_data)
     {
@@ -165,6 +165,8 @@ class Model_DteCompra extends \Model_App
             else
                 $error = (array)$xml->ErrorEnvioLibro->DetErrEnvio;
             $this->revision_detalle = implode("\n\n", $error);
+        } else {
+            $this->revision_detalle = null;
         }
         try {
             $this->save();

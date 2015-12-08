@@ -135,7 +135,7 @@ class Controller_DteVentas extends \Controller_App
      * Acción que envía el archivo XML del libro de ventas al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-27
+     * @version 2015-12-08
      */
     public function enviar_sii($periodo)
     {
@@ -187,21 +187,15 @@ class Controller_DteVentas extends \Controller_App
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'RutEnvia' => $Firma->getID(),
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => '2006-01-20',
-            'NroResol' =>  102006,
+            'FchResol' => $Emisor->certificacion ? $Emisor->certificacion_resolucion : $Emisor->resolucion_fecha,
+            'NroResol' =>  $Emisor->certificacion ? 0 : $Emisor->resolucion_numero,
             'TipoOperacion' => 'VENTA',
-            'TipoLibro' => 'ESPECIAL',
+            'TipoLibro' => 'MENSUAL',
             'TipoEnvio' => 'TOTAL',
-            'FolioNotificacion' => 102006,
         ]);
         // obtener XML
-        //if (!$Emisor->certificacion)
-            //$Libro->setFirma($Firma);
-        //$xml = $Libro->generar(!$Emisor->certificacion); // TODO: se envía detalle en producción?
-        //$xml = $Libro->generar(false); // no generar con detalle
+        $Libro->setFirma($Firma);
         $xml = $Libro->generar();
-        //if ($Emisor->certificacion)
-            $Libro->setFirma($Firma);
         if (!$xml) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No fue posible generar el libro de ventas<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
@@ -339,7 +333,7 @@ class Controller_DteVentas extends \Controller_App
             );
             $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
         }
-        $asunto = 'Revision Envio de Libro Simplificado '.$DteVenta->track_id.' - '.$Emisor->rut.'-'.$Emisor->dv;
+        $asunto = 'Revision Envio de Libro Normal '.$DteVenta->track_id.' - '.$Emisor->rut.'-'.$Emisor->dv;
         $uids = $Imap->search('FROM @sii.cl SUBJECT "'.$asunto.'" UNSEEN');
         if (!$uids) {
             \sowerphp\core\Model_Datasource_Session::message(
