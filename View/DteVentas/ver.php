@@ -97,6 +97,7 @@ echo $f->input([
     'name' => 'xml',
     'label' => 'XML revisión',
     'check' => 'notempty',
+    'attr' => 'accept=".xml"',
 ]);
 echo $f->end('Subir XML de revisión');
 ?>
