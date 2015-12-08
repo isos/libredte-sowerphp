@@ -73,7 +73,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite editar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-27
+     * @version 2015-12-08
      */
     public function modificar($emisor, $dte, $folio)
     {
@@ -83,6 +83,12 @@ class Controller_DteRecibidos extends \Controller_App
         if (!$DteRecibido->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE recibido solicitado no existe', 'error'
+            );
+            $this->redirect('/dte/dte_recibidos');
+        }
+        if ($DteRecibido->intercambio) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'DTE recibido no puede ser modificado ya que fue recibido a través de un intercambio', 'error'
             );
             $this->redirect('/dte/dte_recibidos');
         }

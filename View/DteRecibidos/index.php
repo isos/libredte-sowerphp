@@ -11,9 +11,8 @@
 
 <?php
 foreach ($documentos as &$d) {
-    $acciones = '<a href="dte_recibidos/modificar/'.$d['emisor'].'/'.$d['dte'].'/'.$d['folio'].'" title="Modificar DTE"><span class="fa fa-edit btn btn-default"></span></a>';
-    if ($d['intercambio'])
-        $acciones .= ' <a href="dte_intercambios/pdf/'.$d['intercambio'].'" title="Descargar PDF del DTE"><span class="fa fa-file-pdf-o btn btn-default"></span></a>';
+    $acciones = '<a href="dte_recibidos/modificar/'.$d['emisor'].'/'.$d['dte'].'/'.$d['folio'].'" title="Modificar DTE" class="btn btn-default'.($d['intercambio']?' disabled':'').'"><span class="fa fa-edit"></span></a>';
+    $acciones .= ' <a href="dte_intercambios/pdf/'.$d['intercambio'].'" title="Descargar PDF del DTE" class="btn btn-default'.(!$d['intercambio']?' disabled':'').'" role="button"><span class="fa fa-file-pdf-o"></span></a>';
     $d[] = $acciones;
     $d['total'] = num($d['total']);
     unset($d['emisor'], $d['dte']);
