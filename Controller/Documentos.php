@@ -27,10 +27,63 @@ namespace website\Dte;
 /**
  * Clase para todas las acciones asociadas a documentos (incluyendo API)
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-25
+ * @version 2015-12-12
  */
 class Controller_Documentos extends \Controller_App
 {
+
+    /**
+     * Método para permitir acciones sin estar autenticado
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-12
+     */
+    public function beforeFilter()
+    {
+        $this->Auth->allow('consultar');
+        parent::beforeFilter();
+    }
+
+    /**
+     * Acción que permite buscar y consultar un DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-12
+     */
+    public function consultar($dte = null)
+    {
+        // asignar variables para el formulario
+        $this->set([
+            'dtes' => (new \website\Dte\Admin\Model_DteTipos())->getList(),
+            'dte' => isset($_POST['dte']) ? $_POST['dte'] : $dte,
+        ]);
+        // si se solicitó un documento se busca
+        if (isset($_POST['submit'])) {
+            // verificar si el emisor existe
+            $Emisor = new Model_Contribuyente($_POST['emisor']);
+            if (!$Emisor->exists() or !$Emisor->usuario) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Emisor no está registrado en la aplicación', 'error'
+                );
+                return;
+            }
+            // buscar si existe el DTE en el ambiente que el emisor esté usando
+            $DteEmitido = new Model_DteEmitido($Emisor->rut, $_POST['dte'], $_POST['folio'], (int)$Emisor->certificacion);
+            if (!$DteEmitido->exists()) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    $Emisor->razon_social.' no tiene emitido el DTE solicitado en el ambiente de '.$Emisor->getAmbiente(), 'error'
+                );
+                return;
+            }
+            // verificar que coincida fecha de emisión y monto total del DTE
+            if ($DteEmitido->fecha!=$_POST['fecha'] or $DteEmitido->total!=$_POST['total']) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'DTE existe, pero fecha y/o monto no coinciden con los registrados', 'error'
+                );
+                return;
+            }
+            // asignar DTE a la vista
+            $this->set('DteEmitido', $DteEmitido);
+        }
+    }
 
     /**
      * Acción para mostrar página de emisión de DTE

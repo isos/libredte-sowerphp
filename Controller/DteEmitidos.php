@@ -33,6 +33,17 @@ class Controller_DteEmitidos extends \Controller_App
 {
 
     /**
+     * Método para permitir acciones sin estar autenticado
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-12
+     */
+    public function beforeFilter()
+    {
+        $this->Auth->allow('pdf', 'xml');
+        parent::beforeFilter();
+    }
+
+    /**
      * Acción que permite mostrar los documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-25
@@ -270,11 +281,25 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que descarga el PDF del documento emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2015-12-12
      */
-    public function pdf($dte, $folio, $cedible = false)
+    public function pdf($dte, $folio, $cedible = false, $emisor = null, $fecha = null, $total = null)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        // usar emisor de la sesión
+        if (!$emisor) {
+            $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        }
+        // usar emisor como parámetro
+        else {
+            // verificar si el emisor existe
+            $Emisor = new Model_Contribuyente($emisor);
+            if (!$Emisor->exists() or !$Emisor->usuario) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Emisor no está registrado en la aplicación', 'error'
+                );
+                $this->redirect('/dte/documentos/consultar');
+            }
+        }
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -282,6 +307,14 @@ class Controller_DteEmitidos extends \Controller_App
                 'No existe el DTE solicitado', 'error'
             );
             $this->redirect('/dte/dte_emitidos');
+        }
+        // si se está pidiendo con un emisor por parámetro se debe verificar
+        // fecha de emisión y monto total del dte
+        if ($emisor and ($DteEmitido->fecha!=$fecha or $DteEmitido->total!=$total)) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'DTE existe, pero fecha y/o monto no coinciden con los registrados', 'error'
+            );
+            $this->redirect('/dte/documentos/consultar');
         }
         // armar datos con archivo XML y flag para indicar si es cedible o no
         $data = [
@@ -296,7 +329,7 @@ class Controller_DteEmitidos extends \Controller_App
         }
         // realizar consulta a la API
         $rest = new \sowerphp\core\Network_Http_Rest();
-        $rest->setAuth($this->Auth->User ? $this->Auth->User->hash : $this->token);
+        $rest->setAuth($this->Auth->User ? $this->Auth->User->hash : \sowerphp\core\Configure::read('api.default.token'));
         $response = $rest->post($this->request->url.'/api/dte/documentos/generar_pdf', $data);
         if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
@@ -314,11 +347,25 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que descarga el XML del documento emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2015-12-12
      */
-    public function xml($dte, $folio)
+    public function xml($dte, $folio, $emisor = null, $fecha = null, $total = null)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        // usar emisor de la sesión
+        if (!$emisor) {
+            $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        }
+        // usar emisor como parámetro
+        else {
+            // verificar si el emisor existe
+            $Emisor = new Model_Contribuyente($emisor);
+            if (!$Emisor->exists() or !$Emisor->usuario) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Emisor no está registrado en la aplicación', 'error'
+                );
+                $this->redirect('/dte/documentos/consultar');
+            }
+        }
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -326,6 +373,14 @@ class Controller_DteEmitidos extends \Controller_App
                 'No existe el DTE solicitado', 'error'
             );
             $this->redirect('/dte/dte_emitidos');
+        }
+        // si se está pidiendo con un emisor por parámetro se debe verificar
+        // fecha de emisión y monto total del dte
+        if ($emisor and ($DteEmitido->fecha!=$fecha or $DteEmitido->total!=$total)) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'DTE existe, pero fecha y/o monto no coinciden con los registrados', 'error'
+            );
+            $this->redirect('/dte/documentos/consultar');
         }
         // entregar XML
         $file = 'dte_'.$Emisor->rut.'-'.$Emisor->dv.'_T'.$DteEmitido->dte.'F'.$DteEmitido->folio.'.xml';
@@ -340,7 +395,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que envía por email el PDF y el XML del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2015-12-12
      */
     public function enviar_email($dte, $folio)
     {
@@ -377,7 +432,7 @@ class Controller_DteEmitidos extends \Controller_App
             $data['logo'] = base64_encode(file_get_contents($logo));
         }
         $rest = new \sowerphp\core\Network_Http_Rest();
-        $rest->setAuth($this->Auth->User ? $this->Auth->User->hash : $this->token);
+        $rest->setAuth($this->Auth->User->hash);
         $response = $rest->post($this->request->url.'/api/dte/documentos/generar_pdf', $data);
         if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
