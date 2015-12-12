@@ -1,6 +1,5 @@
 <h1>Previsualización DTE</h1>
 <?php
-debug($resumen);
 new \sowerphp\general\View_Helper_Table([
     ['Tipo', 'Folio', 'Tasa IVA', 'Fecha emisión', 'Sucursal SII', 'RUT receptor', 'Razón social receptor', 'Exento', 'Neto', 'IVA', 'Total'],
     $resumen
