@@ -379,12 +379,16 @@ class Model_Contribuyente extends \Model_App
     /**
      * Constructor del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-21
+     * @version 2015-12-12
      */
     public function __construct($rut = null)
     {
-        parent::__construct($rut);
-        $this->contribuyente = &$this->razon_social;
+        if (!is_numeric($rut))
+            $rut = explode('-', str_replace('.', '', $rut))[0];
+        if (is_numeric($rut)) {
+            parent::__construct($rut);
+            $this->contribuyente = &$this->razon_social;
+        }
     }
 
     /**
