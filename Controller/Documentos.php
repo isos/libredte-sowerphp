@@ -425,7 +425,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2015-12-12
      */
     public function _api_generar_pdf_POST()
     {
@@ -452,6 +452,10 @@ class Controller_Documentos extends \Controller_App
         }
         // crear flag cedible
         $cedible = !empty($this->Api->data['cedible']) ? $this->Api->data['cedible'] : false;
+        // crear flag papel continuo
+        $papelContinuo = !empty($this->Api->data['papelContinuo']) ? $this->Api->data['papelContinuo'] : false;
+        // crear opción para web de verificación
+        $webVerificacion = !empty($this->Api->data['webVerificacion']) ? $this->Api->data['webVerificacion'] : false;
         // sin límite de tiempo para generar documentos
         set_time_limit(0);
         // Cargar EnvioDTE y extraer arreglo con datos de carátula y DTEs
@@ -470,11 +474,13 @@ class Controller_Documentos extends \Controller_App
             if (!$DTE->getDatos())
                 $this->Api->send('No se pudieron obtener los datos de un DTE', 500);
             // generar PDF
-            $pdf = new \sasco\LibreDTE\Sii\PDF\Dte();
-            $pdf->setFooterText(); // esperando resultado certificación SII
+            $pdf = new \sasco\LibreDTE\Sii\PDF\Dte($papelContinuo);
+            $pdf->setFooterText();
             if (isset($logo))
                 $pdf->setLogo('@'.$logo);
             $pdf->setResolucion(['FchResol'=>$Caratula['FchResol'], 'NroResol'=>$Caratula['NroResol']]);
+            if ($webVerificacion)
+                $pdf->setWebVerificacion($webVerificacion);
             $pdf->agregar($DTE->getDatos(), $DTE->getTED());
             if ($cedible and $DTE->esCedible()) {
                 $pdf->setCedible(true);
