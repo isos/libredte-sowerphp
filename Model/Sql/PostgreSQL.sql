@@ -210,8 +210,8 @@ CREATE TABLE dte_emitido (
 	usuario INTEGER NOT NULL,
 	xml TEXT NOT NULL,
 	track_id INTEGER,
-	revision_estado VARCHAR(50),
-	revision_detalle VARCHAR(255),
+	revision_estado VARCHAR(100),
+	revision_detalle TEXT,
 	CONSTRAINT dte_emitido_pk PRIMARY KEY (emisor, dte, folio, certificacion),
 	CONSTRAINT dte_emitido_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL
