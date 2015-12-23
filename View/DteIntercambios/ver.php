@@ -75,20 +75,23 @@ echo $f->begin(['action'=>$_base.'/dte/dte_intercambios/responder/'.$DteIntercam
 echo $f->input([
     'name' => 'NmbContacto',
     'label' => 'Contacto',
-    'value' => $_Auth->User->nombre,
+    'value' => substr($_Auth->User->nombre, 0, 40),
+    'attr' => 'maxlength="40"',
     'check' => 'notempty',
 ]);
 echo $f->input([
     'name' => 'MailContacto',
     'label' => 'Email contacto',
-    'value' => $_Auth->User->email,
+    'value' => substr($_Auth->User->email, 0, 80),
+    'attr' => 'maxlength="80"',
     'check' => 'notempty email',
 ]);
 echo $f->input([
     'name' => 'Recinto',
     'label' => 'Recinto',
-    'value' => $Emisor->direccion.', '.$Emisor->getComuna()->comuna,
+    'value' => subtr($Emisor->direccion.', '.$Emisor->getComuna()->comuna, 0, 80),
     'check' => 'notempty',
+    'attr' => 'maxlength="80"',
     'help' => 'Lugar donde se recibieron los productos o prestaron los servicios',
 ]);
 echo $f->input([
