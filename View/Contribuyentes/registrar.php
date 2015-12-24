@@ -211,7 +211,7 @@ echo $f->input([
 
 <!-- INICIO API -->
 <div role="tabpanel" class="tab-pane" id="api">
-<p>LibreDTE puede comunicarse con la aplicación web de su empresa a través de servicios web. A continuación puede ingresar las URL para diferentes consultas que LibreDTE debería poder hacer a su aplicación.</p>
+<p>LibreDTE puede comunicarse con la aplicación web de su empresa a través de servicios web. A continuación puede ingresar las URL para diferentes consultas que LibreDTE debería poder hacer a su aplicación. Puede revisar la <a href="http://wiki.libredte.cl/doku.php/sowerphp/integracion">documentación de la integración</a> para obtener detalles de las salidas esperadas para cada consulta.</p>
 <?php
 echo $f->input([
     'name' => 'api_token',
