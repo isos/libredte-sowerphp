@@ -107,7 +107,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-22
+     * @version 2015-12-24
      */
     public function previsualizacion()
     {
@@ -189,6 +189,8 @@ class Controller_Documentos extends \Controller_App
         // agregar detalle a los datos
         $n_detalles = count($_POST['NmbItem']);
         $dte['Detalle'] = [];
+        $n_itemAfecto = 0;
+        $n_itemExento = 0;
         for ($i=0; $i<$n_detalles; $i++) {
             $detalle = [];
             // código del item
@@ -214,14 +216,28 @@ class Controller_Documentos extends \Controller_App
             }
             // agregar detalle al listado
             $dte['Detalle'][] = $detalle;
+            // contabilizar item afecto o exento
+            if (empty($detalle['IndExe'])) $n_itemAfecto++;
+            else $n_itemExento++;
         }
         // agregar descuento globales
         if (!empty($_POST['ValorDR_global']) and !empty($_POST['TpoValor_global'])) {
-            $dte['DscRcgGlobal'] = [
-                'TpoMov' => 'D',
-                'TpoValor' => $_POST['TpoValor_global'],
-                'ValorDR' => $_POST['ValorDR_global'],
-            ];
+            $dte['DscRcgGlobal'] = [];
+            if ($n_itemAfecto) {
+                $dte['DscRcgGlobal'][] = [
+                    'TpoMov' => 'D',
+                    'TpoValor' => $_POST['TpoValor_global'],
+                    'ValorDR' => $_POST['ValorDR_global'],
+                ];
+            }
+            if ($n_itemExento) {
+                $dte['DscRcgGlobal'][] = [
+                    'TpoMov' => 'D',
+                    'TpoValor' => $_POST['TpoValor_global'],
+                    'ValorDR' => $_POST['ValorDR_global'],
+                    'IndExeDR' => 1,
+                ];
+            }
         }
         // agregar referencias
         if (isset($_POST['TpoDocRef'][0])) {
