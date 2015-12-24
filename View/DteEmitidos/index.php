@@ -8,7 +8,7 @@ foreach ($documentos as &$d) {
     $d['total'] = num($d['total']);
     unset($d['dte']);
 }
-array_unshift($documentos, ['Documento', 'Folio', 'Receptor', 'Fecha', 'Total', 'Estado', 'Usuario', 'Acciones']);
+array_unshift($documentos, ['Documento', 'Folio', 'Receptor', 'Fecha', 'Total', 'Estado SII', 'Intercambio', 'Usuario', 'Acciones']);
 $t = new \sowerphp\general\View_Helper_Table();
-$t->setColsWidth([null, null, null, null, null, null, null, 100]);
+$t->setColsWidth([null, null, null, null, null, null, null, null, 100]);
 echo $t->generate($documentos);

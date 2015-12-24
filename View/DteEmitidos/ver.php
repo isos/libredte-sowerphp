@@ -16,6 +16,7 @@ $(function() {
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#datos" aria-controls="datos" role="tab" data-toggle="tab">Datos básicos</a></li>
         <li role="presentation"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Enviar DTE por email</a></li>
+        <li role="presentation"><a href="#intercambio" aria-controls="intercambio" role="tab" data-toggle="tab">Resultado intercambio</a></li>
         <li role="presentation"><a href="#referencias" aria-controls="referencias" role="tab" data-toggle="tab">Referencias</a></li>
     </ul>
     <div class="tab-content">
@@ -108,6 +109,72 @@ if ($emails) {
 ?>
 </div>
 <!-- FIN ENVIAR POR EMAIL -->
+
+<!-- INICIO INTERCAMBIO -->
+<div role="tabpanel" class="tab-pane" id="intercambio">
+<?php
+// recibo
+echo '<h2>Recibo</h2>',"\n";
+$Recibo = $DteEmitido->getIntercambioRecibo();
+if ($Recibo) {
+    $Sobre = $Recibo->getSobre();
+    new \sowerphp\general\View_Helper_Table([
+        ['Contacto', 'Teléfono', 'Email', 'Recinto', 'Firma', 'Fecha y hora', 'XML'],
+        [
+            $Sobre->contacto,
+            $Sobre->telefono,
+            $Sobre->email,
+            $Recibo->recinto,
+            $Recibo->firma,
+            $Recibo->fecha_hora,
+            '<a href="'.$_base.'/dte/dte_intercambio_recibos/xml/'.$Sobre->responde.'/'.$Sobre->codigo.'" role="button"><span class="fa fa-file-code-o btn btn-default"></span></a>',
+        ],
+    ]);
+} else {
+    echo '<p>No existe recibo para el DTE.</p>';
+}
+// recepcion
+echo '<h2>Recepción</h2>',"\n";
+$Recepcion = $DteEmitido->getIntercambioRecepcion();
+if ($Recepcion) {
+    $Sobre = $Recepcion->getSobre();
+    new \sowerphp\general\View_Helper_Table([
+        ['Contacto', 'Teléfono', 'Email', 'Estado general', 'Estado DTE', 'Fecha y hora', 'XML'],
+        [
+            $Sobre->contacto,
+            $Sobre->telefono,
+            $Sobre->email,
+            $Sobre->estado.': '.$Sobre->glosa,
+            $Recepcion->estado.': '.$Recepcion->glosa,
+            $Sobre->fecha_hora,
+            '<a href="'.$_base.'/dte/dte_intercambio_recepciones/xml/'.$Sobre->responde.'/'.$Sobre->codigo.'" role="button"><span class="fa fa-file-code-o btn btn-default"></span></a>',
+        ],
+    ]);
+} else {
+    echo '<p>No existe recepción para el DTE.</p>';
+}
+// resultado
+echo '<h2>Resultado</h2>',"\n";
+$Resultado = $DteEmitido->getIntercambioResultado();
+if ($Resultado) {
+    $Sobre = $Resultado->getSobre();
+    new \sowerphp\general\View_Helper_Table([
+        ['Contacto', 'Teléfono', 'Email', 'Estado', 'Fecha y hora', 'XML'],
+        [
+            $Sobre->contacto,
+            $Sobre->telefono,
+            $Sobre->email,
+            $Resultado->estado.': '.$Resultado->glosa,
+            $Sobre->fecha_hora,
+            '<a href="'.$_base.'/dte/dte_intercambio_resultados/xml/'.$Sobre->responde.'/'.$Sobre->codigo.'" role="button"><span class="fa fa-file-code-o btn btn-default"></span></a>',
+        ],
+    ]);
+} else {
+    echo '<p>No existe resultado para el DTE.</p>';
+}
+?>
+</div>
+<!-- FIN INTERCAMBIO -->
 
 <!-- INICIO REFERENCIAS -->
 <div role="tabpanel" class="tab-pane" id="referencias">

@@ -343,4 +343,43 @@ class Model_DteEmitido extends \Model_App
         ', [':rut'=>$this->emisor, ':dte'=>$this->dte, ':folio'=>$this->folio, ':certificacion'=>(int)$this->certificacion]);
     }
 
+    /**
+     * Método que entrega del intercambio el objeto del Recibo del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    public function getIntercambioRecibo()
+    {
+        $Recibo = new Model_DteIntercambioReciboDte(
+            $this->emisor, $this->dte, $this->folio, $this->certificacion
+        );
+        return $Recibo->exists() ? $Recibo : false;
+    }
+
+    /**
+     * Método que entrega del intercambio el objeto de la Recepcion del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    public function getIntercambioRecepcion()
+    {
+        $Recepcion = new Model_DteIntercambioRecepcionDte(
+            $this->emisor, $this->dte, $this->folio, $this->certificacion
+        );
+        return $Recepcion->exists() ? $Recepcion : false;
+    }
+
+    /**
+     * Método que entrega del intercambio el objeto del Resultado del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    public function getIntercambioResultado()
+    {
+        $Resultado = new Model_DteIntercambioResultadoDte(
+            $this->emisor, $this->dte, $this->folio, $this->certificacion
+        );
+        return $Resultado->exists() ? $Resultado : false;
+    }
+
 }

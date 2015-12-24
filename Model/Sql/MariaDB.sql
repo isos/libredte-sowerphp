@@ -19,6 +19,12 @@ DROP TABLE IF EXISTS dte_venta CASCADE;
 DROP TABLE IF EXISTS dte_intercambio CASCADE;
 DROP TABLE IF EXISTS dte_recibido CASCADE;
 DROP TABLE IF EXISTS dte_compra CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_recibo CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_recibo_dte CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_recepcion CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_recepcion_dte CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_resultado CASCADE;
+DROP TABLE IF EXISTS dte_intercambio_resultado_dte CASCADE;
 SET foreign_key_checks = 1;
 
 -- tabla para firmas electrónicas
@@ -367,6 +373,108 @@ CREATE TABLE dte_compra (
 	CONSTRAINT dte_compra_pk PRIMARY KEY (receptor, periodo, certificacion),
 	CONSTRAINT dte_compra_receptor_fk FOREIGN KEY (receptor)
 		REFERENCES contribuyente (rut) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- intercambio: recibos
+CREATE TABLE dte_intercambio_recibo (
+	responde INTEGER NOT NULL,
+	recibe INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	contacto VARCHAR(40),
+	telefono VARCHAR(40),
+	email VARCHAR(80),
+	fecha_hora DATETIME NOT NULL,
+	xml TEXT NOT NULL,
+	CONSTRAINT dte_intercambio_recibo_pk PRIMARY KEY (responde, recibe, codigo),
+	CONSTRAINT dte_intercambio_recibo_recibe_fk FOREIGN KEY (recibe)
+		REFERENCES contribuyente (rut) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE dte_intercambio_recibo_dte (
+	emisor INTEGER NOT NULL,
+	dte SMALLINT NOT NULL,
+	folio INTEGER NOT NULL,
+	certificacion BOOLEAN NOT NULL,
+	responde INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	recinto VARCHAR(80) NOT NULL,
+	firma VARCHAR(10) NOT NULL,
+	fecha_hora DATETIME NOT NULL,
+	CONSTRAINT dte_intercambio_recibo_dte_pk PRIMARY KEY (emisor, dte, folio, certificacion),
+	CONSTRAINT dte_intercambio_recibo_dte_pk_fk FOREIGN KEY (emisor, dte, folio, certificacion)
+		REFERENCES dte_emitido (emisor, dte, folio, certificacion) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT dte_intercambio_recibo_dte_recibo_fk FOREIGN KEY (responde, emisor, codigo)
+		REFERENCES dte_intercambio_recibo (responde, recibe, codigo) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- intercambio: recepcion envio
+CREATE TABLE dte_intercambio_recepcion (
+	responde INTEGER NOT NULL,
+	recibe INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	contacto VARCHAR(40),
+	telefono VARCHAR(40),
+	email VARCHAR(80),
+	fecha_hora DATETIME NOT NULL,
+	estado INTEGER NOT NULL,
+	glosa VARCHAR(256) NOT NULL,
+	xml TEXT NOT NULL,
+	CONSTRAINT dte_intercambio_recepcion_pk PRIMARY KEY (responde, recibe, codigo),
+	CONSTRAINT dte_intercambio_recepcion_recibe_fk FOREIGN KEY (recibe)
+		REFERENCES contribuyente (rut) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE dte_intercambio_recepcion_dte (
+	emisor INTEGER NOT NULL,
+	dte SMALLINT NOT NULL,
+	folio INTEGER NOT NULL,
+	certificacion BOOLEAN NOT NULL,
+	responde INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	estado INTEGER NOT NULL,
+	glosa VARCHAR(256) NOT NULL,
+	CONSTRAINT dte_intercambio_recepcion_dte_pk PRIMARY KEY (emisor, dte, folio, certificacion),
+	CONSTRAINT dte_intercambio_recepcion_dte_pk_fk FOREIGN KEY (emisor, dte, folio, certificacion)
+		REFERENCES dte_emitido (emisor, dte, folio, certificacion) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT dte_intercambio_recepcion_dte_recepcion_fk FOREIGN KEY (responde, emisor, codigo)
+		REFERENCES dte_intercambio_recepcion (responde, recibe, codigo) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- intercambio: resultado dte
+CREATE TABLE dte_intercambio_resultado (
+	responde INTEGER NOT NULL,
+	recibe INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	contacto VARCHAR(40),
+	telefono VARCHAR(40),
+	email VARCHAR(80),
+	fecha_hora DATETIME NOT NULL,
+	xml TEXT NOT NULL,
+	CONSTRAINT dte_intercambio_resultado_pk PRIMARY KEY (responde, recibe, codigo),
+	CONSTRAINT dte_intercambio_resultado_recibe_fk FOREIGN KEY (recibe)
+		REFERENCES contribuyente (rut) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE TABLE dte_intercambio_resultado_dte (
+	emisor INTEGER NOT NULL,
+	dte SMALLINT NOT NULL,
+	folio INTEGER NOT NULL,
+	certificacion BOOLEAN NOT NULL,
+	responde INTEGER NOT NULL,
+	codigo CHAR(32) NOT NULL,
+	estado INTEGER NOT NULL,
+	glosa VARCHAR(256) NOT NULL,
+	CONSTRAINT dte_intercambio_resultado_dte_pk PRIMARY KEY (emisor, dte, folio, certificacion),
+	CONSTRAINT dte_intercambio_resultado_dte_pk_fk FOREIGN KEY (emisor, dte, folio, certificacion)
+		REFERENCES dte_emitido (emisor, dte, folio, certificacion) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT dte_intercambio_resultado_dte_recibo_fk FOREIGN KEY (responde, emisor, codigo)
+		REFERENCES dte_intercambio_resultado (responde, recibe, codigo) MATCH FULL
 		ON UPDATE CASCADE ON DELETE CASCADE
 );
 

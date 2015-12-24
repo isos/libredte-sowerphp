@@ -667,7 +667,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-23
+     * @version 2015-12-23
      */
     public function getDocumentosEmitidos($filtros = [])
     {
@@ -678,8 +678,13 @@ class Model_Contribuyente extends \Model_App
             $vars[':certificacion'] = $filtros['certificacion'];
         }
         return $this->db->getTable('
-            SELECT d.dte, t.tipo, d.folio, r.razon_social, d.fecha, d.total, d.revision_estado AS estado, u.usuario
-            FROM dte_emitido AS d, dte_tipo AS t, contribuyente AS r, usuario AS u
+            SELECT d.dte, t.tipo, d.folio, r.razon_social, d.fecha, d.total, d.revision_estado AS estado, i.glosa AS intercambio, u.usuario
+            FROM
+                dte_emitido AS d LEFT JOIN dte_intercambio_resultado_dte AS i
+                    ON i.emisor = d.emisor AND i.dte = d.dte AND i.folio = d.folio AND i.certificacion = d.certificacion,
+                dte_tipo AS t,
+                contribuyente AS r,
+                usuario AS u
             WHERE d.dte = t.codigo AND d.receptor = r.rut AND d.usuario = u.id AND '.implode(' AND ', $where).'
             ORDER BY d.fecha DESC, t.tipo, r.razon_social
         ', $vars);

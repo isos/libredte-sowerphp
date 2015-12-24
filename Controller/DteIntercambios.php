@@ -102,9 +102,11 @@ class Controller_DteIntercambios extends \Controller_App
     }
 
     /**
-     * Acción para actualizar la bandeja de intercambio
+     * Acción para actualizar la bandeja de intercambio. Guarda los DTEs
+     * recibidos por intercambio y guarda los acuses de recibos de DTEs
+     * enviados a otros contribuyentes
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-08
+     * @version 2015-12-23
      */
     public function actualizar()
     {
@@ -126,7 +128,7 @@ class Controller_DteIntercambios extends \Controller_App
             $this->redirect('/dte/dte_intercambios');
         }
         // procesar cada mensaje sin leer
-        $n_EnvioDTE = $n_EnvioRecibos = $n_RecepcionDTE = $n_ResultadoDTE = 0;
+        $n_EnvioDTE = $n_acuse = $n_EnvioRecibos = $n_RecepcionEnvio = $n_ResultadoDTE = 0;
         foreach ($uids as &$uid) {
             $m = $Imap->getMessage($uid, ['subtype'=>['PLAIN', 'HTML', 'XML'], 'extension'=>['xml']]);
             if ($m and isset($m['attachments'][0])) {
@@ -140,15 +142,29 @@ class Controller_DteIntercambios extends \Controller_App
                 if (isset($m['header']->reply_to[0])) {
                     $datos_email['responder_a'] = substr($m['header']->reply_to[0]->mailbox.'@'.$m['header']->reply_to[0]->host, 0, 80);
                 }
+                $acuseContado = false;
                 foreach ($m['attachments'] as $file) {
                     if ($this->procesar_EnvioDTE($Emisor->rut, $datos_email, $file))
                         $n_EnvioDTE++;
-                    else if ($this->procesar_EnvioRecibos($Emisor->rut, $datos_email, $file))
+                    else if ($this->procesar_EnvioRecibos($Emisor, $datos_email, $file)) {
                         $n_EnvioRecibos++;
-                    else if ($this->procesar_RecepcionDTE($Emisor->rut, $datos_email, $file))
-                        $n_RecepcionDTE++;
-                    else if ($this->procesar_ResultadoDTE($Emisor->rut, $datos_email, $file))
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                    } else if ($this->procesar_RecepcionEnvio($Emisor, $datos_email, $file)) {
+                        $n_RecepcionEnvio++;
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                    } else if ($this->procesar_ResultadoDTE($Emisor, $datos_email, $file)) {
                         $n_ResultadoDTE++;
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                    }
                 }
                 // marcar email como leído
                 $Imap->setSeen($uid);
@@ -159,9 +175,9 @@ class Controller_DteIntercambios extends \Controller_App
             $encontrados = 'Se encontraron '.num($n_uids).' correos';
         else
             $encontrados = 'Se encontró '.num($n_uids).' correo';
-        $omitidos = $n_uids - $n_EnvioDTE - $n_EnvioRecibos - $n_RecepcionDTE - $n_ResultadoDTE;
+        $omitidos = $n_uids - $n_EnvioDTE - $n_acuse;
         \sowerphp\core\Model_Datasource_Session::message(
-            $encontrados.': EnvioDTE='.num($n_EnvioDTE).',  EnvioRecibos='.num($n_EnvioRecibos).', RecepcionDTE='.num($n_RecepcionDTE).', ResultadoDTE='.num($n_ResultadoDTE).' y Omitidos='.num($omitidos), 'ok'
+            $encontrados.': EnvioDTE='.num($n_EnvioDTE).',  EnvioRecibos='.num($n_EnvioRecibos).', RecepcionEnvio='.num($n_RecepcionEnvio).', ResultadoDTE='.num($n_ResultadoDTE).' y Omitidos='.num($omitidos), 'ok'
         );
         $this->redirect('/dte/dte_intercambios');
     }
@@ -206,65 +222,41 @@ class Controller_DteIntercambios extends \Controller_App
 
     /**
      * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
-     * @param emisor RUT del emisor sin puntos ni dígito verificador
+     * @param Emisor Objeto del emisor del documento que se espera
      * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
      * @param file Arreglo con los índices: name, data, size y type
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-08
+     * @version 2015-12-23
      */
-    private function procesar_EnvioRecibos($emisor, array $datos_email, array $file)
+    private function procesar_EnvioRecibos($Emisor, array $datos_email, array $file)
     {
-        // preparar datos
-        /*$EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($file['data']);
-        if (!$EnvioDte->getID())
-            return null;
-        // guardar resultado del DTE
-        $DteEmitido = new Model_DteIntercambio();
-        return $DteEmitido->save();*/
-        return false;
+        return (new Model_DteIntercambioRecibo())->saveXML($Emisor, $file['data']);
     }
 
     /**
      * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
-     * @param emisor RUT del emisor sin puntos ni dígito verificador
+     * @param Emisor Objeto del emisor del documento que se espera
      * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
      * @param file Arreglo con los índices: name, data, size y type
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-08
+     * @version 2015-12-23
      */
-    private function procesar_RecepcionDTE($emisor, array $datos_email, array $file)
+    private function procesar_RecepcionEnvio($Emisor, array $datos_email, array $file)
     {
-        // preparar datos
-        /*$EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($file['data']);
-        if (!$EnvioDte->getID())
-            return null;
-        // guardar resultado del DTE
-        $DteEmitido = new Model_DteIntercambio();
-        return $DteEmitido->save();*/
-        return false;
+        return (new Model_DteIntercambioRecepcion())->saveXML($Emisor, $file['data']);
     }
 
     /**
      * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
-     * @param emisor RUT del emisor sin puntos ni dígito verificador
+     * @param Emisor Objeto del emisor del documento que se espera
      * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
      * @param file Arreglo con los índices: name, data, size y type
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-08
+     * @version 2015-12-23
      */
-    private function procesar_ResultadoDTE($emisor, array $datos_email, array $file)
+    private function procesar_ResultadoDTE($Emisor, array $datos_email, array $file)
     {
-        // preparar datos
-        /*$EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($file['data']);
-        if (!$EnvioDte->getID())
-            return null;
-        // guardar resultado del DTE
-        $DteEmitido = new Model_DteIntercambio();
-        return $DteEmitido->save();*/
-        return false;
+        return (new Model_DteIntercambioResultado())->saveXML($Emisor, $file['data']);
     }
 
     /**
