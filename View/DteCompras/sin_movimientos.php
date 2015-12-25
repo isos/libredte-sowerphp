@@ -1,6 +1,6 @@
 <a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC" class="pull-right"><span class="btn btn-default">Volver a IEC</span></a>
 
-<h1>Enviar libro de ventas (IEV) sin movimientos</h1>
+<h1>Enviar libro de compras (IEC) sin movimientos</h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();
 echo $f->begin(['onsubmit'=>'Form.check() && Form.checkSend(\'¿Está seguro de enviar el libro sin movimientos?\')']);

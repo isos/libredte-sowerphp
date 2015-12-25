@@ -1,15 +1,14 @@
-<h1>Emitir documento tributario electrónico (DTE)</h1>
+<h1>Emitir DTE de <?=$Emisor->razon_social?> (<?=$Emisor->getRUT()?>)</h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form(false);
 echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsualizacion', 'onsubmit'=>'DTE.check()']);
 ?>
     <!-- DATOS DEL DOCUMENTO -->
     <div class="row">
-        <div class="form-group col-md-8"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte, 'value'=>33])?></div>
+        <div class="form-group col-md-8"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte, 'value'=>33, 'attr'=>'onblur="DTE.setTipo(this.value)"'])?></div>
         <div class="form-group col-md-4"><?=$f->input(['type' => 'date', 'name' => 'FchEmis', 'placeholder'=>'Fecha emisión DTE', 'popover'=>'Día en que se emite el documento', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
     </div>
     <!-- DATOS DEL EMISOR -->
-    <h2>Emisor: <?=$Emisor->razon_social?> (<?=$Emisor->getRUT()?>)</h2>
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input(['name'=>'GiroEmis', 'placeholder' => 'Giro del emisor', 'value'=>$Emisor->giro, 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'Acteco', 'options' => $actividades_economicas, 'value'=>$Emisor->actividad_economica, 'check' => 'notempty'])?></div>
@@ -18,7 +17,6 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
     </div>
     <p>(*) modificar los datos del emisor (giro, actividad económica y/o dirección) sólo afectará a la emisión de este documento, no se guardarán estos cambios.</p>
     <!-- DATOS DEL RECEPTOR -->
-    <h2>Receptor</h2>
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" onblur="Receptor.setDatos(\'emitir_dte\')"'])?></div>
         <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"'])?></div>
@@ -29,6 +27,23 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
         <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaRecep', 'options' => [''=>'Comuna del receptor'] + $comunas, 'check' => 'notempty'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['name' => 'Contacto', 'placeholder' => 'Teléfono del receptor (opcional)', 'check'=>'telephone', 'attr' => 'maxlength="20"'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['name' => 'CorreoRecep', 'placeholder' => 'Email del receptor (opcional)', 'check'=>'email', 'attr' => 'maxlength="80"'])?></div>
+    </div>
+    <!-- DATOS DE TRANSPORTE EN CASO QUE SEA GUÍA DE DESPACHO -->
+    <div class="row" id="datosTransporte" style="display:none">
+        <div class="form-group col-md-12">
+            <?php new \sowerphp\general\View_Helper_Table([
+                ['Tipo traslado', 'Dirección', 'Comuna', 'Transportista', 'Patente', 'RUT chofer', 'Nombre chofer'],
+                [
+                    $f->input(['type'=>'select', 'name'=>'IndTraslado', 'options'=>$IndTraslado, 'attr'=>'style="width:8em"']),
+                    $f->input(['name'=>'DirDest', 'attr'=>'maxlength="70"']),
+                    $f->input(['type' => 'select', 'name' => 'CmnaDest', 'options' => [''=>''] + $comunas, 'attr'=>'style="width:7em"']),
+                    $f->input(['name'=>'RUTTrans', 'placeholder'=>'99.999.999-9', 'check'=>'rut', 'attr'=>'style="width:8em"']),
+                    $f->input(['name'=>'Patente', 'attr'=>'maxlength="6" style="width:6em"']),
+                    $f->input(['name'=>'RUTChofer', 'check'=>'rut', 'attr'=>'style="width:8em"']),
+                    $f->input(['name'=>'NombreChofer', 'attr'=>'maxlength="30" style="width:8em"']),
+                ]
+            ]); ?>
+        </div>
     </div>
     <!-- DETALLE DEL DOCUMENTO -->
     <div class="row">
@@ -74,7 +89,7 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
 ])?>
         </div>
     </div>
-    <!-- RESUMEN DE LOS MONTOS DE LA FACTURA -->
+    <!-- RESUMEN DE LOS MONTOS DEL DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-12">
             <?php new \sowerphp\general\View_Helper_Table([
@@ -91,11 +106,11 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
             ]); ?>
         </div>
     </div>
-    <!-- BOTÓN PARA GENERAR FACTURA -->
+    <!-- BOTÓN PARA GENERAR DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-offset-4 col-md-4">
             <button type="submit" name="submit" class="btn btn-primary" style="width:100%">
-                Generar previsualización del DTE
+                Generar documento temporal y previsualización
             </button>
         </div>
     </div>

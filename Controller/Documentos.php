@@ -27,10 +27,22 @@ namespace website\Dte;
 /**
  * Clase para todas las acciones asociadas a documentos (incluyendo API)
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-12
+ * @version 2015-12-25
  */
 class Controller_Documentos extends \Controller_App
 {
+
+    private $IndTraslado = [
+        1 => 'Operación constituye venta',
+        2 => 'Ventas por efectuar',
+        3 => 'Consignaciones',
+        4 => ' Entrega gratuita',
+        5 => 'Traslados internos',
+        6 => 'Otros traslados no venta',
+        7 => 'Guía de devolución',
+        8 => 'Traslado para exportación. (no venta)',
+        9 => 'Venta para exportación',
+    ]; ///< tipos de traslado
 
     /**
      * Método para permitir acciones sin estar autenticado
@@ -101,13 +113,14 @@ class Controller_Documentos extends \Controller_App
             'tasa' => \sasco\LibreDTE\Sii::getIVA(),
             'tipos_dte' => $Emisor->getDocumentosAutorizados(),
             'tipos_referencia' => (new \website\Dte\Admin\Model_DteReferenciaTipos())->getList(),
+            'IndTraslado' => $this->IndTraslado,
         ]);
     }
 
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-12-24
+     * @version 2015-12-25
      */
     public function previsualizacion()
     {
@@ -186,6 +199,22 @@ class Controller_Documentos extends \Controller_App
                 ],
             ],
         ];
+        // agregar datos de traslado si es guía de despacho
+        if ($dte['Encabezado']['IdDoc']['TipoDTE']==52) {
+            $dte['Encabezado']['IdDoc']['IndTraslado'] = $_POST['IndTraslado'];
+            if (!empty($_POST['Patente']) or !empty($_POST['RUTTrans']) or (!empty($_POST['RUTChofer']) and !empty($_POST['NombreChofer'])) or !empty($_POST['DirDest']) or !empty($_POST['CmnaDest'])) {
+                $dte['Encabezado']['Transporte'] = [
+                    'Patente' => !empty($_POST['Patente']) ? $_POST['Patente'] : false,
+                    'RUTTrans' => !empty($_POST['RUTTrans']) ? str_replace('.', '', $_POST['RUTTrans']) : false,
+                    'Chofer' => (!empty($_POST['RUTChofer']) and !empty($_POST['NombreChofer'])) ? [
+                        'RUTChofer' => str_replace('.', '', $_POST['RUTChofer']),
+                        'NombreChofer' => $_POST['NombreChofer'],
+                    ] : false,
+                    'DirDest' => !empty($_POST['DirDest']) ? $_POST['DirDest'] : false,
+                    'CmnaDest' => !empty($_POST['CmnaDest']) ? (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comuna($_POST['CmnaDest']))->comuna : false,
+                ];
+            }
+        }
         // agregar detalle a los datos
         $n_detalles = count($_POST['NmbItem']);
         $dte['Detalle'] = [];

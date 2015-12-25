@@ -151,6 +151,15 @@ function DTE() {
     return;
 }
 
+DTE.setTipo = function (tipo) {
+    // habilitar o ocultar datos para guía de despacho
+    if (tipo==52) {
+        $('#datosTransporte').show();
+    } else {
+        $('#datosTransporte').hide();
+    }
+}
+
 DTE.setItem = function (contribuyente, codigo) {
     var f = document.getElementById("emitir_dte");
     var cols = codigo.parentNode.parentNode.parentNode.childNodes;
