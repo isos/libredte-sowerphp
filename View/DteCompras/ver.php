@@ -1,7 +1,7 @@
 <a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC" class="pull-right"><span class="btn btn-default">Volver a IEC</span></a>
 
-<h1>Libro de compras período <?=$DteCompra->periodo?></h1>
-<p>Esta es la página del libro de compras del período <?=$DteCompra->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>
+<h1>Libro de compras período <?=$Libro->periodo?></h1>
+<p>Esta es la página del libro de compras del período <?=$Libro->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>
 
 <script type="text/javascript">
 $(function() {
@@ -12,7 +12,7 @@ $(function() {
 });
 </script>
 
-<?php $n_compras = count($compras); ?>
+<?php $n_compras = count($detalle); ?>
 
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
@@ -32,18 +32,18 @@ $(function() {
 <?php
 new \sowerphp\general\View_Helper_Table([
     ['Período', 'DTE recibidos', 'DTE envíados'],
-    [$DteCompra->periodo, num($n_compras), num($DteCompra->documentos)],
+    [$Libro->periodo, num($n_compras), num($Libro->documentos)],
 ]);
 ?>
         <div class="row">
             <div class="col-md-6">
-                <a class="btn btn-default btn-lg btn-block<?=!$n_compras?' disabled':''?>" href="<?=$_base?>/dte/dte_compras/csv/<?=$DteCompra->periodo?>" role="button">
+                <a class="btn btn-default btn-lg btn-block<?=!$n_compras?' disabled':''?>" href="<?=$_base?>/dte/dte_compras/csv/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-excel-o" style="font-size:24px"></span>
                     Descargar detalle en archivo CSV
                 </a>
             </div>
             <div class="col-md-6">
-                <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_compras/xml/<?=$DteCompra->periodo?>" role="button">
+                <a class="btn btn-default btn-lg btn-block<?=!$Libro->documentos?' disabled':''?>" href="<?=$_base?>/dte/dte_compras/xml/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-code-o" style="font-size:24px"></span>
                     Descargar libro de compras en XML
                 </a>
@@ -51,16 +51,16 @@ new \sowerphp\general\View_Helper_Table([
         </div>
     </div>
     <div class="col-md-3 center bg-info">
-        <span class="lead">Track ID SII: <?=$DteCompra->track_id?></span>
-        <p><strong><?=$DteCompra->revision_estado?></strong></p>
-        <p><?=str_replace("\n", '<br/>', $DteCompra->revision_detalle)?></p>
-<?php if ($DteCompra->track_id) : ?>
+        <span class="lead">Track ID SII: <?=$Libro->track_id?></span>
+        <p><strong><?=$Libro->revision_estado?></strong></p>
+        <p><?=str_replace("\n", '<br/>', $Libro->revision_detalle)?></p>
+<?php if ($Libro->track_id) : ?>
         <p>
-            <a class="btn btn-info" href="<?=$_base?>/dte/dte_compras/actualizar_estado/<?=$DteCompra->periodo?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_compras/solicitar_revision/<?=$DteCompra->periodo?>" title="Solicitar nueva revisión del DTE al SII">solicitar nueva revisión</a></span>
+            <a class="btn btn-info" href="<?=$_base?>/dte/dte_compras/actualizar_estado/<?=$Libro->periodo?>" role="button">Actualizar estado</a><br/>
+            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_compras/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del DTE al SII">solicitar nueva revisión</a></span>
         </p>
 <?php else: ?>
-        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_compras/enviar_sii/<?=$DteCompra->periodo?>" role="button">Enviar libro al SII</a></p>
+        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_compras/enviar_sii/<?=$Libro->periodo?>" role="button">Enviar libro al SII</a></p>
 <?php endif; ?>
         </div>
     </div>
@@ -72,17 +72,17 @@ new \sowerphp\general\View_Helper_Table([
 <!-- INICIO DETALLES -->
 <div role="tabpanel" class="tab-pane" id="detalle">
 <?php
-array_unshift($compras, $compras_cols);
-new \sowerphp\general\View_Helper_Table($compras);
+array_unshift($detalle, $libro_cols);
+new \sowerphp\general\View_Helper_Table($detalle);
 ?>
 </div>
 <!-- FIN DETALLES -->
 
 <!-- INICIO ESTADÍSTICAS -->
 <div role="tabpanel" class="tab-pane" id="estadisticas">
-    <img src="<?=$_base.'/dte/dte_compras/grafico_compras_diarias/'.$DteCompra->periodo?>" alt="Gráfico compras diarias del período" class="img-responsive thumbnail center" />
+    <img src="<?=$_base.'/dte/dte_compras/grafico_documentos_diarios/'.$Libro->periodo?>" alt="Gráfico compras diarias del período" class="img-responsive thumbnail center" />
     <br/>
-    <img src="<?=$_base.'/dte/dte_compras/grafico_compras_tipo/'.$DteCompra->periodo?>" alt="Gráfico con tipos de compras del período" class="img-responsive thumbnail center" />
+    <img src="<?=$_base.'/dte/dte_compras/grafico_tipos/'.$Libro->periodo?>" alt="Gráfico con tipos de compras del período" class="img-responsive thumbnail center" />
 </div>
 <!-- FIN ESTADÍSTICAS -->
 
@@ -93,7 +93,7 @@ new \sowerphp\general\View_Helper_Table($compras);
 <p>Aquí puede subir el XML con el resultado de la revisión del libro de compras envíado al SII.</p>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();
-echo $f->begin(['action'=>$_base.'/dte/dte_compras/subir_revision/'.$DteCompra->periodo, 'onsubmit'=>'Form.check()']);
+echo $f->begin(['action'=>$_base.'/dte/dte_compras/subir_revision/'.$Libro->periodo, 'onsubmit'=>'Form.check()']);
 echo $f->input([
     'type' => 'file',
     'name' => 'xml',
