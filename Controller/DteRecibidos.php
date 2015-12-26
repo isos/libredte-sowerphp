@@ -122,7 +122,7 @@ class Controller_DteRecibidos extends \Controller_App
                 return;
             }
         }
-        // crear dte recibido60
+        // crear dte recibido
         list($emisor, $dv) = explode('-', str_replace('.', '', $_POST['emisor']));
         $DteRecibido = new Model_DteRecibido($emisor, $_POST['dte'], (int)$_POST['folio'], (int)$Emisor->certificacion);
         $DteRecibido->receptor = $Emisor->rut;
@@ -143,26 +143,31 @@ class Controller_DteRecibidos extends \Controller_App
             $DteRecibido->impuesto_adicional = null;
             $DteRecibido->impuesto_adicional_tasa = null;
         }
-        // obtener firma
-        $Firma = $Emisor->getFirma($this->Auth->User->id);
-        if (!$Firma) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
-            );
-            $this->redirect('/dte/admin/firma_electronicas');
-        }
-        // consultar estado dte
-        $estado = $DteRecibido->getEstado($Firma);
-        if ($estado===false) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No se pudo obtener el estado del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            return;
-        } else if (is_string($estado)) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'Estado DTE: '.$estado, 'error'
-            );
-            return;
+        // si el DTE es de producción y es electrónico entonces se consultará su
+        // estado antes de poder guardar, esto evitará agregar documentos que no
+        // han sido recibidos en el SII o sus datos son incorrectos
+        if (!$Emisor->certificacion and $DteRecibido->getTipo()->electronico) {
+            // obtener firma
+            $Firma = $Emisor->getFirma($this->Auth->User->id);
+            if (!$Firma) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
+                );
+                $this->redirect('/dte/admin/firma_electronicas');
+            }
+            // consultar estado dte
+            $estado = $DteRecibido->getEstado($Firma);
+            if ($estado===false) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'No se pudo obtener el estado del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
+                );
+                return;
+            } else if (is_string($estado)) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Estado DTE: '.$estado, 'error'
+                );
+                return;
+            }
         }
         // todo ok con el dte así que se agrega a los dte recibidos
         try {
