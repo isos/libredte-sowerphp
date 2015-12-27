@@ -323,18 +323,17 @@ class Model_DteEmitido extends \Model_App
     /**
      * Método que entrega las referencias que existen a este DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2015-12-27
      */
     public function getReferencias()
     {
         return $this->db->getTable('
             SELECT t.tipo AS documento_tipo, r.folio, d.fecha, rt.tipo AS referencia_tipo, r.razon, r.dte
-            FROM dte_referencia AS r, dte_tipo AS t, dte_emitido AS d, dte_referencia_tipo AS rt
+            FROM dte_referencia AS r LEFT JOIN dte_referencia_tipo AS rt ON r.codigo = rt.codigo, dte_tipo AS t, dte_emitido AS d
             WHERE
                 r.dte = t.codigo
                 AND d.dte = r.dte
                 AND d.folio = r.folio
-                AND r.codigo = rt.codigo
                 AND r.emisor = :rut
                 AND r.certificacion = :certificacion
                 AND r.referencia_dte = :dte

@@ -193,6 +193,9 @@ if ($referencias) {
     echo '<p>No hay documentos que referencien a este.</p>',"\n";
 }
 ?>
+<a class="btn btn-primary btn-lg btn-block" href="<?=$_base?>/dte/documentos/emitir/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
+    Crear referencia a este documento
+</a>
 </div>
 <!-- FIN REFERENCIAS -->
 

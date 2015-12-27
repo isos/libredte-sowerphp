@@ -327,12 +327,12 @@ DTE.check = function () {
             status = false;
             return false;
         }
-        if (__.empty($('input[name="RazonRef[]"]').get(i).value)) {
+        /*if (__.empty($('input[name="RazonRef[]"]').get(i).value)) {
             alert ('En la línea '+(i+1)+' de referencia:'+"\n"+'Razón de la referencia no puede estar en blanco');
             $('input[name="RazonRef[]"]').get(i).focus();
             status = false;
             return false;
-        }
+        }*/
     });
     if (!status)
         return false;

@@ -100,11 +100,30 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para mostrar página de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-25
+     * @version 2015-12-26
      */
-    public function emitir()
+    public function emitir($referencia_dte = null, $referencia_folio = null)
     {
         $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        if ($referencia_dte and $referencia_folio) {
+            $DteEmitido = new Model_DteEmitido($Emisor->rut, $referencia_dte, $referencia_folio, (int)$Emisor->certificacion);
+            if (!$DteEmitido->exists()) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Documento T'.$referencia_dte.'F'.$referencia_folio.' no existe, no se puede referenciar', 'error'
+                );
+                $this->redirect('/dte/dte_emitidos');
+            }
+            $DteEmisor = $DteEmitido->getDatos()['Encabezado']['Emisor'];
+            $DteReceptor = $DteEmitido->getDatos()['Encabezado']['Receptor'];
+            $Comunas = new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas();
+            $DteEmisor['CmnaOrigen'] = $Comunas->getComunaByName($DteEmisor['CmnaOrigen']);
+            $DteReceptor['CmnaRecep'] = $Comunas->getComunaByName($DteReceptor['CmnaRecep']);
+            $this->set([
+                'DteEmitido' => $DteEmitido,
+                'DteEmisor' => $DteEmisor,
+                'DteReceptor' => $DteReceptor,
+            ]);
+        }
         $this->set([
             '_header_extra' => ['js'=>['/dte/js/dte.js'], 'css'=>['/dte/css/dte.css']],
             'Emisor' => $Emisor,
@@ -114,6 +133,7 @@ class Controller_Documentos extends \Controller_App
             'tipos_dte' => $Emisor->getDocumentosAutorizados(),
             'tipos_referencia' => (new \website\Dte\Admin\Model_DteReferenciaTipos())->getList(),
             'IndTraslado' => $this->IndTraslado,
+
         ]);
     }
 
@@ -129,6 +149,13 @@ class Controller_Documentos extends \Controller_App
         if (!isset($_POST['submit'])) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No puede acceder de forma directa a la previsualización', 'error'
+            );
+            $this->redirect('/dte/documentos/emitir');
+        }
+        // si no está autorizado a emitir el tipo de documento redirigir
+        if (!$Emisor->documentoAutorizado($_POST['TpoDoc'])) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No está autorizado a emitir el tipo de documento '.$_POST['TpoDoc'], 'error'
             );
             $this->redirect('/dte/documentos/emitir');
         }
@@ -277,8 +304,8 @@ class Controller_Documentos extends \Controller_App
                     'TpoDocRef' => $_POST['TpoDocRef'][$i],
                     'FolioRef' => $_POST['FolioRef'][$i],
                     'FchRef' => $_POST['FchRef'][$i],
-                    'CodRef' => $_POST['CodRef'][$i],
-                    'RazonRef' => $_POST['RazonRef'][$i],
+                    'CodRef' => !empty($_POST['CodRef'][$i]) ? $_POST['CodRef'][$i] : false,
+                    'RazonRef' => !empty($_POST['RazonRef'][$i]) ? $_POST['RazonRef'][$i] : false,
                 ];
             }
         }
@@ -311,7 +338,7 @@ class Controller_Documentos extends \Controller_App
      * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
      * al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-30
+     * @version 2015-12-26
      */
     public function generar($receptor, $dte, $codigo)
     {
@@ -385,8 +412,8 @@ class Controller_Documentos extends \Controller_App
                 $DteReferencia->certificacion = $DteEmitido->certificacion;
                 $DteReferencia->referencia_dte = $referencia['TpoDocRef'];
                 $DteReferencia->referencia_folio = $referencia['FolioRef'];
-                $DteReferencia->codigo = $referencia['CodRef'];
-                $DteReferencia->razon = $referencia['RazonRef'];
+                $DteReferencia->codigo = !empty($referencia['CodRef']) ? $referencia['CodRef'] : null;
+                $DteReferencia->razon = !empty($referencia['RazonRef']) ? $referencia['RazonRef'] : null;
                 $DteReferencia->save();
             }
         }

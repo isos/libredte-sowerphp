@@ -250,9 +250,9 @@ CREATE TABLE dte_referencia (
 	certificacion BOOLEAN NOT NULL DEFAULT false,
 	referencia_dte SMALLINT NOT NULL,
 	referencia_folio INTEGER NOT NULL,
-	codigo SMALLINT NOT NULL,
-	razon VARCHAR(90) NOT NULL,
-	CONSTRAINT dte_referencia_pk PRIMARY KEY (emisor, dte, folio, certificacion, referencia_dte, referencia_folio, codigo),
+	codigo SMALLINT,
+	razon VARCHAR(90),
+	CONSTRAINT dte_referencia_pk PRIMARY KEY (emisor, dte, folio, certificacion, referencia_dte, referencia_folio),
 	CONSTRAINT dte_referencia_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL
 		ON UPDATE CASCADE ON DELETE CASCADE,

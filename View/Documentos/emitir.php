@@ -1,7 +1,12 @@
 <h1>Emitir DTE de <?=$Emisor->razon_social?> (<?=$Emisor->getRUT()?>)</h1>
+<?php if (isset($DteEmitido)) : ?>
+<script type="text/javascript">
+    $(function() { DTE.calcular() });
+</script>
 <?php
+endif;
 $f = new \sowerphp\general\View_Helper_Form(false);
-echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsualizacion', 'onsubmit'=>'DTE.check()']);
+echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'/dte/documentos/previsualizacion', 'onsubmit'=>'DTE.check()']);
 ?>
     <!-- DATOS DEL DOCUMENTO -->
     <div class="row">
@@ -10,23 +15,23 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
     </div>
     <!-- DATOS DEL EMISOR -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name'=>'GiroEmis', 'placeholder' => 'Giro del emisor', 'value'=>$Emisor->giro, 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'Acteco', 'options' => $actividades_economicas, 'value'=>$Emisor->actividad_economica, 'check' => 'notempty'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'DirOrigen', 'placeholder' => 'Dirección del emisor', 'value'=>$Emisor->direccion, 'check' => 'notempty', 'attr' => 'maxlength="70"'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaOrigen', 'value' => $Emisor->comuna, 'options' => $comunas, 'check' => 'notempty'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name'=>'GiroEmis', 'placeholder' => 'Giro del emisor', 'value'=>(isset($DteEmisor)?$DteEmisor['GiroEmis']:$Emisor->giro), 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'Acteco', 'options' => $actividades_economicas, 'value'=>(isset($DteEmisor)?$DteEmisor['Acteco']:$Emisor->actividad_economica), 'check' => 'notempty'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name' => 'DirOrigen', 'placeholder' => 'Dirección del emisor', 'value'=>(isset($DteEmisor['DirOrigen'])?$DteEmisor['DirOrigen']:$Emisor->direccion), 'check' => 'notempty', 'attr' => 'maxlength="70"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaOrigen', 'value' => (isset($DteEmisor)?$DteEmisor['CmnaOrigen']:$Emisor->comuna), 'options' => $comunas, 'check' => 'notempty'])?></div>
     </div>
     <p>(*) modificar los datos del emisor (giro, actividad económica y/o dirección) sólo afectará a la emisión de este documento, no se guardarán estos cambios.</p>
     <!-- DATOS DEL RECEPTOR -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" onblur="Receptor.setDatos(\'emitir_dte\')"'])?></div>
-        <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"'])?></div>
-        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" '.(isset($DteReceptor)?'readonly="readonly"':'onblur="Receptor.setDatos(\'emitir_dte\')"'), 'value'=>(isset($DteReceptor)?$DteReceptor['RUTRecep']:'')])?></div>
+        <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"', 'value'=>(isset($DteReceptor['RznSocRecep'])?$DteReceptor['RznSocRecep']:'')])?></div>
+        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="80"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
     </div>
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input([ 'name' => 'DirRecep', 'placeholder' => 'Dirección del receptor', 'check' => 'notempty', 'attr' => 'maxlength="70"'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaRecep', 'options' => [''=>'Comuna del receptor'] + $comunas, 'check' => 'notempty'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'Contacto', 'placeholder' => 'Teléfono del receptor (opcional)', 'check'=>'telephone', 'attr' => 'maxlength="20"'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'CorreoRecep', 'placeholder' => 'Email del receptor (opcional)', 'check'=>'email', 'attr' => 'maxlength="80"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input([ 'name' => 'DirRecep', 'placeholder' => 'Dirección del receptor', 'check' => 'notempty', 'attr' => 'maxlength="70"', 'value'=>(isset($DteReceptor['DirRecep'])?$DteReceptor['DirRecep']:'')])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaRecep', 'options' => [''=>'Comuna del receptor'] + $comunas, 'check' => 'notempty', 'value'=>(isset($DteReceptor['CmnaRecep'])?$DteReceptor['CmnaRecep']:'')])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name' => 'Contacto', 'placeholder' => 'Teléfono del receptor (opcional)', 'check'=>'telephone', 'attr' => 'maxlength="20"', 'value'=>(isset($DteReceptor['Contacto'])?$DteReceptor['Contacto']:'')])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name' => 'CorreoRecep', 'placeholder' => 'Email del receptor (opcional)', 'check'=>'email', 'attr' => 'maxlength="80"', 'value'=>(isset($DteReceptor['CorreoRecep'])?$DteReceptor['CorreoRecep']:'')])?></div>
     </div>
     <!-- DATOS DE TRANSPORTE EN CASO QUE SEA GUÍA DE DESPACHO -->
     <div class="row" id="datosTransporte" style="display:none">
@@ -48,7 +53,8 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
     <!-- DETALLE DEL DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-12">
-<?=$f->input([
+<?php
+$input_detalle = [
     'type'=>'js',
     'id'=>'detalle',
     'label'=>'Detalle',
@@ -66,7 +72,29 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
         ['name'=>'subtotal', 'value'=>0, 'attr'=>'readonly="readonly" style="text-align:center;width:7em"']
     ],
     'accesskey' => 'D',
-])?>
+];
+if (isset($DteEmitido)) {
+    $Detalle = $DteEmitido->getDatos()['Detalle'];
+    if (!isset($Detalle[0]))
+        $Detalle = [$Detalle];
+    $detalle = [];
+    foreach ($Detalle as $d) {
+        $detalle[] = [
+            'VlrCodigo' => isset($d['CdgItem']['VlrCodigo']) ? $d['CdgItem']['VlrCodigo'] : '',
+            'NmbItem' => isset($d['NmbItem']) ? $d['NmbItem'] : '',
+            'DscItem' => isset($d['DscItem']) ? $d['DscItem'] : '',
+            'IndExe' => (int)!empty($d['IndExe']),
+            'QtyItem' => isset($d['QtyItem']) ? $d['QtyItem'] : '',
+            'UnmdItem' => isset($d['UnmdItem']) ? $d['UnmdItem'] : '',
+            'PrcItem' => isset($d['PrcItem']) ? $d['PrcItem'] : '',
+            'ValorDR' => isset($d['DescuentoPct']) ? $d['DescuentoPct'] : (isset($d['DescuentoMonto']) ? $d['DescuentoMonto'] : 0),
+            'TpoValor' => isset($d['DescuentoPct']) ? '%' : (isset($d['DescuentoMonto']) ? '$' : '%'),
+        ];
+    }
+    $input_detalle['values'] = $detalle;
+}
+echo $f->input($input_detalle);
+?>
         </div>
     </div>
     <!-- REFERENCIAS DEL DOCUMENTO -->
@@ -81,22 +109,37 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>'previsu
         ['name'=>'FchRef', 'type'=>'date', 'check'=>'date'],
         ['name'=>'TpoDocRef', 'type'=>'select', 'options'=>[''=>'Tipo de documento referenciado'] + $tipos_dte, 'attr'=>'onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
         ['name'=>'FolioRef', 'check'=>'integer', 'attr'=>'maxlength="18" onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
-        ['name'=>'CodRef', 'type'=>'select', 'options'=>$tipos_referencia],
+        ['name'=>'CodRef', 'type'=>'select', 'options'=>[''=>''] + $tipos_referencia],
         ['name'=>'RazonRef', 'attr'=>'maxlength="90"'],
     ],
-    'values' => [],
     'accesskey' => 'R',
+    'values' => isset($DteEmitido) ? [[
+        'FchRef' => $DteEmitido->fecha,
+        'TpoDocRef' => $DteEmitido->dte,
+        'FolioRef' => $DteEmitido->folio,
+    ]] : [],
 ])?>
         </div>
     </div>
     <!-- RESUMEN DE LOS MONTOS DEL DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-12">
-            <?php new \sowerphp\general\View_Helper_Table([
+            <?php
+            if (isset($DteEmitido) and isset($DteEmitido->getDatos()['DscRcgGlobal'])) {
+                $DscRcgGlobal = $DteEmitido->getDatos()['DscRcgGlobal'];
+                if (!isset($DscRcgGlobal[0]))
+                    $DscRcgGlobal = [$DscRcgGlobal];
+                $ValorDR_global = $DscRcgGlobal[0]['ValorDR'];
+                $TpoValor_global = $DscRcgGlobal[0]['TpoValor'];
+            } else {
+                $ValorDR_global = 0;
+                $TpoValor_global = '%';
+            }
+            new \sowerphp\general\View_Helper_Table([
                 ['Desc. glogal', '% / $', 'Neto', 'Exento', 'Tasa IVA', 'IVA', 'Total'],
                 [
-                    $f->input(['name'=>'ValorDR_global', 'placeholder'=>'Descuento global', 'value'=>0, 'check'=>'notempty integer', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"', 'popover'=>'Descuento global que se aplica a todos los items del DTE']),
-                    $f->input(['name'=>'TpoValor_global', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'attr'=>'style="width:5em" onblur="DTE.calcular()"']),
+                    $f->input(['name'=>'ValorDR_global', 'placeholder'=>'Descuento global', 'value'=>$ValorDR_global, 'check'=>'notempty integer', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"', 'popover'=>'Descuento global que se aplica a todos los items del DTE']),
+                    $f->input(['name'=>'TpoValor_global', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'value'=>$TpoValor_global, 'attr'=>'style="width:5em" onblur="DTE.calcular()"']),
                     $f->input(['name'=>'neto', 'value'=>0, 'attr'=>'readonly="readonly"']),
                     $f->input(['name'=>'exento', 'value'=>0, 'attr'=>'readonly="readonly"']),
                     $f->input(['name'=>'tasa', 'label'=>'Tasa IVA', 'value'=>$tasa, 'check'=>'notempty integer', 'attr'=>'readonly="readonly"']),

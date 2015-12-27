@@ -26,7 +26,7 @@ namespace website\Dte;
 
 /**
  * Clase para mapear la tabla dte_referencia de la base de datos
- * Comentario de la tabla: 
+ * Comentario de la tabla:
  * Esta clase permite trabajar sobre un registro de la tabla dte_referencia
  * @author SowerPHP Code Generator
  * @version 2015-09-25 16:06:34
@@ -41,12 +41,12 @@ class Model_DteReferencia extends \Model_App
     // Atributos de la clase (columnas en la base de datos)
     public $emisor; ///< integer(32) NOT NULL DEFAULT '' PK FK:contribuyente.rut
     public $dte; ///< smallint(16) NOT NULL DEFAULT '' PK FK:dte_tipo.codigo
-    public $folio; ///< integer(32) NOT NULL DEFAULT '' PK 
-    public $certificacion; ///< boolean() NOT NULL DEFAULT 'false' PK 
+    public $folio; ///< integer(32) NOT NULL DEFAULT '' PK
+    public $certificacion; ///< boolean() NOT NULL DEFAULT 'false' PK
     public $referencia_dte; ///< smallint(16) NOT NULL DEFAULT '' PK FK:dte_tipo.codigo
-    public $referencia_folio; ///< integer(32) NOT NULL DEFAULT '' PK 
-    public $codigo; ///< smallint(16) NOT NULL DEFAULT '' PK FK:dte_referencia_tipo.codigo
-    public $razon; ///< character varying(90) NOT NULL DEFAULT '' 
+    public $referencia_folio; ///< integer(32) NOT NULL DEFAULT '' PK
+    public $codigo; ///< smallint(16) NULL DEFAULT '' FK:dte_referencia_tipo.codigo
+    public $razon; ///< character varying(90) NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
@@ -121,10 +121,10 @@ class Model_DteReferencia extends \Model_App
             'comment'   => '',
             'type'      => 'smallint',
             'length'    => 16,
-            'null'      => false,
+            'null'      => true,
             'default'   => '',
             'auto'      => false,
-            'pk'        => true,
+            'pk'        => false,
             'fk'        => array('table' => 'dte_referencia_tipo', 'column' => 'codigo')
         ),
         'razon' => array(
@@ -146,7 +146,6 @@ class Model_DteReferencia extends \Model_App
 
     public static $fkNamespace = array(
         'Model_Contribuyente' => 'website\Dte',
-        'Model_DteTipo' => 'website\Dte',
         'Model_DteTipo' => 'website\Dte',
         'Model_DteReferenciaTipo' => 'website\Dte'
     ); ///< Namespaces que utiliza esta clase
