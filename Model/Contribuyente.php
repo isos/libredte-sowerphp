@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Clase para mapear la tabla contribuyente de la base de datos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-25
+ * @version 2015-12-27
  */
 class Model_Contribuyente extends \Model_App
 {
@@ -794,6 +794,88 @@ class Model_Contribuyente extends \Model_App
             FROM dte_tipo AS t, dte_emitido AS e
             WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY t.tipo
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+    }
+
+    /**
+     * Método que entrega el resumen de las guías por períodos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-26
+     */
+    public function getResumenGuiasPeriodos()
+    {
+        $periodo = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(e.fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(e.fecha, "%Y%m")';
+        return $this->db->getTable('
+            (
+                SELECT '.$periodo.' AS periodo, COUNT(*) AS emitidos, g.documentos AS enviados, g.track_id, g.revision_estado
+                FROM dte_emitido AS e LEFT JOIN dte_guia AS g ON e.emisor = g.emisor AND e.certificacion = g.certificacion AND '.$periodo.' = g.periodo
+                WHERE e.emisor = :rut AND e.certificacion = :certificacion AND e.dte = 52
+                GROUP BY '.$periodo.', enviados, g.track_id, g.revision_estado
+            ) UNION (
+                SELECT periodo, documentos AS emitidos, documentos AS enviados, track_id, revision_estado
+                FROM dte_guia
+                WHERE emisor = :rut AND certificacion = :certificacion
+            )
+            ORDER BY periodo DESC
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+    }
+
+    /**
+     * Método que entrega el resumen de las guías de un período
+     * @todo Extraer IndTraslado en MariaDB
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-27
+     */
+    public function getGuias($periodo)
+    {
+        if ($this->db->config['type']=='PostgreSQL') {
+            $periodo_col = 'TO_CHAR(e.fecha, \'YYYYmm\')';
+            $tipo_col = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:IndTraslado/text()\', CONVERT_FROM(decode(e.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+        } else {
+            $periodo_col = 'DATE_FORMAT(e.fecha, "%Y%m")';
+            //$tipo_col = 'ExtractValue(, \'\')';
+            $tipo_col = '\'\'';
+        }
+        return $this->db->getTable('
+            SELECT
+                e.folio,
+                NULL AS anulado,
+                1 AS operacion,
+                '.$tipo_col.' AS tipo,
+                e.fecha,
+                '.$this->db->concat('r.rut', '-', 'r.dv').' AS rut,
+                r.razon_social,
+                e.neto,
+                e.tasa,
+                e.iva,
+                e.total,
+                NULL AS modificado,
+                ref.dte AS ref_dte,
+                ref.folio AS ref_folio,
+                re.fecha AS ref_fecha
+            FROM
+                dte_emitido AS e
+                LEFT JOIN dte_referencia AS ref ON e.dte = ref.referencia_dte AND e.folio = ref.referencia_folio AND e.certificacion = ref.certificacion
+                LEFT JOIN dte_emitido AS re ON re.dte = ref.dte AND re.folio = ref.folio AND re.certificacion = ref.certificacion,
+                contribuyente AS r
+            WHERE e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND e.dte = 52
+            ORDER BY e.fecha, e.folio
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+    }
+
+    /**
+     * Método que entrega el resumen de las guías diarias de un período
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-27
+     */
+    public function getGuiasDiarias($periodo)
+    {
+        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(fecha, \'YYYYmm\')' : 'DATE_FORMAT(fecha, "%Y%m")';
+        return $this->db->getTable('
+            SELECT fecha, COUNT(*) AS guias
+            FROM dte_emitido
+            WHERE emisor = :rut AND certificacion = :certificacion AND '.$periodo_col.' = :periodo AND dte = 52
+            GROUP BY fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
     }
 

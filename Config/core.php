@@ -58,6 +58,11 @@
         'desc' => 'Acceder al Libro de Ventas',
         'icon' => 'fa fa-book',
     ],
+    '/dte_guias' => [
+        'name' => 'Libro de guías',
+        'desc' => 'Acceder al Libro de Guías de despacho',
+        'icon' => 'fa fa-book',
+    ],
     '/admin' => [
         'name' => 'Administración',
         'desc' => 'Administración del módulo DTE',

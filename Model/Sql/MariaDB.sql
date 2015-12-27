@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS dte_intercambio_recepcion CASCADE;
 DROP TABLE IF EXISTS dte_intercambio_recepcion_dte CASCADE;
 DROP TABLE IF EXISTS dte_intercambio_resultado CASCADE;
 DROP TABLE IF EXISTS dte_intercambio_resultado_dte CASCADE;
+DROP TABLE IF EXISTS dte_guia CASCADE;
 SET foreign_key_checks = 1;
 
 -- tabla para firmas electrónicas
@@ -475,6 +476,22 @@ CREATE TABLE dte_intercambio_resultado_dte (
 		ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT dte_intercambio_resultado_dte_recibo_fk FOREIGN KEY (responde, emisor, codigo)
 		REFERENCES dte_intercambio_resultado (responde, recibe, codigo) MATCH FULL
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- tabla para libro de guías de despacho
+CREATE TABLE dte_guia (
+	emisor INTEGER NOT NULL,
+	periodo INTEGER NOT NULL,
+	certificacion BOOLEAN NOT NULL DEFAULT false,
+	documentos INTEGER NOT NULL,
+	xml TEXT NOT NULL,
+	track_id INTEGER,
+	revision_estado VARCHAR(100),
+	revision_detalle TEXT,
+	CONSTRAINT dte_guia_pk PRIMARY KEY (emisor, periodo, certificacion),
+	CONSTRAINT dte_guia_emisor_fk FOREIGN KEY (emisor)
+		REFERENCES contribuyente (rut) MATCH FULL
 		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
