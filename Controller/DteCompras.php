@@ -63,7 +63,7 @@ class Controller_DteCompras extends Controller_Libros
      * Acción que envía el archivo XML del libro de compras al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-08
+     * @version 2015-12-27
      */
     public function enviar_sii($periodo)
     {
@@ -96,7 +96,7 @@ class Controller_DteCompras extends Controller_Libros
             foreach ($compra as $k => $v) {
                 if (strpos($k, 'impuesto_adicional')!==0 and strpos($k, 'iva_no_recuperable')!==0) {
                     if ($v!==null)
-                        $d[$this->compras_cols[$k]] = $v;
+                        $d[$this->libro_cols[$k]] = $v;
                 }
             }
             // agregar iva no recuperable

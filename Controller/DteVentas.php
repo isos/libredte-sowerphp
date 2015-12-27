@@ -60,7 +60,7 @@ class Controller_DteVentas extends Controller_Libros
      * Acción que envía el archivo XML del libro de ventas al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-08
+     * @version 2015-12-27
      */
     public function enviar_sii($periodo)
     {
@@ -93,7 +93,7 @@ class Controller_DteVentas extends Controller_Libros
             foreach ($venta as $k => $v) {
                 if (strpos($k, 'impuesto_')!==0) {
                     if ($v!==null)
-                        $d[$this->ventas_cols[$k]] = $v;
+                        $d[$this->libro_cols[$k]] = $v;
                 }
             }
             // agregar otros impuestos
