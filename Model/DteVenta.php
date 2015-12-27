@@ -31,7 +31,7 @@ namespace website\Dte;
  * @author SowerPHP Code Generator
  * @version 2015-09-25 21:47:15
  */
-class Model_DteVenta extends \Model_App
+class Model_DteVenta extends Model_Libro
 {
 
     // Datos para la conexión a la base de datos
@@ -147,33 +147,5 @@ class Model_DteVenta extends \Model_App
     public static $fkNamespace = array(
         'Model_Contribuyente' => 'website\Dte'
     ); ///< Namespaces que utiliza esta clase
-
-    /**
-     * Método que guarda el estado del envío del libro al SII
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-08
-     */
-    public function saveRevision($xml_data)
-    {
-        $xml = new \SimpleXMLElement($xml_data, LIBXML_COMPACT);
-        if ($xml->Identificacion->TrackId!=$this->track_id)
-            return 'Track ID no corresponde al envío del Libro';
-        $this->revision_estado = (string)$xml->Identificacion->EstadoEnvio;
-        if (isset($xml->ErrorEnvioLibro)) {
-            if (is_string($xml->ErrorEnvioLibro->DetErrEnvio))
-                $error = [$xml->ErrorEnvioLibro->DetErrEnvio];
-            else
-                $error = (array)$xml->ErrorEnvioLibro->DetErrEnvio;
-            $this->revision_detalle = implode("\n\n", $error);
-        } else {
-            $this->revision_detalle = null;
-        }
-        try {
-            $this->save();
-            return true;
-        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-            return $e->getMessage();
-        }
-    }
 
 }
