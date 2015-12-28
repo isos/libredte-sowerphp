@@ -140,7 +140,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-12-25
+     * @version 2015-12-28
      */
     public function previsualizacion()
     {
@@ -179,7 +179,7 @@ class Controller_Documentos extends \Controller_App
         $Receptor = new Model_Contribuyente($rut);
         $Receptor->dv = $dv;
         $Receptor->razon_social = $_POST['RznSocRecep'];
-        $Receptor->giro = $_POST['GiroRecep'];
+        $Receptor->giro = substr($_POST['GiroRecep'], 0, 40);
         $Receptor->telefono = $_POST['Contacto'];
         $Receptor->email = $_POST['CorreoRecep'];
         $Receptor->direccion = $_POST['DirRecep'];

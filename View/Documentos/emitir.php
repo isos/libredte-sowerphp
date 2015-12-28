@@ -25,7 +25,7 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" '.(isset($DteReceptor)?'readonly="readonly"':'onblur="Receptor.setDatos(\'emitir_dte\')"'), 'value'=>(isset($DteReceptor)?$DteReceptor['RUTRecep']:'')])?></div>
         <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"', 'value'=>(isset($DteReceptor['RznSocRecep'])?$DteReceptor['RznSocRecep']:'')])?></div>
-        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="80"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
+        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
     </div>
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input([ 'name' => 'DirRecep', 'placeholder' => 'Dirección del receptor', 'check' => 'notempty', 'attr' => 'maxlength="70"', 'value'=>(isset($DteReceptor['DirRecep'])?$DteReceptor['DirRecep']:'')])?></div>
