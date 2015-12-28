@@ -133,7 +133,7 @@ echo $f->input([
     'name' => 'certificacion',
     'label' => '¿En certificación?',
     'checked' => true,
-    'help' => 'Si está seleccionado todo el sistema funcionará en ambiente de certificación',
+    'help' => 'Si está seleccionado el sistema funcionará en ambiente de certificación',
 ]);
 echo $f->input([
     'type' => 'date',
