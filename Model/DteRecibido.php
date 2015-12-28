@@ -28,8 +28,8 @@ namespace website\Dte;
  * Clase para mapear la tabla dte_recibido de la base de datos
  * Comentario de la tabla:
  * Esta clase permite trabajar sobre un registro de la tabla dte_recibido
- * @author SowerPHP Code Generator
- * @version 2015-09-27 19:27:12
+ * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+ * @version 2015-12-28
  */
 class Model_DteRecibido extends \Model_App
 {
@@ -271,6 +271,18 @@ class Model_DteRecibido extends \Model_App
         'Model_IvaNoRecuperable' => 'website\Dte\Admin',
         'Model_ImpuestoAdicional' => 'website\Dte\Admin'
     ); ///< Namespaces que utiliza esta clase
+
+    /**
+     * Método para guardar el documento recibido, creará el emisor si no existe
+     * antes de ser guardado el documento
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-28
+     */
+    public function save()
+    {
+        $this->getEmisor(); // si el emisor no existe con esto se creará
+        parent::save();
+    }
 
     /**
      * Método que entrega el objeto del tipo del dte
