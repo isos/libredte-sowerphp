@@ -329,6 +329,12 @@ CREATE TABLE dte_recibido (
 	iva_no_recuperable SMALLINT,
 	impuesto_adicional SMALLINT,
 	impuesto_adicional_tasa SMALLINT,
+	impuesto_tipo SMALLINT NOT NULL DEFAULT 1,
+	anulado CHAR(1),
+	impuesto_sin_credito INTEGER,
+	monto_activo_fijo INTEGER,
+	monto_iva_activo_fijo INTEGER,
+	iva_no_retenido INTEGER,
 	CONSTRAINT dte_recibido_pk PRIMARY KEY (emisor, dte, folio, certificacion),
 	CONSTRAINT dte_recibido_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL

@@ -22,15 +22,15 @@ echo $f->input([
     'check' => 'notempty integer',
 ]);
 echo $f->input([
-    'name' => 'tasa',
-    'label' => 'Tasa IVA',
-    'check' => 'notempty integer',
-]);
-echo $f->input([
     'type' => 'date',
     'name' => 'fecha',
     'label' => 'Fecha documento',
     'check' => 'notempty date',
+]);
+echo $f->input([
+    'name' => 'tasa',
+    'label' => 'Tasa IVA',
+    'check' => 'integer',
 ]);
 echo $f->input([
     'name' => 'exento',
@@ -65,5 +65,36 @@ echo $f->input([
     'label' => 'Tasa Imp. adic.',
     'check' => 'integer',
     'help' => 'Tasa del impuesto adicional (obligatorio si hay impuesto adicional)'
+]);
+echo $f->input([
+    'type' => 'select',
+    'name' => 'impuesto_tipo',
+    'label' => 'Tipo de impuesto',
+    'options' => [1=>'IVA', 2=>'Ley 18211'],
+]);
+echo $f->input([
+    'type' => 'checkbox',
+    'name' => 'anulado',
+    'label' => '¿Anulado?',
+]);
+echo $f->input([
+    'name' => 'impuesto_sin_credito',
+    'label' => 'Impuesto sin crédito',
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'monto_activo_fijo',
+    'label' => 'Monto activo fijo',
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'monto_iva_activo_fijo',
+    'label' => 'IVA activo fijo',
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'iva_no_retenido',
+    'label' => 'IVA no retenido',
+    'check' => 'integer',
 ]);
 echo $f->end('Agregar DTE recibido');

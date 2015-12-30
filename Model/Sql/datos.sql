@@ -9,6 +9,7 @@ INSERT INTO dte_tipo VALUES
 	(38, 'Boleta exenta', false, false, true),
 	(39, 'Boleta electrónica', true, false, true),
 	(41, 'Boleta exenta electrónica', true, false, true),
+	(46, 'Factura de compra electrónica', true, true, true),
 	(50, 'Guía de despacho', false, false, false),
 	(52, 'Guía de despacho electrónica', true, false, false),
 	(55, 'Nota de débito', false, true, true),

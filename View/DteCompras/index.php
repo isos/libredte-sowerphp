@@ -1,3 +1,4 @@
+<a href="<?=$_base?>/dte/dte_compras/importar" title="Importar libro IEC desde archivo CSV" class="btn btn-default pull-right"><span class="fa fa-upload"></span> Importar CSV</a>
 <h1>Libro de compras (IEC)</h1>
 <?php
 foreach ($periodos as &$p) {

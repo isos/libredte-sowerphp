@@ -143,6 +143,12 @@ class Controller_DteRecibidos extends \Controller_App
             $DteRecibido->impuesto_adicional = null;
             $DteRecibido->impuesto_adicional_tasa = null;
         }
+        $DteRecibido->impuesto_tipo = $_POST['impuesto_tipo'];
+        $DteRecibido->anulado = isset($_POST['anulado']) ? 'A' : null;
+        $DteRecibido->impuesto_sin_credito = !empty($_POST['impuesto_sin_credito']) ? $_POST['impuesto_sin_credito'] : null;
+        $DteRecibido->monto_activo_fijo = !empty($_POST['monto_activo_fijo']) ? $_POST['monto_activo_fijo'] : null;
+        $DteRecibido->monto_iva_activo_fijo = !empty($_POST['monto_iva_activo_fijo']) ? $_POST['monto_iva_activo_fijo'] : null;
+        $DteRecibido->iva_no_retenido = !empty($_POST['iva_no_retenido']) ? $_POST['iva_no_retenido'] : null;
         // si el DTE es de producción y es electrónico entonces se consultará su
         // estado antes de poder guardar, esto evitará agregar documentos que no
         // han sido recibidos en el SII o sus datos son incorrectos

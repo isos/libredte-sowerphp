@@ -949,7 +949,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2015-09-29
      */
     public function getCompras($periodo)
     {
@@ -958,30 +958,43 @@ class Model_Contribuyente extends \Model_App
             SELECT
                 r.dte,
                 r.folio,
-                r.tasa,
-                r.fecha,
-                r.sucursal_sii,
                 '.$this->db->concat('e.rut', '-', 'e.dv').' AS rut,
+                r.tasa,
                 e.razon_social,
+                r.impuesto_tipo,
+                r.fecha,
+                r.anulado,
                 r.exento,
                 r.neto,
                 r.iva,
                 r.iva_no_recuperable,
-                \'\' AS iva_no_recuperable_monto,
+                NULL AS iva_no_recuperable_monto,
+                NULL AS iva_uso_comun_monto,
                 r.iva_uso_comun,
                 r.impuesto_adicional,
                 r.impuesto_adicional_tasa,
-                \'\' AS impuesto_adicional_monto,
-                r.total
+                NULL AS impuesto_adicional_monto,
+                r.total,
+                r.impuesto_sin_credito,
+                r.monto_activo_fijo,
+                r.monto_iva_activo_fijo,
+                r.iva_no_retenido,
+                r.sucursal_sii
             FROM dte_tipo AS t, dte_recibido AS r, contribuyente AS e
             WHERE t.codigo = r.dte AND t.compra = true AND r.emisor = e.rut AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             ORDER BY r.fecha, r.dte, r.folio
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
         foreach ($compras as &$c) {
+            // asignar IVA no recuperable
             if (!empty($c['iva_no_recuperable'])) {
-                $c['iva_no_recuperable_monto'] = $c['iva'];
+                $c['iva_no_recuperable_monto'] = round((int)$c['neto']*($c['tasa']/100));
                 $c['iva'] = 0;
             }
+            // asignar IVA de uso comun
+            if (!empty($c['iva_uso_comun'])) {
+                $c['iva_uso_comun_monto'] = round((int)$c['neto']*($c['tasa']/100));
+            }
+            // asignar monto de impuesto adicionl
             if (!empty($c['impuesto_adicional'])) {
                 $c['impuesto_adicional_monto'] = round((int)$c['neto']*($c['impuesto_adicional_tasa']/100));
             }

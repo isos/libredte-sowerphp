@@ -57,6 +57,12 @@ class Model_DteRecibido extends \Model_App
     public $iva_no_recuperable; ///< smallint(16) NULL DEFAULT '' FK:iva_no_recuperable.codigo
     public $impuesto_adicional; ///< smallint(16) NULL DEFAULT '' FK:impuesto_adicional.codigo
     public $impuesto_adicional_tasa; ///< smallint(16) NULL DEFAULT ''
+    public $impuesto_tipo; ///< smallint(16) NOT NULL DEFAULT '1'
+    public $anulado; ///< character(1) NULL DEFAULT ''
+    public $impuesto_sin_credito; ///< integer(32) NULL DEFAULT ''
+    public $monto_activo_fijo; ///< integer(32) NULL DEFAULT ''
+    public $monto_iva_activo_fijo; ///< integer(32) NULL DEFAULT ''
+    public $iva_no_retenido; ///< integer(32) NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
@@ -258,6 +264,72 @@ class Model_DteRecibido extends \Model_App
             'pk'        => false,
             'fk'        => null
         ),
+        'impuesto_tipo' => array(
+            'name'      => 'Impuesto Tipo',
+            'comment'   => '',
+            'type'      => 'smallint',
+            'length'    => 16,
+            'null'      => false,
+            'default'   => '1',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'anulado' => array(
+            'name'      => 'Anulado',
+            'comment'   => '',
+            'type'      => 'character',
+            'length'    => 1,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'impuesto_sin_credito' => array(
+            'name'      => 'Impuesto Sin Credito',
+            'comment'   => '',
+            'type'      => 'integer',
+            'length'    => 32,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'monto_activo_fijo' => array(
+            'name'      => 'Monto Activo Fijo',
+            'comment'   => '',
+            'type'      => 'integer',
+            'length'    => 32,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'monto_iva_activo_fijo' => array(
+            'name'      => 'Monto Iva Activo Fijo',
+            'comment'   => '',
+            'type'      => 'integer',
+            'length'    => 32,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'iva_no_retenido' => array(
+            'name'      => 'Iva No Retenido',
+            'comment'   => '',
+            'type'      => 'integer',
+            'length'    => 32,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
 
     );
 
@@ -276,12 +348,12 @@ class Model_DteRecibido extends \Model_App
      * Método para guardar el documento recibido, creará el emisor si no existe
      * antes de ser guardado el documento
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-28
+     * @version 2015-12-29
      */
     public function save()
     {
         $this->getEmisor(); // si el emisor no existe con esto se creará
-        parent::save();
+        return parent::save();
     }
 
     /**

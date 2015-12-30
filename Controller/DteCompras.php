@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de compras
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-25
+ * @version 2015-12-29
  */
 class Controller_DteCompras extends Controller_Libros
 {
@@ -40,30 +40,119 @@ class Controller_DteCompras extends Controller_Libros
     ]; ///< Configuración para las acciones del controlador
 
     protected $libro_cols = [
+        'Tipo Doc',
+        'Folio',
+        'Rut Contraparte',
+        'Tasa Impuesto',
+        'Razón Social Contraparte',
+        'Tipo Impuesto[1=IVA:2=LEY 18211]',
+        'Fecha Emisión',
+        'Anulado[A]',
+        'Monto Exento',
+        'Monto Neto',
+        'Monto IVA (Recuperable)',
+        'Cod IVA no Rec',
+        'Monto IVA no Rec',
+        'IVA Uso Común',
+        'Factor IVA Uso Comun',
+        'Cod Otro Imp (Con Crédito)',
+        'Tasa Otro Imp (Con Crédito)',
+        'Monto Otro Imp (Con Crédito)',
+        'Monto Total',
+        'Monto Otro Imp Sin Crédito',
+        'Monto Activo Fijo',
+        'Monto IVA Activo Fijo',
+        'IVA No Retenido',
+        'Sucursal SII',
+    ]; ///< Columnas del archivo CSV del libro
+
+    protected $detalle_cols = [
         'dte' => 'TpoDoc',
         'folio' => 'NroDoc',
-        'tasa' => 'TasaImp',
-        'fecha' => 'FchDoc',
-        'sucursal_sii' => 'CdgSIISucur',
         'rut' => 'RUTDoc',
+        'tasa' => 'TasaImp',
         'razon_social' => 'RznSoc',
+        'impuesto_tipo' => 'TpoImp',
+        'fecha' => 'FchDoc',
+        'anulado' => 'Anulado',
         'exento' => 'MntExe',
         'neto' => 'MntNeto',
         'iva' => 'MntIVA',
         'iva_no_recuperable' => 'CodIVANoRec',
         'iva_no_recuperable_monto' => 'MntIVANoRec',
+        'iva_uso_comun_monto' => 'IVAUsoComun',
         'iva_uso_comun' => 'FctProp',
-        'impuesto_codigo' => 'CodImp',
-        'impuesto_tasa' => 'TasaImp',
-        'impuesto_monto' => 'MntImp',
+        'impuesto_adicional' => 'CodImp',
+        'impuesto_adicional_tasa' => 'TasaImp',
+        'impuesto_adicional_monto' => 'MntImp',
         'total' => 'MntTotal',
-    ]; ///< Columnas del archivo CSV del libro
+        'impuesto_sin_credito' => 'MntSinCred',
+        'monto_activo_fijo' => 'MntActivoFijo',
+        'monto_iva_activo_fijo' => 'MntIVAActivoFijo',
+        'iva_no_retenido' => 'IVANoRetenido',
+        'sucursal_sii' => 'CdgSIISucur',
+    ]; ///< Mapeo columna en BD a nombre en detalle del libro
+
+    /**
+     * Acción que permite importar un libro desde un archivo CSV
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-29
+     */
+    public function importar()
+    {
+        if (isset($_POST['submit'])) {
+            // verificar que se haya podido subir el archivo con el libro
+            if (!isset($_FILES['archivo']) or $_FILES['archivo']['error']) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Ocurrió un error al subir el libro', 'error'
+                );
+                return;
+            }
+            // obtener receptor (contribuyente operando)
+            $Receptor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+
+
+            $Libro = new \sasco\LibreDTE\Sii\LibroCompraVenta();
+            $Libro->agregarComprasCSV($_FILES['archivo']['tmp_name']);
+            $detalle = $Libro->getCompras();
+            // agregar cada documento del libro
+            $keys = array_keys($this->detalle_cols);
+            $noGuardado = [];
+            foreach ($detalle as $d) {
+                $datos = array_combine($keys, $d);
+                $DteRecibido = new Model_DteRecibido();
+                $DteRecibido->set($datos);
+                $DteRecibido->emisor = explode('-', str_replace('.', '', $datos['rut']))[0];
+                $DteRecibido->certificacion = $Receptor->certificacion;
+                $DteRecibido->receptor = $Receptor->rut;
+                $DteRecibido->usuario = $this->Auth->User->id;
+                try {
+                    if (!$DteRecibido->save()) {
+                        $noGuardado[] = 'T'.$DteRecibido->dte.'F'.$DteRecibido->folio;
+                    }
+                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                    $noGuardado[] = 'T'.$DteRecibido->dte.'F'.$DteRecibido->folio.': '.$e->getMessage();
+                }
+            }
+            // mostrar errores o redireccionar
+            if ($noGuardado) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Los siguientes documentos no se agregaron:<br/><br/>- '.implode('<br/><br/>- ', $noGuardado), 'error'
+                );
+            } else {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Se importó el libro de compras', 'ok'
+                );
+                $this->redirect('/dte/dte_compras');
+            }
+        }
+    }
 
     /**
      * Acción que envía el archivo XML del libro de compras al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-27
+     * @version 2015-12-29
      */
     public function enviar_sii($periodo)
     {
@@ -96,7 +185,7 @@ class Controller_DteCompras extends Controller_Libros
             foreach ($compra as $k => $v) {
                 if (strpos($k, 'impuesto_adicional')!==0 and strpos($k, 'iva_no_recuperable')!==0) {
                     if ($v!==null)
-                        $d[$this->libro_cols[$k]] = $v;
+                        $d[$this->detalle_cols[$k]] = $v;
                 }
             }
             // agregar iva no recuperable

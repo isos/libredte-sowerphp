@@ -25,17 +25,17 @@ echo $f->input([
     'check' => 'notempty integer',
 ]);
 echo $f->input([
-    'name' => 'tasa',
-    'label' => 'Tasa IVA',
-    'value' => $DteRecibido->tasa,
-    'check' => 'notempty integer',
-]);
-echo $f->input([
     'type' => 'date',
     'name' => 'fecha',
     'label' => 'Fecha documento',
     'value' => $DteRecibido->fecha,
     'check' => 'notempty date',
+]);
+echo $f->input([
+    'name' => 'tasa',
+    'label' => 'Tasa IVA',
+    'value' => $DteRecibido->tasa,
+    'check' => 'integer',
 ]);
 echo $f->input([
     'name' => 'exento',
@@ -76,5 +76,42 @@ echo $f->input([
     'value' => $DteRecibido->impuesto_adicional_tasa,
     'check' => 'integer',
     'help' => 'Tasa del impuesto adicional (obligatorio si hay impuesto adicional)'
+]);
+echo $f->input([
+    'type' => 'select',
+    'name' => 'impuesto_tipo',
+    'label' => 'Tipo de impuesto',
+    'value' => $DteRecibido->impuesto_tipo,
+    'options' => [1=>'IVA', 2=>'Ley 18211'],
+]);
+echo $f->input([
+    'type' => 'checkbox',
+    'name' => 'anulado',
+    'checked' => $DteRecibido->anulado == 'A' ? true : false,
+    'label' => '¿Anulado?',
+]);
+echo $f->input([
+    'name' => 'impuesto_sin_credito',
+    'label' => 'Impuesto sin crédito',
+    'value' => $DteRecibido->impuesto_sin_credito,
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'monto_activo_fijo',
+    'label' => 'Monto activo fijo',
+    'value' => $DteRecibido->monto_activo_fijo,
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'monto_iva_activo_fijo',
+    'label' => 'IVA activo fijo',
+    'value' => $DteRecibido->monto_iva_activo_fijo,
+    'check' => 'integer',
+]);
+echo $f->input([
+    'name' => 'iva_no_retenido',
+    'label' => 'IVA no retenido',
+    'value' => $DteRecibido->iva_no_retenido,
+    'check' => 'integer',
 ]);
 echo $f->end('Editar DTE recibido');
