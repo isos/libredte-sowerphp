@@ -134,7 +134,7 @@ Receptor.setDatos = function (form) {
         dataType: "json",
         success: function (contribuyente) {
             f.RznSocRecep.value  = contribuyente.razon_social;
-            f.GiroRecep.value  = contribuyente.giro;
+            f.GiroRecep.value  = contribuyente.giro.substr(0, 40);
             f.DirRecep.value  = contribuyente.direccion;
             f.CmnaRecep.value  = contribuyente.comuna;
             f.Contacto.value  = contribuyente.telefono;
