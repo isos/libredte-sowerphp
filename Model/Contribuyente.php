@@ -379,7 +379,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Constructor del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-30
+     * @version 2015-12-31
      */
     public function __construct($rut = null)
     {
@@ -394,7 +394,7 @@ class Model_Contribuyente extends \Model_App
                 );
                 if ($response['status']['code']==200) {
                     $info = json_decode($response['body'], true);
-                    $this->razon_social = $info['razon_social'];
+                    $this->razon_social = substr($info['razon_social'], 0, 100);
                     if (!empty($info['actividades'][0]['codigo']))
                         $this->actividad_economica = $info['actividades'][0]['codigo'];
                     if (!empty($info['actividades'][0]['glosa']))
