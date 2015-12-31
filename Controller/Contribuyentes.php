@@ -363,7 +363,7 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método de la API que permite obtener los datos de un contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2015-12-30
      */
     public function _api_info_GET($rut)
     {
@@ -373,7 +373,7 @@ class Controller_Contribuyentes extends \Controller_App
         $clean = ['sii_pass', 'intercambio_pass', 'api_token', 'api_items'];
         foreach($clean as $attr)
             $Contribuyente->$attr = false;
-        return $Contribuyente;
+        $this->Api->send($Contribuyente, 200, JSON_PRETTY_PRINT);
     }
 
 }
