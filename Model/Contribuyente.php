@@ -379,7 +379,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Constructor del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-12
+     * @version 2015-12-30
      */
     public function __construct($rut = null)
     {
@@ -387,6 +387,24 @@ class Model_Contribuyente extends \Model_App
             $rut = explode('-', str_replace('.', '', $rut))[0];
         if (is_numeric($rut)) {
             parent::__construct($rut);
+            if (!$this->exists()) {
+                $this->dv = \sowerphp\app\Utility_Rut::dv($this->rut);
+                $response = \sowerphp\core\Network_Http_Socket::get(
+                    'https://sasco.cl/api/servicios/enlinea/sii/actividad_economica/'.$this->rut.'/'.$this->dv
+                );
+                if ($response['status']['code']==200) {
+                    $info = json_decode($response['body'], true);
+                    $this->razon_social = $info['razon_social'];
+                    if (!empty($info['actividades'][0]['codigo']))
+                        $this->actividad_economica = $info['actividades'][0]['codigo'];
+                    if (!empty($info['actividades'][0]['glosa']))
+                        $this->giro = substr($info['actividades'][0]['glosa'], 0, 80);
+                    try {
+                        $this->save();
+                    } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                    }
+                }
+            }
             $this->contribuyente = &$this->razon_social;
         }
     }
