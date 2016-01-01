@@ -43,7 +43,7 @@ new \sowerphp\general\View_Helper_Table([
                 </a>
             </div>
             <div class="col-md-6">
-                <a class="btn btn-default btn-lg btn-block<?=!$Libro->documentos?' disabled':''?>" href="<?=$_base?>/dte/dte_guias/xml/<?=$Libro->periodo?>" role="button">
+                <a class="btn btn-default btn-lg btn-block<?=!$Libro->xml?' disabled':''?>" href="<?=$_base?>/dte/dte_guias/xml/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-code-o" style="font-size:24px"></span>
                     Descargar libro de guías en XML
                 </a>
