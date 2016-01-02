@@ -78,7 +78,7 @@ class Controller_Contribuyentes extends \Controller_App
         }
         // si se llegó acá con un emisor se guarda en la sesión
         if (isset($Emisor)) {
-            \sowerphp\core\Model_Datasource_Session::write('dte.Emisor', $Emisor);
+            $this->setContribuyente($Emisor);
             // redireccionar
             if ($referer)
                 \sowerphp\core\Model_Datasource_Session::delete('referer');

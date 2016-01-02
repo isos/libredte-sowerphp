@@ -39,7 +39,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'periodos' => $Emisor->{'getResumen'.$this->config['model']['plural'].'Periodos'}(),
         ]);
@@ -52,7 +52,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function ver($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $detalle = $Emisor->{'get'.$this->config['model']['plural']}($periodo);
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
@@ -77,7 +77,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function csv($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $detalle = $Emisor->{'get'.$this->config['model']['plural']}($periodo);
         if (!$detalle) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -96,7 +96,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function xml($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // crear objeto del libro
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
@@ -153,7 +153,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function solicitar_revision($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
@@ -212,7 +212,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function actualizar_estado($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
@@ -279,7 +279,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function subir_revision($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
@@ -325,7 +325,7 @@ abstract class Controller_Libros extends \Controller_App
      */
     public function grafico_documentos_diarios($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $detalle = $Emisor->{'get'.$this->config['model']['plural'].'Diarias'}($periodo);
         $chart = new \sowerphp\general\View_Helper_Chart();
         $chart->vertical_bar(

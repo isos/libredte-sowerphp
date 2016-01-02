@@ -43,7 +43,7 @@ class Controller_DteIntercambioRecepciones extends \Controller_App
      */
     public function xml($responde, $codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener Recepción
         $DteIntercambioRecepcion = new Model_DteIntercambioRecepcion($responde, $Emisor->rut, $codigo);
         if (!$DteIntercambioRecepcion->exists()) {

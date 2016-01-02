@@ -50,7 +50,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $filtros = ['certificacion'=>(int)$Emisor->certificacion];
         if (isset($_POST['submit'])) {
 
@@ -68,7 +68,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function ver($dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -94,7 +94,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function enviar_sii($dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -146,7 +146,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function solicitar_revision($dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -204,7 +204,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function actualizar_estado($dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -287,7 +287,7 @@ class Controller_DteEmitidos extends \Controller_App
     {
         // usar emisor de la sesión
         if (!$emisor) {
-            $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+            $Emisor = $this->getContribuyente();
         }
         // usar emisor como parámetro
         else {
@@ -353,7 +353,7 @@ class Controller_DteEmitidos extends \Controller_App
     {
         // usar emisor de la sesión
         if (!$emisor) {
-            $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+            $Emisor = $this->getContribuyente();
         }
         // usar emisor como parámetro
         else {
@@ -399,7 +399,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function enviar_email($dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteEmitido->exists()) {
@@ -471,7 +471,7 @@ class Controller_DteEmitidos extends \Controller_App
      */
     public function _api_info_GET($dte, $folio, $contribuyente = null)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         if (!$Emisor) {
             if (!$contribuyente)
                 $this->Api->send('Debe indicar el emisor', 500);

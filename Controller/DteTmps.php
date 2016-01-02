@@ -39,7 +39,7 @@ class Controller_DteTmps extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $DteTmps = new Model_DteTmps();
         $DteTmps->setWhereStatement(['emisor = :rut'], [':rut'=>$Emisor->rut]);
         $this->set([
@@ -55,7 +55,7 @@ class Controller_DteTmps extends \Controller_App
      */
     public function pdf($receptor, $dte, $codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener datos JSON del DTE
         $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
         if (!$DteTmp->exists()) {
@@ -107,7 +107,7 @@ class Controller_DteTmps extends \Controller_App
      */
     public function eliminar($receptor, $dte, $codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE temporal
         $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
         if (!$DteTmp->exists()) {

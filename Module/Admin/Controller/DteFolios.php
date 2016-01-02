@@ -44,7 +44,7 @@ class Controller_DteFolios extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'Emisor' => $Emisor,
             'folios' => $Emisor->getFolios(),
@@ -58,7 +58,7 @@ class Controller_DteFolios extends \Controller_App
      */
     public function agregar()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'dte_tipos' => $Emisor->getDocumentosAutorizados(),
         ]);
@@ -101,7 +101,7 @@ class Controller_DteFolios extends \Controller_App
      */
     public function subir_caf()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'Emisor' => $Emisor,
         ]);
@@ -202,7 +202,7 @@ class Controller_DteFolios extends \Controller_App
      */
     public function modificar($dte)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $DteFolio = new Model_DteFolio($Emisor->rut, $dte, (int)$Emisor->certificacion);
         if (!$DteFolio->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(

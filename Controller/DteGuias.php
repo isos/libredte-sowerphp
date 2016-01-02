@@ -65,7 +65,7 @@ class Controller_DteGuias extends Controller_Libros
      */
     public function enviar_sii($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // si el periodo es mayor o igual al actual no se puede enviar
         if ($periodo >= date('Ym')) {
             \sowerphp\core\Model_Datasource_Session::message(

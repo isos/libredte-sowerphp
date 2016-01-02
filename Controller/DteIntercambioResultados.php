@@ -43,7 +43,7 @@ class Controller_DteIntercambioResultados extends \Controller_App
      */
     public function xml($responde, $codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener Resultado
         $DteIntercambioResultado = new Model_DteIntercambioResultado($responde, $Emisor->rut, $codigo);
         if (!$DteIntercambioResultado->exists()) {

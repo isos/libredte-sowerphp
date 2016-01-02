@@ -39,7 +39,7 @@ class Controller_DteRecibidos extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $filtros = ['certificacion'=>(int)$Emisor->certificacion];
         if (isset($_POST['submit'])) {
 
@@ -57,7 +57,7 @@ class Controller_DteRecibidos extends \Controller_App
      */
     public function agregar()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // asignar variables para la vista
         $this->set([
             'Emisor' => $Emisor,
@@ -77,7 +77,7 @@ class Controller_DteRecibidos extends \Controller_App
      */
     public function modificar($emisor, $dte, $folio)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener dte recibido
         $DteRecibido = new Model_DteRecibido($emisor, $dte, $folio, (int)$Emisor->certificacion);
         if (!$DteRecibido->exists()) {
@@ -112,7 +112,7 @@ class Controller_DteRecibidos extends \Controller_App
      */
     private function save()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // revisar datos minimos
         foreach(['emisor', 'dte', 'folio', 'fecha', 'tasa'] as $attr) {
             if (!isset($_POST[$attr][0])) {

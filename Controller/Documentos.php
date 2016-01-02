@@ -100,11 +100,11 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para mostrar página de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-12-26
+     * @version 2016-01-02
      */
     public function emitir($referencia_dte = null, $referencia_folio = null)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         if ($referencia_dte and $referencia_folio) {
             $DteEmitido = new Model_DteEmitido($Emisor->rut, $referencia_dte, $referencia_folio, (int)$Emisor->certificacion);
             if (!$DteEmitido->exists()) {
@@ -140,11 +140,11 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-12-28
+     * @version 2016-01-02
      */
     public function previsualizacion()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // si no se viene por POST redirigir
         if (!isset($_POST['submit'])) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -338,11 +338,11 @@ class Controller_Documentos extends \Controller_App
      * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
      * al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-12-26
+     * @version 2016-01-02
      */
     public function generar($receptor, $dte, $codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE temporal
         $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
         if (!$DteTmp->exists()) {

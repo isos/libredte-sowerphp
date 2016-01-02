@@ -141,14 +141,13 @@ class Model_DteTmp extends \Model_App
      * Método que genera el XML de EnvioDTE a partir de los datos ya
      * normalizados de un DTE temporal
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-22
+     * @version 2016-01-02
      */
     public function getEnvioDte($folio = 0, \sasco\LibreDTE\Sii\Folios $Folios = null, \sasco\LibreDTE\FirmaElectronica $Firma = null)
     {
         $dte = json_decode($this->datos, true);
         if (!$dte)
             return false;
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
         $dte['Encabezado']['IdDoc']['Folio'] = $folio;
         $Dte = new \sasco\LibreDTE\Sii\Dte($dte, false);
         if ($Folios and !$Dte->timbrar($Folios))
@@ -159,6 +158,7 @@ class Model_DteTmp extends \Model_App
         $EnvioDte->agregar($Dte);
         if ($Firma)
             $EnvioDte->setFirma($Firma);
+        $Emisor = $this->getEmisor();
         $EnvioDte->setCaratula([
             'RutEnvia' => $Firma ? $Firma->getID() : false,
             'RutReceptor' => $Emisor->certificacion ? '60803000-K' : $Dte->getReceptor(),
@@ -186,6 +186,16 @@ class Model_DteTmp extends \Model_App
     public function getDte()
     {
         return (new \website\Dte\Admin\Model_DteTipos())->get($this->dte);
+    }
+
+    /**
+     * Método que entrega el objeto del emisor
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @version 2016-01-02
+     */
+    public function getEmisor()
+    {
+        return (new \website\Dte\Model_Contribuyentes())->get($this->emisor);
     }
 
 }

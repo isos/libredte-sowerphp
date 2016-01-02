@@ -43,7 +43,7 @@ class Controller_FirmaElectronicas extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'Emisor' => $Emisor,
             'firmas' => $Emisor->getFirmas(),

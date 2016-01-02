@@ -109,7 +109,7 @@ class Controller_DteCompras extends Controller_Libros
                 return;
             }
             // obtener receptor (contribuyente operando)
-            $Receptor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+            $Receptor = $this->getContribuyente();
 
 
             $Libro = new \sasco\LibreDTE\Sii\LibroCompraVenta();
@@ -156,7 +156,7 @@ class Controller_DteCompras extends Controller_Libros
      */
     public function enviar_sii($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // si el periodo es mayor o igual al actual no se puede enviar
         if ($periodo >= date('Ym')) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -253,7 +253,7 @@ class Controller_DteCompras extends Controller_Libros
      */
     public function grafico_tipos($periodo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $compras = $Emisor->getComprasPorTipo($periodo);
         $chart = new \sowerphp\general\View_Helper_Chart();
         $chart->pie('Compras por tipo de DTE del período '.$periodo, $compras);

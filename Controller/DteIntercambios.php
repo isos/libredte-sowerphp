@@ -39,7 +39,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function index()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $this->set([
             'Emisor' => $Emisor,
             'intercambios' => $Emisor->getIntercambios(),
@@ -53,7 +53,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function ver($codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE intercambiado
         $DteIntercambio = new Model_DteIntercambio($Emisor->rut, $codigo, (int)$Emisor->certificacion);
         if (!$DteIntercambio->exists()) {
@@ -87,7 +87,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function html($codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         $DteIntercambio = new Model_DteIntercambio($Emisor->rut, $codigo, (int)$Emisor->certificacion);
         if (!$DteIntercambio->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -110,7 +110,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function actualizar()
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // conectar a la casilla de intercambio por IMAP
         $Imap = $Emisor->getEmailImap();
         if (!$Imap) {
@@ -266,7 +266,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function pdf($codigo, $cedible = false)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE intercambiado
         $DteIntercambio = new Model_DteIntercambio($Emisor->rut, $codigo, (int)$Emisor->certificacion);
         if (!$DteIntercambio->exists()) {
@@ -310,7 +310,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function xml($codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteIntercambio = new Model_DteIntercambio($Emisor->rut, $codigo, (int)$Emisor->certificacion);
         if (!$DteIntercambio->exists()) {
@@ -335,7 +335,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function responder($codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // si no se viene por post error
         if (!isset($_POST['submit'])) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -589,7 +589,7 @@ class Controller_DteIntercambios extends \Controller_App
      */
     public function resultados_xml($codigo)
     {
-        $Emisor = \sowerphp\core\Model_Datasource_Session::read('dte.Emisor');
+        $Emisor = $this->getContribuyente();
         // obtener DTE emitido
         $DteIntercambio = new Model_DteIntercambio($Emisor->rut, $codigo, (int)$Emisor->certificacion);
         if (!$DteIntercambio->exists()) {
