@@ -33,12 +33,12 @@
         'desc' => 'Revisar documentos temporales',
         'icon' => 'fa fa-list',
     ],
-    '/dte_emitidos' => [
+    '/dte_emitidos/listar' => [
         'name' => 'Documentos emitidos',
         'desc' => 'Revisar documentos emitidos',
         'icon' => 'fa fa-sign-out',
     ],
-    '/dte_recibidos' => [
+    '/dte_recibidos/listar' => [
         'name' => 'Documentos recibidos',
         'desc' => 'Revisar documentos recibidos',
         'icon' => 'fa fa-sign-in',

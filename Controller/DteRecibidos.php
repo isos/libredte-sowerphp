@@ -35,18 +35,38 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite mostrar los documentos recibidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-27
+     * @version 2016-01-03
      */
-    public function index()
+    public function listar($pagina = 1)
     {
         $Emisor = $this->getContribuyente();
-        $filtros = ['certificacion'=>(int)$Emisor->certificacion];
-        if (isset($_POST['submit'])) {
-
+        $filtros = [];
+        if (isset($_GET['search'])) {
+            foreach (explode(',', $_GET['search']) as $filtro) {
+                list($var, $val) = explode(':', $filtro);
+                $filtros[$var] = $val;
+            }
         }
+        $searchUrl = isset($_GET['search'])?('?search='.$_GET['search']):'';
+        $documentos_total = $Emisor->countDocumentosRecibidos($filtros);
+        if (!empty($pagina)) {
+            $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
+            $filtros['offset'] = ($pagina-1)*$filtros['limit'];
+            $paginas = ceil($documentos_total/$filtros['limit']);
+            if ($pagina != 1 && $pagina > $paginas) {
+                $this->redirect('/dte/'.$this->request->params['controller'].'/listar/1'.$searchUrl);
+            }
+        } else $paginas = 1;
         $this->set([
             'Emisor' => $Emisor,
             'documentos' => $Emisor->getDocumentosRecibidos($filtros),
+            'documentos_total' => $documentos_total,
+            'paginas' => $paginas,
+            'pagina' => $pagina,
+            'search' => $filtros,
+            'tipos_dte' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
+            'usuarios' => $Emisor->getListUsuarios(),
+            'searchUrl' => $searchUrl,
         ]);
     }
 

@@ -110,8 +110,6 @@ class Controller_DteCompras extends Controller_Libros
             }
             // obtener receptor (contribuyente operando)
             $Receptor = $this->getContribuyente();
-
-
             $Libro = new \sasco\LibreDTE\Sii\LibroCompraVenta();
             $Libro->agregarComprasCSV($_FILES['archivo']['tmp_name']);
             $detalle = $Libro->getCompras();

@@ -474,6 +474,21 @@ class Model_Contribuyente extends \Model_App
     }
 
     /**
+     * Método que entrega el listado de usuarios para los campos select
+     * @return Listado de usuarios
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-03
+     */
+    public function getListUsuarios()
+    {
+        return $this->db->getTable('
+            SELECT u.id, u.usuario
+            FROM usuario AS u, contribuyente_usuario AS c
+            WHERE u.id = c.usuario AND c.contribuyente = :rut
+        ', [':rut'=>$this->rut]);
+    }
+
+    /**
      * Método que determina si el usuario está o no autorizado a trabajar con el
      * contribuyente
      * @param usuario ID del usuario que se quiere saber si está autorizado
@@ -685,17 +700,21 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-23
+     * @version 2016-01-03
      */
     public function getDocumentosEmitidos($filtros = [])
     {
-        $where = ['d.emisor = :rut'];
-        $vars = [':rut'=>$this->rut];
-        if (isset($filtros['certificacion'])) {
-            $where[] = 'd.certificacion = :certificacion';
-            $vars[':certificacion'] = $filtros['certificacion'];
+        // armar filtros
+        $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
+            if (isset($filtros[$c])) {
+                $where[] = 'd.'.$c.' = :'.$c;
+                $vars[':'.$c] = $filtros[$c];
+            }
         }
-        return $this->db->getTable('
+        // armar consulta
+        $query = '
             SELECT d.dte, t.tipo, d.folio, r.razon_social, d.fecha, d.total, d.revision_estado AS estado, i.glosa AS intercambio, u.usuario
             FROM
                 dte_emitido AS d LEFT JOIN dte_intercambio_resultado_dte AS i
@@ -705,7 +724,34 @@ class Model_Contribuyente extends \Model_App
                 usuario AS u
             WHERE d.dte = t.codigo AND d.receptor = r.rut AND d.usuario = u.id AND '.implode(' AND ', $where).'
             ORDER BY d.fecha DESC, t.tipo, r.razon_social
-        ', $vars);
+        ';
+        // armar límite consulta
+        if (isset($filtros['limit'])) {
+            $query = $this->db->setLimit($query, $filtros['limit'], $filtros['offset']);
+        }
+        // entregar consulta
+        return $this->db->getTable($query, $vars);
+    }
+
+    /**
+     * Método que entrega el total de documentos emitidos por el contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-03
+     */
+    public function countDocumentosEmitidos($filtros = [])
+    {
+        $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
+            if (isset($filtros[$c])) {
+                $where[] = 'd.'.$c.' = :'.$c;
+                $vars[':'.$c] = $filtros[$c];
+            }
+        }
+        return $this->db->getValue(
+            'SELECT COUNT(*) FROM dte_emitido AS d WHERE '.implode(' AND ', $where),
+            $vars
+        );
     }
 
     /**
@@ -923,22 +969,53 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos recibidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-01-03
      */
     public function getDocumentosRecibidos($filtros = [])
     {
-        $where = ['d.receptor = :rut'];
-        $vars = [':rut'=>$this->rut];
-        if (isset($filtros['certificacion'])) {
-            $where[] = 'd.certificacion = :certificacion';
-            $vars[':certificacion'] = $filtros['certificacion'];
+        // armar filtros
+        $where = ['d.receptor = :rut', 'd.certificacion = :certificacion'];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        foreach (['dte', 'folio', 'emisor', 'fecha', 'total', 'intercambio', 'usuario'] as $c) {
+            if (isset($filtros[$c])) {
+                $where[] = 'd.'.$c.' = :'.$c;
+                $vars[':'.$c] = $filtros[$c];
+            }
         }
-        return $this->db->getTable('
+        // armar consulta
+        $query = '
             SELECT d.dte, t.tipo, d.folio, e.razon_social, d.fecha, d.total, d.intercambio, u.usuario, d.emisor
             FROM dte_recibido AS d, dte_tipo AS t, contribuyente AS e, usuario AS u
             WHERE d.dte = t.codigo AND d.emisor = e.rut AND d.usuario = u.id AND '.implode(' AND ', $where).'
             ORDER BY d.fecha DESC, t.tipo, e.razon_social
-        ', $vars);
+        ';
+        // armar límite consulta
+        if (isset($filtros['limit'])) {
+            $query = $this->db->setLimit($query, $filtros['limit'], $filtros['offset']);
+        }
+        // entregar consulta
+        return $this->db->getTable($query, $vars);
+    }
+
+    /**
+     * Método que entrega el total de documentos recibidos por el contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-03
+     */
+    public function countDocumentosRecibidos($filtros = [])
+    {
+        $where = ['d.receptor = :rut', 'd.certificacion = :certificacion'];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        foreach (['dte', 'folio', 'emisor', 'fecha', 'total', 'usuario'] as $c) {
+            if (isset($filtros[$c])) {
+                $where[] = 'd.'.$c.' = :'.$c;
+                $vars[':'.$c] = $filtros[$c];
+            }
+        }
+        return $this->db->getValue(
+            'SELECT COUNT(*) FROM dte_recibido AS d WHERE '.implode(' AND ', $where),
+            $vars
+        );
     }
 
     /**
