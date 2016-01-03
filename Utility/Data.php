@@ -41,11 +41,13 @@ class Utility_Data
      * @param key Índice en la configuración para obtener la clave a usar
      * @return Texto encriptado en base64
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-19
+     * @version 2016-01-02
      */
     public static function encrypt($plaintext, $key = 'dte.pkey')
     {
         $key = \sowerphp\core\Configure::read($key);
+        if (!$key)
+            return base64_encode($plaintext);
         $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
         $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
         $ciphertext = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $plaintext, MCRYPT_MODE_CBC, $iv);
@@ -58,14 +60,16 @@ class Utility_Data
      * @param key Índice en la configuración para obtener la clave a usar
      * @return Texto plano
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2016-01-02
      */
     public static function decrypt($ciphertext_base64, $key = 'dte.pkey')
     {
         if (empty($ciphertext_base64))
             return $ciphertext_base64;
-        $key = \sowerphp\core\Configure::read($key);
         $ciphertext_dec = base64_decode($ciphertext_base64);
+        $key = \sowerphp\core\Configure::read($key);
+        if (!$key)
+            return $ciphertext_dec;
         $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
         $iv_dec = substr($ciphertext_dec, 0, $iv_size);
         $ciphertext_dec = substr($ciphertext_dec, $iv_size);
