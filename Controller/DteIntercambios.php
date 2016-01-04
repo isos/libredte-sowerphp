@@ -106,7 +106,7 @@ class Controller_DteIntercambios extends \Controller_App
      * recibidos por intercambio y guarda los acuses de recibos de DTEs
      * enviados a otros contribuyentes
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-23
+     * @version 2016-01-04
      */
     public function actualizar()
     {
@@ -115,7 +115,7 @@ class Controller_DteIntercambios extends \Controller_App
         $Imap = $Emisor->getEmailImap();
         if (!$Imap) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'No se pudo conectar con la casilla de correo de intercambio', 'error'
+                'No fue posible conectar mediante IMAP a '.$Emisor->intercambio_imap.', verificar mailbox, usuario y/o contraseña de correo de intercambio:<br/>'.implode('<br/>', imap_errors()), 'error'
             );
             $this->redirect('/dte/dte_intercambios');
         }
