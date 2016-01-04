@@ -1,4 +1,4 @@
-<a href="<?=$_base?>/dte/dte_recibidos" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a DTE recibidos</span></a>
+<a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a DTE recibidos</span></a>
 
 <h1>Agregar DTE recibido</h1>
 <?php
