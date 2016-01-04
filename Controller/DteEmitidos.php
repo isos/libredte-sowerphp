@@ -46,10 +46,13 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que permite mostrar los documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-03
+     * @version 2016-01-04
      */
     public function listar($pagina = 1)
     {
+        if (!is_numeric($pagina)) {
+            $this->redirect('/dte/'.$this->request->params['controller'].'/listar');
+        }
         $Emisor = $this->getContribuyente();
         $filtros = [];
         if (isset($_GET['search'])) {
@@ -59,18 +62,27 @@ class Controller_DteEmitidos extends \Controller_App
             }
         }
         $searchUrl = isset($_GET['search'])?('?search='.$_GET['search']):'';
-        $documentos_total = $Emisor->countDocumentosEmitidos($filtros);
+        try {
+            $documentos_total = $Emisor->countDocumentosEmitidos($filtros);
+            $documentos = $Emisor->getDocumentosEmitidos($filtros);
+        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Error al recuperar los documentos:<br/>'.$e->getMessage(), 'error'
+            );
+            $documentos_total = 0;
+            $documentos = [];
+        }
         if (!empty($pagina)) {
             $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
             $filtros['offset'] = ($pagina-1)*$filtros['limit'];
-            $paginas = ceil($documentos_total/$filtros['limit']);
+            $paginas = $documentos_total ? ceil($documentos_total/$filtros['limit']) : 0;
             if ($pagina != 1 && $pagina > $paginas) {
-                $this->redirect('/dte/'.$this->request->params['controller'].'/listar/1'.$searchUrl);
+                $this->redirect('/dte/'.$this->request->params['controller'].'/listar'.$searchUrl);
             }
         } else $paginas = 1;
         $this->set([
             'Emisor' => $Emisor,
-            'documentos' => $Emisor->getDocumentosEmitidos($filtros),
+            'documentos' => $documentos,
             'documentos_total' => $documentos_total,
             'paginas' => $paginas,
             'pagina' => $pagina,
