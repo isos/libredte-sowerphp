@@ -89,7 +89,7 @@ echo $f->input([
 echo $f->input([
     'name' => 'Recinto',
     'label' => 'Recinto',
-    'value' => subtr($Emisor->direccion.', '.$Emisor->getComuna()->comuna, 0, 80),
+    'value' => substr($Emisor->direccion.', '.$Emisor->getComuna()->comuna, 0, 80),
     'check' => 'notempty',
     'attr' => 'maxlength="80"',
     'help' => 'Lugar donde se recibieron los productos o prestaron los servicios',
