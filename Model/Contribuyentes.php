@@ -83,4 +83,59 @@ class Model_Contribuyentes extends \Model_Plural_App
         ', [':usuario'=>$usuario]);
     }
 
+    /**
+     * Método que entrega una tabla con los movimientos de los contribuyentes
+     * @param desde Desde cuando considerar la actividad de los contribuyentes
+     * @param hasta Hasta cuando considerar la actividad de los contribuyentes
+     * @param certificacion Ambiente por el que se está consultando
+     * @param detalle Si se debe incluir o no el detalle
+     * @return Tabla con los contribuyentes y sus movimientos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-07
+     */
+    public function getConMovimientos($desde = 1, $hasta = null, $certificacion = false, $detalle = true)
+    {
+        $vars = [':certificacion' => (int)$certificacion];
+        // definir desde
+        if (is_numeric($desde)) {
+            $desde = $this->db->config['type']=='PostgreSQL' ? ('NOW () - INTERVAL \''.(int)$desde.' months\'') : ('DATE_SUB(NOW(), INTERVAL '.(int)$desde.' MONTH)');
+        } else {
+            $vars[':desde'] = $desde;
+            $desde = ':desde';
+        }
+        // definir hasta
+        if ($hasta) {
+            $vars[':hasta'] = $hasta;
+        }
+        // realizar consulta
+        $method = $detalle ? 'getTable' : 'getCol';
+        return $this->db->$method('
+            SELECT c.razon_social '.($detalle?', e.emitidos, r.recibidos':'').'
+            FROM
+                contribuyente AS c
+                LEFT JOIN (
+                    SELECT c.rut, COUNT(*) AS emitidos
+                    FROM contribuyente AS c, dte_emitido AS e
+                    WHERE
+                        c.rut = e.emisor
+                        AND c.usuario IS NOT NULL
+                        AND e.certificacion = :certificacion
+                        AND e.fecha >= '.$desde.' '.(!empty($hasta)?'AND e.fecha <= :hasta':'').'
+                    GROUP BY c.rut
+                ) AS e ON c.rut = e.rut
+                LEFT JOIN (
+                    SELECT c.rut, COUNT(*) AS recibidos
+                    FROM contribuyente AS c, dte_recibido AS r
+                    WHERE
+                        c.rut = r.receptor
+                        AND c.usuario IS NOT NULL
+                        AND r.certificacion = :certificacion
+                        AND r.fecha >= '.$desde.' '.(!empty($hasta)?'AND r.fecha <= :hasta':'').'
+                    GROUP BY c.rut
+                ) AS r ON c.rut = r.rut
+            WHERE e.emitidos > 0 OR r.recibidos > 0
+            ORDER BY c.razon_social
+        ', $vars);
+    }
+
 }
