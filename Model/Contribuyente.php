@@ -831,16 +831,18 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las ventas diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-26
+     * @version 2016-01-07
      */
     public function getVentasDiarias($periodo)
     {
         $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(e.fecha, \'YYYYmm\')' : 'DATE_FORMAT(e.fecha, "%Y%m")';
-        return $this->db->getTable('
-            SELECT e.fecha, COUNT(*) AS ventas
+        $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(e.fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(e.fecha, "%e")';
+        return $this->db->getAssociativeArray('
+            SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
             FROM dte_tipo AS t, dte_emitido AS e
             WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY e.fecha
+            ORDER BY e.fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
     }
 
@@ -930,16 +932,18 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las guías diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-27
+     * @version 2016-01-07
      */
     public function getGuiasDiarias($periodo)
     {
         $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(fecha, \'YYYYmm\')' : 'DATE_FORMAT(fecha, "%Y%m")';
-        return $this->db->getTable('
-            SELECT fecha, COUNT(*) AS guias
+        $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(fecha, "%e")';
+        return $this->db->getAssociativeArray('
+            SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
             FROM dte_emitido
             WHERE emisor = :rut AND certificacion = :certificacion AND '.$periodo_col.' = :periodo AND dte = 52
             GROUP BY fecha
+            ORDER BY fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
     }
 
@@ -1100,16 +1104,18 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-01-07
      */
     public function getComprasDiarias($periodo)
     {
         $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
-        return $this->db->getTable('
-            SELECT r.fecha, COUNT(*) AS compras
+        $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%e")';
+        return $this->db->getAssociativeArray('
+            SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
             FROM dte_tipo AS t, dte_recibido AS r
             WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY r.fecha
+            ORDER BY r.fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
     }
 

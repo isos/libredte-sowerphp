@@ -321,14 +321,19 @@ abstract class Controller_Libros extends \Controller_App
      * Acción que genera la imagen del gráfico de barras de con los documentos
      * diarios del libro
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-26
+     * @version 2016-01-07
      */
     public function grafico_documentos_diarios($periodo)
     {
         $Emisor = $this->getContribuyente();
         $detalle = $Emisor->{'get'.$this->config['model']['plural'].'Diarias'}($periodo);
+        for ($dia=1; $dia<=31; $dia++) {
+            if (!isset($detalle[$dia]))
+                $detalle[$dia] = 0;
+        }
+        ksort($detalle);
         $chart = new \sowerphp\general\View_Helper_Chart();
-        $chart->vertical_bar(
+        $chart->line(
             $this->config['model']['plural'].' diarias período '.$periodo,
             [$this->config['model']['plural']=>$detalle]
         );
