@@ -116,13 +116,13 @@ class Controller_DteRecibidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE recibido solicitado no existe', 'error'
             );
-            $this->redirect('/dte/dte_recibidos');
+            $this->redirect('/dte/dte_recibidos/listar');
         }
         if ($DteRecibido->intercambio) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE recibido no puede ser modificado ya que fue recibido a través de un intercambio', 'error'
             );
-            $this->redirect('/dte/dte_recibidos');
+            $this->redirect('/dte/dte_recibidos/listar');
         }
         // agregar variables para la vista
         $this->set([
@@ -213,7 +213,7 @@ class Controller_DteRecibidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE recibido guardado', 'ok'
             );
-            $this->redirect('/dte/dte_recibidos');
+            $this->redirect('/dte/dte_recibidos/listar');
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No fue posible guardar el DTE: '.$e->getMessage(), 'error'

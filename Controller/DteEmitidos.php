@@ -107,7 +107,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // asignar variables para la vista
         $this->set([
@@ -133,7 +133,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si el dte ya fue enviado error
         if ($DteEmitido->track_id) {
@@ -185,7 +185,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si no tiene track id error
         if (!$DteEmitido->track_id) {
@@ -243,7 +243,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si no tiene track id error
         if (!$DteEmitido->track_id) {
@@ -338,7 +338,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si se está pidiendo con un emisor por parámetro se debe verificar
         // fecha de emisión y monto total del dte
@@ -404,7 +404,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si se está pidiendo con un emisor por parámetro se debe verificar
         // fecha de emisión y monto total del dte
@@ -438,7 +438,7 @@ class Controller_DteEmitidos extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el DTE solicitado', 'error'
             );
-            $this->redirect('/dte/dte_emitidos');
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // se verifican datos mínimos
         foreach (['emails', 'asunto', 'mensaje'] as $attr) {
