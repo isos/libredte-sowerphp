@@ -363,9 +363,13 @@ class Controller_DteEmitidos extends \Controller_App
         $rest = new \sowerphp\core\Network_Http_Rest();
         $rest->setAuth($this->Auth->User ? $this->Auth->User->hash : \sowerphp\core\Configure::read('api.default.token'));
         $response = $rest->post($this->request->url.'/api/dte/documentos/generar_pdf', $data);
+        if ($response===false) {
+            \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
+            $this->redirect('/dte/dte_emitidos/listar');
+        }
         if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
-            return;
+            $this->redirect('/dte/dte_emitidos/listar');
         }
         // si dió código 200 se entrega la respuesta del servicio web
         foreach (['Content-Disposition', 'Content-Length', 'Content-Type'] as $header) {
