@@ -40,7 +40,7 @@ class Shell_Command_ActualizarContribuyentes extends \Shell_App
     {
         if ($opcion != 'all') {
             if (method_exists($this, $opcion)) {
-                $this->$opcion();
+                $this->$opcion($ambiente);
             } else {
                 $this->out(
                     '<error>Opción '.$opcion.' del comando no fue encontrada.</error>'
