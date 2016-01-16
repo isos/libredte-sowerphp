@@ -550,7 +550,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-12
+     * @version 2016-01-15
      */
     public function _api_generar_pdf_POST()
     {
@@ -614,9 +614,6 @@ class Controller_Documentos extends \Controller_App
             $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
             $pdf->Output($file, 'F');
         }
-        // guardar estadística
-        list($emisor, $dv) = explode('-', $Caratula['RutEmisor']);
-        list($receptor, $dv) = explode('-', $Caratula['RutReceptor']);
         // si solo es un archivo y se pidió no comprimir se entrega directamente
         if (isset($this->Api->data['compress']) and !$this->Api->data['compress'] and !isset($Documentos[1])) {
             $this->response->sendFile($file, ['disposition'=>'attachement', 'exit'=>false]);
