@@ -148,6 +148,7 @@ echo $f->input([
 
 <!-- INICIO EMAILS -->
 <div role="tabpanel" class="tab-pane" id="emails">
+<p>Aquí debe configurar las dos casillas de correo para operar con facturación electrónica. Puede revisar la <a href="http://wiki.libredte.cl/doku.php/webapp/config/email">documentación de las casillas de correo</a> para obtener detalles de qué opciones debe usar.</p>
 <h2>Email contacto SII</h2>
 <?php
 echo $f->input([
