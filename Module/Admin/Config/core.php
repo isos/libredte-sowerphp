@@ -21,6 +21,9 @@
  * En caso contrario, consulte <http://www.gnu.org/licenses/gpl.html>.
  */
 
+// título del módulo
+\sowerphp\core\Configure::write('module.title', 'Panel de administración');
+
 // Menú para el módulo
 \sowerphp\core\Configure::write('nav.module', [
     '/dte_folios' => [
