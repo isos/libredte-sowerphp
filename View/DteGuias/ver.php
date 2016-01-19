@@ -57,7 +57,7 @@ new \sowerphp\general\View_Helper_Table([
 <?php if ($Libro->track_id) : ?>
         <p>
             <a class="btn btn-info" href="<?=$_base?>/dte/dte_guias/actualizar_estado/<?=$Libro->periodo?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_guias/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del DTE al SII">solicitar nueva revisión</a></span>
+            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_guias/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del libro al SII">solicitar nueva revisión</a></span>
         </p>
 <?php else: ?>
         <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_guias/enviar_sii/<?=$Libro->periodo?>" role="button">Enviar libro al SII</a></p>

@@ -1,4 +1,4 @@
-<a href="<?=$_base?>/dte/dte_intercambios" title="Volver a la bandeja de intercambio de DTE" class="pull-right"><span class="btn btn-default">Volver a bandeja intercambio</span></a>
+<a href="<?=$_base?>/dte/dte_intercambios" title="Volver a la bandeja de intercambio entre contribuyentes" class="pull-right"><span class="btn btn-default">Volver a bandeja intercambio</span></a>
 
 <h1>Intercambio N° <?=$DteIntercambio->codigo?></h1>
 <p>Esta es la página del intercambio N° <?=$DteIntercambio->codigo?> de la empresa <?=$Emisor->razon_social?>.</p>
@@ -27,7 +27,7 @@ $de = $DteIntercambio->de;
 if ($DteIntercambio->de!=$DteIntercambio->responder_a)
     $de .= '<br/><span>'.$DteIntercambio->responder_a.'</span>';
 new \sowerphp\general\View_Helper_Table([
-    ['Recibido', 'De', 'Emisor', 'Firma', 'DTEs', 'Estado', 'Usuario'],
+    ['Recibido', 'De', 'Emisor', 'Firma', 'Documentos', 'Estado', 'Usuario'],
     [$DteIntercambio->fecha_hora_email, $de, $DteIntercambio->getEmisor()->razon_social, $DteIntercambio->fecha_hora_firma, num($DteIntercambio->documentos), $DteIntercambio->getEstado()->estado, $DteIntercambio->getUsuario()->usuario],
 ]);
 ?>
@@ -142,7 +142,7 @@ echo $f->input([
     'type' => 'js',
     'id' => 'documentos',
     'label' => 'Documentos',
-    'titles' => ['DTE', 'Folio', 'Total', 'Estado SII', 'Estado', 'Glosa', 'Acuse'],
+    'titles' => ['Documento', 'Folio', 'Total', 'Estado SII', 'Estado', 'Glosa', 'Acuse'],
     'inputs' => [
         ['name'=>'TipoDTE', 'attr'=>'readonly="readonly" size="3"'],
         ['name'=>'Folio', 'attr'=>'readonly="readonly" size="10"'],
@@ -156,7 +156,7 @@ echo $f->input([
         ['name'=>'acuse', 'type'=>'select', 'options'=>[1=>'Si', 0=>'No'], 'attr'=>'style="width:5em"'],
     ],
     'values' => $RecepcionDTE,
-    'help' => 'Si el estado es diferente a "DTE Recibido OK" entonces el DTE será rechazado (no hay aceptado con reparos). Aquellos DTE con acuse de recibo serán agregados a los DTEs recibidos de '.$Emisor->razon_social
+    'help' => 'Si el estado es diferente a "DTE Recibido OK" entonces el documento será rechazado (no hay aceptado con reparos). Aquellos documentos con acuse de recibo serán agregados a los documentos recibidos de '.$Emisor->razon_social
 ]);
 
 echo $f->end('Generar y enviar respuesta del intercambio');

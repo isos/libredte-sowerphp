@@ -1,18 +1,18 @@
-<h1>DTE recibidos</h1>
+<h1>Documentos recibidos</h1>
 <p>Aquí podrá consultar todos los documentos recibidos por la empresa <?=$Emisor->razon_social?>.</p>
 
 <div class="text-right">
     <a href="<?=$_base?>/dte/dte_recibidos/agregar" class="btn btn-default">
         <span class="fa fa-plus"></span>
-        Agregar DTE recibido
+        Agregar documento recibido
     </a>
     <br/><br/>
 </div>
 
 <?php
 foreach ($documentos as &$d) {
-    $acciones = '<a href="'.$_base.'/dte/dte_recibidos/modificar/'.$d['emisor'].'/'.$d['dte'].'/'.$d['folio'].'" title="Modificar DTE" class="btn btn-default'.($d['intercambio']?' disabled':'').'"><span class="fa fa-edit"></span></a>';
-    $acciones .= ' <a href="'.$_base.'/dte/dte_intercambios/pdf/'.$d['intercambio'].'" title="Descargar PDF del DTE" class="btn btn-default'.(!$d['intercambio']?' disabled':'').'" role="button"><span class="fa fa-file-pdf-o"></span></a>';
+    $acciones = '<a href="'.$_base.'/dte/dte_recibidos/modificar/'.$d['emisor'].'/'.$d['dte'].'/'.$d['folio'].'" title="Modificar documento" class="btn btn-default'.($d['intercambio']?' disabled':'').'"><span class="fa fa-edit"></span></a>';
+    $acciones .= ' <a href="'.$_base.'/dte/dte_intercambios/pdf/'.$d['intercambio'].'" title="Descargar PDF del documento" class="btn btn-default'.(!$d['intercambio']?' disabled':'').'" role="button"><span class="fa fa-file-pdf-o"></span></a>';
     $d[] = $acciones;
     $d['total'] = num($d['total']);
     unset($d['emisor'], $d['dte']);

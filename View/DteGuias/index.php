@@ -8,7 +8,7 @@ foreach ($periodos as &$p) {
         $acciones .= ' <span class="fa fa-file-excel-o btn btn-default disabled"></span>';
     $p[] = $acciones;
 }
-array_unshift($periodos, ['Período','Guías emitidas', 'Guías envíadas', 'Track ID', 'Estado', 'Acciones']);
+array_unshift($periodos, ['Período', 'Emitidas', 'Envíadas', 'Track ID', 'Estado', 'Acciones']);
 new \sowerphp\general\View_Helper_Table($periodos);
 ?>
 <a class="btn btn-primary btn-lg btn-block" href="<?=$_base?>/dte/dte_guias/sin_movimientos" role="button">Enviar libro de guías sin movimientos</a>

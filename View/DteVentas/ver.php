@@ -31,7 +31,7 @@ $(function() {
         <div class="col-md-9">
 <?php
 new \sowerphp\general\View_Helper_Table([
-    ['Período', 'DTE emitidos', 'DTE envíados'],
+    ['Período', 'Emitidos', 'Envíados'],
     [$Libro->periodo, num($n_ventas), num($Libro->documentos)],
 ]);
 ?>
@@ -39,7 +39,7 @@ new \sowerphp\general\View_Helper_Table([
             <div class="col-md-6">
                 <a class="btn btn-default btn-lg btn-block<?=!$n_ventas?' disabled':''?>" href="<?=$_base?>/dte/dte_ventas/csv/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-excel-o" style="font-size:24px"></span>
-                    Descargar detalle en archivo CSV
+                    Descargar libro de ventas en CSV
                 </a>
             </div>
             <div class="col-md-6">
@@ -57,7 +57,7 @@ new \sowerphp\general\View_Helper_Table([
 <?php if ($Libro->track_id) : ?>
         <p>
             <a class="btn btn-info" href="<?=$_base?>/dte/dte_ventas/actualizar_estado/<?=$Libro->periodo?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_ventas/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del DTE al SII">solicitar nueva revisión</a></span>
+            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_ventas/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del libro al SII">solicitar nueva revisión</a></span>
         </p>
 <?php else: ?>
         <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_ventas/enviar_sii/<?=$Libro->periodo?>" role="button">Enviar libro al SII</a></p>

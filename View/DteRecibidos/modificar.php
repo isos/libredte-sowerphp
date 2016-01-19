@@ -1,4 +1,4 @@
-<a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a DTE recibidos</span></a>
+<a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a documentos recibidos</span></a>
 
 <h1>Editar documento <?=$DteRecibido->getTipo()->tipo?> N° <?=$DteRecibido->folio?></h1>
 <?php
@@ -14,7 +14,7 @@ echo $f->input([
     'type' => 'select',
     'name' => 'dte',
     'label' => 'Documento',
-    'options' => [''=>'Seleccionar tipo de DTE'] + $tipos_documentos,
+    'options' => [''=>'Seleccionar tipo de documento'] + $tipos_documentos,
     'value' => $DteRecibido->dte,
     'check' => 'notempty',
 ]);
@@ -114,4 +114,4 @@ echo $f->input([
     'value' => $DteRecibido->iva_no_retenido,
     'check' => 'integer',
 ]);
-echo $f->end('Editar DTE recibido');
+echo $f->end('Guardar cambios al documento');

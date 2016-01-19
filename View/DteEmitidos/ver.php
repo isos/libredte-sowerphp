@@ -1,7 +1,7 @@
-<a href="<?=$_base?>/dte/dte_emitidos/listar" title="Volver a los documentos emitidos" class="pull-right"><span class="btn btn-default">Volver a DTE emitidos</span></a>
+<a href="<?=$_base?>/dte/dte_emitidos/listar" title="Volver a los documentos emitidos" class="pull-right"><span class="btn btn-default">Volver a documentos emitidos</span></a>
 
-<h1>DTE T<?=$DteEmitido->dte?>F<?=$DteEmitido->folio?></h1>
-<p>Esta es la página del DTE <?=$DteEmitido->getTipo()->tipo?> (<?=$DteEmitido->dte?>) folio número <?=$DteEmitido->folio?> de la empresa <?=$Emisor->razon_social?>.</p>
+<h1>Documento T<?=$DteEmitido->dte?>F<?=$DteEmitido->folio?></h1>
+<p>Esta es la página del documento <?=$DteEmitido->getTipo()->tipo?> (<?=$DteEmitido->dte?>) folio número <?=$DteEmitido->folio?> de la empresa <?=$Emisor->razon_social?>.</p>
 
 <script type="text/javascript">
 $(function() {
@@ -15,7 +15,7 @@ $(function() {
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#datos" aria-controls="datos" role="tab" data-toggle="tab">Datos básicos</a></li>
-        <li role="presentation"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Enviar DTE por email</a></li>
+        <li role="presentation"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Enviar por email</a></li>
         <li role="presentation"><a href="#intercambio" aria-controls="intercambio" role="tab" data-toggle="tab">Resultado intercambio</a></li>
         <li role="presentation"><a href="#referencias" aria-controls="referencias" role="tab" data-toggle="tab">Referencias</a></li>
     </ul>
@@ -35,13 +35,13 @@ new \sowerphp\general\View_Helper_Table([
             <div class="col-md-6">
                 <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/pdf/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
                     <span class="fa fa-file-pdf-o" style="font-size:24px"></span>
-                    Descargar PDF del DTE
+                    Descargar documento en PDF
                 </a>
             </div>
             <div class="col-md-6">
                 <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/xml/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
                     <span class="fa fa-file-code-o" style="font-size:24px"></span>
-                    Descargar XML del DTE
+                    Descargar documento en XML
                 </a>
             </div>
         </div>
@@ -53,10 +53,10 @@ new \sowerphp\general\View_Helper_Table([
 <?php if ($DteEmitido->track_id) : ?>
         <p>
             <a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/actualizar_estado/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del DTE al SII">solicitar nueva revisión</a></span>
+            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a></span>
         </p>
 <?php else: ?>
-        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/enviar_sii/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Enviar DTE al SII</a></p>
+        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/enviar_sii/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Enviar documento al SII</a></p>
 <?php endif; ?>
         </div>
     </div>
@@ -97,14 +97,14 @@ if ($emails) {
         'titles' => ['Email', 'Origen'],
         'table' => $table,
         'checked' => $checked,
-        'help' => 'Seleccionar emails a los que se enviará el DTE',
+        'help' => 'Seleccionar emails a los que se enviará el documento',
     ]);
     echo $f->input(['name'=>'asunto', 'label'=>'Asunto', 'value'=>$asunto, 'check'=>'notempty']);
     echo $f->input(['type'=>'textarea', 'name'=>'mensaje', 'label'=>'Mensaje', 'value'=>$mensaje, 'rows'=>10, 'check'=>'notempty']);
     echo $f->input(['type'=>'checkbox', 'name'=>'cedible', 'label'=>'¿Copia cedible?']);
     echo $f->end('Enviar PDF y XML por email');
 } else {
-    echo '<p>No hay emails registrados para el receptor ni el DTE.</p>',"\n";
+    echo '<p>No hay emails registrados para el receptor ni el documento.</p>',"\n";
 }
 ?>
 </div>
@@ -131,7 +131,7 @@ if ($Recibo) {
         ],
     ]);
 } else {
-    echo '<p>No existe recibo para el DTE.</p>';
+    echo '<p>No existe recibo para el documento.</p>';
 }
 // recepcion
 echo '<h2>Recepción</h2>',"\n";
@@ -139,7 +139,7 @@ $Recepcion = $DteEmitido->getIntercambioRecepcion();
 if ($Recepcion) {
     $Sobre = $Recepcion->getSobre();
     new \sowerphp\general\View_Helper_Table([
-        ['Contacto', 'Teléfono', 'Email', 'Estado general', 'Estado DTE', 'Fecha y hora', 'XML'],
+        ['Contacto', 'Teléfono', 'Email', 'Estado general', 'Estado documento', 'Fecha y hora', 'XML'],
         [
             $Sobre->contacto,
             $Sobre->telefono,
@@ -151,7 +151,7 @@ if ($Recepcion) {
         ],
     ]);
 } else {
-    echo '<p>No existe recepción para el DTE.</p>';
+    echo '<p>No existe recepción para el documento.</p>';
 }
 // resultado
 echo '<h2>Resultado</h2>',"\n";
@@ -170,7 +170,7 @@ if ($Resultado) {
         ],
     ]);
 } else {
-    echo '<p>No existe resultado para el DTE.</p>';
+    echo '<p>No existe resultado para el documento.</p>';
 }
 ?>
 </div>
@@ -182,8 +182,8 @@ if ($Resultado) {
 if ($referencias) {
     echo '<p>Los siguientes son documentos que hacen referencia a este.</p>',"\n";
     foreach ($referencias as &$r) {
-        $acciones = '<a href="'.$_base.'/dte/dte_emitidos/ver/'.$r['dte'].'/'.$r['folio'].'" title="Ver DTE"><span class="fa fa-search btn btn-default"></span></a>';
-        $acciones .= ' <a href="'.$_base.'/dte/dte_emitidos/pdf/'.$r['dte'].'/'.$r['folio'].'" title="Descargar PDF del DTE"><span class="fa fa-file-pdf-o btn btn-default"></span></a>';
+        $acciones = '<a href="'.$_base.'/dte/dte_emitidos/ver/'.$r['dte'].'/'.$r['folio'].'" title="Ver documento"><span class="fa fa-search btn btn-default"></span></a>';
+        $acciones .= ' <a href="'.$_base.'/dte/dte_emitidos/pdf/'.$r['dte'].'/'.$r['folio'].'" title="Descargar PDF del documento"><span class="fa fa-file-pdf-o btn btn-default"></span></a>';
         $r[] = $acciones;
         unset($r['dte']);
     }
