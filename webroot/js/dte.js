@@ -170,17 +170,19 @@ DTE.setItem = function (contribuyente, codigo) {
             dataType: "json",
             success: function (item) {
                 // asignar valores del item
-                cols[0].childNodes[0].childNodes[0].value = item.VlrCodigo;
-                cols[1].childNodes[0].childNodes[0].value = item.NmbItem;
-                cols[2].childNodes[0].childNodes[0].value = item.DscItem;
-                cols[3].childNodes[0].childNodes[0].value = item.IndExe;
-                cols[5].childNodes[0].childNodes[0].value = item.UnmdItem;
-                cols[6].childNodes[0].childNodes[0].value = item.PrcItem;
-                cols[7].childNodes[0].childNodes[0].value = item.ValorDR;
-                cols[8].childNodes[0].childNodes[0].value = item.TpoValor;
-                // foco en cantidad
-                cols[4].childNodes[0].childNodes[0].focus();
-                cols[4].childNodes[0].childNodes[0].select();
+                cols[0].childNodes[0].childNodes[0].value = item.VlrCodigo !== undefined ? item.VlrCodigo : '';
+                cols[1].childNodes[0].childNodes[0].value = item.NmbItem !== undefined ? item.NmbItem : '';
+                cols[2].childNodes[0].childNodes[0].value = item.DscItem !== undefined ? item.DscItem : '';
+                cols[3].childNodes[0].childNodes[0].value = item.IndExe !== undefined ? item.IndExe : 0;
+                cols[5].childNodes[0].childNodes[0].value = item.UnmdItem !== undefined ? item.UnmdItem : '';
+                cols[6].childNodes[0].childNodes[0].value = item.PrcItem !== undefined ? item.PrcItem : '';
+                cols[7].childNodes[0].childNodes[0].value = item.ValorDR !== undefined ? item.ValorDR : '';
+                cols[8].childNodes[0].childNodes[0].value = item.TpoValor !== undefined ? item.TpoValor : '%';
+                // foco en cantidad sólo si se logró obtener el código
+                if (item.VlrCodigo !== undefined) {
+                    cols[4].childNodes[0].childNodes[0].focus();
+                    cols[4].childNodes[0].childNodes[0].select();
+                }
                 // calcular valores del dte
                 DTE.calcular();
             },
