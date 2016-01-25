@@ -111,7 +111,7 @@ CREATE TABLE contribuyente (
 	intercambio_pass VARCHAR (255),
 	modificado DATETIME NOT NULL DEFAULT NOW(),
 	api_token VARCHAR(255),
-	api_items VARCHAR(100),
+	api_items VARCHAR(255),
 	CONSTRAINT contribuyente_actividad_economica_fk FOREIGN KEY (actividad_economica)
 		REFERENCES actividad_economica (codigo) MATCH FULL
 		ON UPDATE CASCADE ON DELETE RESTRICT,

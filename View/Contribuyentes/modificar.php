@@ -238,12 +238,14 @@ echo $f->input([
     'label' => 'Token',
     'value' => \website\Dte\Utility_Data::decrypt($Contribuyente->api_token),
     'help' => 'Token opcional para autenticación a través de <em>HTTP Basic Auth</em>. Se enviará al servicio el token como usuario y una X como contraseña.',
+    'attr' => 'maxlength="255"',
 ]);
 echo $f->input([
     'name' => 'api_items',
     'label' => 'Items',
     'value' => $Contribuyente->api_items,
-    'help' => 'URL para consultar por GET los items a través de su código. Ejemplos: https://example.com/api/items/ o https://example.com/api/items?codigo='
+    'help' => 'URL para consultar por GET los items a través de su código. Ejemplos: https://example.com/api/items/ o https://example.com/api/items?codigo=',
+    'attr' => 'maxlength="255"',
 ]);
 ?>
 </div>

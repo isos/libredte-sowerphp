@@ -218,11 +218,13 @@ echo $f->input([
     'name' => 'api_token',
     'label' => 'Token',
     'help' => 'Token opcional para autenticación a través de <em>HTTP Basic Auth</em>. Se enviará al servicio el token como usuario y una X como contraseña.',
+    'attr' => 'maxlength="255"',
 ]);
 echo $f->input([
     'name' => 'api_items',
     'label' => 'Items',
-    'help' => 'URL para consultar por GET los items a través de su código. Ejemplos: https://example.com/items/ o https://example.com/items?codigo='
+    'help' => 'URL para consultar por GET los items a través de su código. Ejemplos: https://example.com/items/ o https://example.com/items?codigo=',
+    'attr' => 'maxlength="255"',
 ]);
 ?>
 </div>
