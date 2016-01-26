@@ -45,10 +45,11 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método que selecciona la empresa con la que se trabajará en el módulo DTE
      * @param rut Si se pasa un RUT se tratará de seleccionar
+     * @param url URL a la que redirigir después de seleccionar el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-19
+     * @version 2016-01-25
      */
-    public function seleccionar($rut = null)
+    public function seleccionar($rut = null, $url = null)
     {
         $referer = \sowerphp\core\Model_Datasource_Session::read('referer');
         // si se está pidiendo una empresa en particular se tratará de usar
@@ -62,7 +63,8 @@ class Controller_Contribuyentes extends \Controller_App
                 \sowerphp\core\Model_Datasource_Session::message('No está autorizado a operar con la empresa solicitada', 'error');
                 $this->redirect('/dte/contribuyentes/seleccionar');
             }
-            \sowerphp\core\Model_Datasource_Session::message('Desde ahora estará operando con '.$Emisor->razon_social);
+            if (!$url)
+                \sowerphp\core\Model_Datasource_Session::message('Desde ahora estará operando con '.$Emisor->razon_social);
         }
         // si no se indicó una empresa por su rut se tratará de usar la que
         // esté configurada (si existe) o bien se mostrará listado de las
@@ -82,6 +84,8 @@ class Controller_Contribuyentes extends \Controller_App
             // redireccionar
             if ($referer)
                 \sowerphp\core\Model_Datasource_Session::delete('referer');
+            else if ($url)
+                $referer = base64_decode($url);
             else
                 $referer = '/dte';
             $this->redirect($referer);
