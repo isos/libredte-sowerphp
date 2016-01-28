@@ -311,54 +311,59 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que guarda los datos del contribuyente, incluyendo su
      * configuración y parámetros adicionales
+     * @param registrado Se usa para indicar que el contribuyente que se esta guardando es uno registrado por un usuario (se validan otros datos)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-01-28
      */
-    public function save()
+    public function save($registrado = false)
     {
-        // verificar campos mínimos
-        foreach (['razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna'] as $attr) {
-            if (empty($this->$attr)) {
-                throw new \Exception('Debe especificar: '.$attr);
+        if ($registrado) {
+            // verificar campos mínimos
+            foreach (['razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna'] as $attr) {
+                if (empty($this->$attr)) {
+                    throw new \Exception('Debe especificar: '.$attr);
+                }
             }
-        }
-        // verificar que si se está en producción se haya pasado la fecha y número de resolución
-        if (!$this->config_ambiente_en_certificacion and (empty($this->config_ambiente_produccion_fecha) or empty($this->config_ambiente_produccion_numero))) {
-            throw new \Exception('Para usar la empresa en producción debe indicar la fecha y número de resolución que la autoriza');
-        }
-        if ($this->config_ambiente_en_certificacion and empty($this->config_ambiente_certificacion_fecha)) {
-            throw new \Exception('Para usar la empresa en certificación debe indicar la fecha que la autoriza');
-        }
-        // si se pasó un logo se guarda
-        if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
-            if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
-                throw new \Exception('Formato del logo debe ser PNG', 'error');
+            // verificar que si se está en producción se haya pasado la fecha y número de resolución
+            if (!$this->config_ambiente_en_certificacion and (empty($this->config_ambiente_produccion_fecha) or empty($this->config_ambiente_produccion_numero))) {
+                throw new \Exception('Para usar la empresa en producción debe indicar la fecha y número de resolución que la autoriza');
             }
-            $config = \sowerphp\core\Configure::read('dte.logos');
-            \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
-            move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$this->rut.'.png');
-        }
-        // encriptar campos sensibles
-        foreach (self::$encriptar as $col) {
-            if (!empty($this->{'config_'.$col})) {
-                $this->{'config_'.$col} = Utility_Data::encrypt($this->{'config_'.$col});
+            if ($this->config_ambiente_en_certificacion and empty($this->config_ambiente_certificacion_fecha)) {
+                throw new \Exception('Para usar la empresa en certificación debe indicar la fecha que la autoriza');
+            }
+            // si se pasó un logo se guarda
+            if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
+                if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
+                    throw new \Exception('Formato del logo debe ser PNG', 'error');
+                }
+                $config = \sowerphp\core\Configure::read('dte.logos');
+                \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
+                move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$this->rut.'.png');
+            }
+            // encriptar campos sensibles
+            foreach (self::$encriptar as $col) {
+                if (!empty($this->{'config_'.$col})) {
+                    $this->{'config_'.$col} = Utility_Data::encrypt($this->{'config_'.$col});
+                }
             }
         }
         // guardar contribuyente
         if (!parent::save())
             return false;
         // guardar configuración
-        foreach ($this->config as $configuracion => $datos) {
-            foreach ($datos as $variable => $valor) {
-                $Config = new Model_ContribuyenteConfig($this->rut, $configuracion, $variable);
-                if (!is_array($valor) and !is_object($valor)) {
-                    $Config->valor = $valor;
-                    $Config->json = 0;
-                } else {
-                    $Config->valor = json_encode($valor);
-                    $Config->json = 1;
+        if ($registrado) {
+            foreach ($this->config as $configuracion => $datos) {
+                foreach ($datos as $variable => $valor) {
+                    $Config = new Model_ContribuyenteConfig($this->rut, $configuracion, $variable);
+                    if (!is_array($valor) and !is_object($valor)) {
+                        $Config->valor = $valor;
+                        $Config->json = 0;
+                    } else {
+                        $Config->valor = json_encode($valor);
+                        $Config->json = 1;
+                    }
+                    $Config->save();
                 }
-                $Config->save();
             }
         }
         return true;

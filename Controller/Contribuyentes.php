@@ -139,7 +139,7 @@ class Controller_Contribuyentes extends \Controller_App
             $Contribuyente->modificado = date('Y-m-d H:i:s');
             // guardar contribuyente
             try {
-                $Contribuyente->save();
+                $Contribuyente->save(true);
                 // guardar los DTE por defecto que la empresa podrá usar
                 $dtes = \sowerphp\core\Configure::read('dte.dtes');
                 foreach ($dtes as $dte) {
@@ -196,7 +196,7 @@ class Controller_Contribuyentes extends \Controller_App
             $Contribuyente->set($_POST);
             $Contribuyente->modificado = date('Y-m-d H:i:s');
             try {
-                $Contribuyente->save();
+                $Contribuyente->save(true);
                 \sowerphp\core\Model_Datasource_Session::message('Empresa '.$Contribuyente->razon_social.' ha sido modificada', 'ok');
                 $this->redirect('/dte/contribuyentes/seleccionar');
             } catch (\Exception $e) {
