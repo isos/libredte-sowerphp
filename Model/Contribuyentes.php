@@ -144,4 +144,25 @@ class Model_Contribuyentes extends \Model_Plural_App
         ', $vars);
     }
 
+    /**
+     * Método que entrega la cantidad de contribuyentes registrados
+     * @param certificacion =true sólo certificación, =false sólo producción, =null todos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-07
+     */
+    public function countRegistrados($certificacion = null)
+    {
+        if ($certificacion===null) {
+            return $this->db->getValue(
+                'SELECT COUNT(*) FROM contribuyente WHERE usuario IS NOT NULL'
+            );
+        } else {
+            return $this->db->getValue('
+                SELECT COUNT(*)
+                FROM contribuyente AS c JOIN contribuyente_config AS e ON c.rut = e.contribuyente
+                WHERE c.usuario IS NOT NULL AND e.configuracion = \'ambiente\' AND e.variable = \'en_certificacion\' AND e.valor = :certificacion
+            ', [':certificacion' => (int)$certificacion]);
+        }
+    }
+
 }

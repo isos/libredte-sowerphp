@@ -287,7 +287,7 @@ class Model_Contribuyente extends \Model_App
      * Método para setear los atributos del contribuyente
      * @param array Arreglo con los datos que se deben asignar
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-27
+     * @version 2016-01-28
      */
     public function set($array)
     {
@@ -299,7 +299,8 @@ class Model_Contribuyente extends \Model_App
                 $name = str_replace('config_', '', $name);
                 $c = substr($name, 0, strpos($name, '_'));
                 $v = substr($name, strpos($name, '_')+1);
-                if (!empty($value))
+                $value = ($value===false or $value===0) ? '0' : ((!is_array($value) and !is_object($value)) ? (string)$value : $value);
+                if (isset($value[0]))
                     $this->config[$c][$v] = in_array($name, self::$encriptar) ? Utility_Data::encrypt($value) : $value;
                 else
                     $this->config[$c][$v] = null;
@@ -311,7 +312,7 @@ class Model_Contribuyente extends \Model_App
      * Método que guarda los datos del contribuyente, incluyendo su
      * configuración y parámetros adicionales
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-01-28
      */
     public function save()
     {
@@ -350,7 +351,7 @@ class Model_Contribuyente extends \Model_App
         foreach ($this->config as $configuracion => $datos) {
             foreach ($datos as $variable => $valor) {
                 $Config = new Model_ContribuyenteConfig($this->rut, $configuracion, $variable);
-                if (!is_array($valor)) {
+                if (!is_array($valor) and !is_object($valor)) {
                     $Config->valor = $valor;
                     $Config->json = 0;
                 } else {

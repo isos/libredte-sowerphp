@@ -122,7 +122,9 @@ class Shell_Command_MigrarConfigContribuyentes extends \Shell_App
                 $this->out('Procesando contribuyente número '.num($procesados).': '.$contribuyente['rut']);
             }
             foreach ($this->columnas as $origen => $destino) {
-                if (!empty($contribuyente[$origen])) {
+                $value = $contribuyente[$origen];
+                $value = ($value===false or $value===0) ? '0' : (string)$value;
+                if (isset($value[0])) {
                     $configuracion = substr($destino, 0, strpos($destino, '_'));
                     $variable = substr($destino, strpos($destino, '_')+1);
                     if ($this->verbose>=2) {
@@ -141,7 +143,7 @@ class Shell_Command_MigrarConfigContribuyentes extends \Shell_App
                             ':contribuyente' => $contribuyente['rut'],
                             ':configuracion' => $configuracion,
                             ':variable' => $variable,
-                            ':valor' => $contribuyente[$origen],
+                            ':valor' => $value,
                         ]);
                     } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
                         return false;
