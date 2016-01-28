@@ -151,9 +151,12 @@ echo $f->input([
 
 <!-- INICIO EMAILS -->
 <div role="tabpanel" class="tab-pane" id="emails">
-<p>Aquí debe configurar las dos casillas de correo para operar con facturación electrónica. Puede revisar la <a href="http://wiki.libredte.cl/doku.php/webapp/config/email">documentación de las casillas de correo</a> para obtener detalles de qué opciones debe usar.</p>
-<h2>Email contacto SII</h2>
+    <p>Aquí debe configurar las dos casillas de correo para operar con facturación electrónica. Puede revisar la <a href="http://wiki.libredte.cl/doku.php/faq/libredte/sowerphp/config/email">documentación de las casillas de correo</a> para obtener detalles de qué opciones debe usar.</p>
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Email contacto SII</h2>
 <?php
+$f->setColsLabel(3);
 echo $f->input([
     'name' => 'config_email_sii_smtp',
     'label' => 'Servidor SMTP',
@@ -185,7 +188,9 @@ echo $f->input([
     'check' => 'notempty',
 ]);
 ?>
-<h2>Email intercambio</h2>
+        </div>
+        <div class="col-md-6">
+            <h2>Email intercambio</h2>
 <?php
 echo $f->input([
     'name' => 'config_email_intercambio_smtp',
@@ -217,7 +222,10 @@ echo $f->input([
     'label' => 'Contraseña',
     'check' => 'notempty',
 ]);
+$f->setColsLabel();
 ?>
+        </div>
+    </div>
 </div>
 <!-- FIN EMAILS -->
 
