@@ -73,26 +73,10 @@ CREATE TABLE contribuyente (
 	actividad_economica INTEGER,
 	telefono VARCHAR(20),
 	email VARCHAR (80),
-	web VARCHAR (80),
 	direccion VARCHAR(70),
 	comuna CHAR(5),
-	sucursal_sii INTEGER,
-	resolucion_fecha DATE,
-	resolucion_numero SMALLINT,
 	usuario INTEGER,
-	certificacion BOOLEAN,
-	certificacion_resolucion DATE,
-	sii_smtp VARCHAR (50),
-	sii_imap VARCHAR (100),
-	sii_user VARCHAR (50),
-	sii_pass VARCHAR (255),
-	intercambio_smtp VARCHAR (50),
-	intercambio_imap VARCHAR (100),
-	intercambio_user VARCHAR (50),
-	intercambio_pass VARCHAR (255),
 	modificado TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-	api_token VARCHAR(255),
-	api_items VARCHAR(255),
 	CONSTRAINT contribuyente_actividad_economica_fk FOREIGN KEY (actividad_economica)
 		REFERENCES actividad_economica (codigo) MATCH FULL
 		ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -105,6 +89,20 @@ CREATE TABLE contribuyente (
 );
 CREATE INDEX contribuyente_comuna_idx ON contribuyente (comuna);
 CREATE INDEX contribuyente_usuario_idx ON contribuyente (usuario);
+
+-- tabla para los datos extra del contribuyente (email, api, configuraciones, etc)
+DROP TABLE IF EXISTS contribuyente_config CASCADE;
+CREATE TABLE contribuyente_config (
+    contribuyente INTEGER NOT NULL,
+    configuracion VARCHAR(32) NOT NULL,
+    variable VARCHAR(64) NOT NULL,
+    valor TEXT,
+    json BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT contribuyente_config_pkey PRIMARY KEY (contribuyente, configuracion, variable),
+    CONSTRAINT contribuyente_config_contribuyente_fk FOREIGN KEY (contribuyente)
+                REFERENCES contribuyente (rut) MATCH FULL
+                ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 -- tabla para los DTE que tienen autorizados los contribuyentes en la webapp
 DROP TABLE IF EXISTS contribuyente_dte CASCADE;

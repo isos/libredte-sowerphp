@@ -154,12 +154,11 @@ class Model_DteFolio extends \Model_App
     /**
      * Método que calcula la cantidad de folios que quedan disponibles y guarda
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-29
+     * @version 2016-01-27
      */
     public function calcularDisponibles()
     {
-        if (!$this->db->beginTransaction(true))
-            return false;
+        $this->db->beginTransaction(true);
         $cafs = $this->db->getTable('
             SELECT desde, hasta
             FROM dte_caf
@@ -195,7 +194,8 @@ class Model_DteFolio extends \Model_App
             $this->db->rollback();
             return false;
         }
-        return $this->db->commit();
+        $this->db->commit();
+        return true;
     }
 
 }

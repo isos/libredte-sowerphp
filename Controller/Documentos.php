@@ -78,7 +78,7 @@ class Controller_Documentos extends \Controller_App
                 return;
             }
             // buscar si existe el DTE en el ambiente que el emisor esté usando
-            $DteEmitido = new Model_DteEmitido($Emisor->rut, $_POST['dte'], $_POST['folio'], (int)$Emisor->certificacion);
+            $DteEmitido = new Model_DteEmitido($Emisor->rut, $_POST['dte'], $_POST['folio'], (int)$Emisor->config_ambiente_en_certificacion);
             if (!$DteEmitido->exists()) {
                 \sowerphp\core\Model_Datasource_Session::message(
                     $Emisor->razon_social.' no tiene emitido el DTE solicitado en el ambiente de '.$Emisor->getAmbiente(), 'error'
@@ -106,7 +106,7 @@ class Controller_Documentos extends \Controller_App
     {
         $Emisor = $this->getContribuyente();
         if ($referencia_dte and $referencia_folio) {
-            $DteEmitido = new Model_DteEmitido($Emisor->rut, $referencia_dte, $referencia_folio, (int)$Emisor->certificacion);
+            $DteEmitido = new Model_DteEmitido($Emisor->rut, $referencia_dte, $referencia_folio, (int)$Emisor->config_ambiente_en_certificacion);
             if (!$DteEmitido->exists()) {
                 \sowerphp\core\Model_Datasource_Session::message(
                     'Documento T'.$referencia_dte.'F'.$referencia_folio.' no existe, no se puede referenciar', 'error'
@@ -211,7 +211,6 @@ class Controller_Documentos extends \Controller_App
                     'Telefono' => $Emisor->telefono ? $Emisor->telefono : false,
                     'CorreoEmisor' => $Emisor->email ? $Emisor->email : false,
                     'Acteco' => $Emisor->actividad_economica,
-                    'CdgSIISucur' => $Emisor->sucursal_sii ? $Emisor->sucursal_sii : false,
                     'DirOrigen' => $Emisor->direccion,
                     'CmnaOrigen' => $Emisor->getComuna()->comuna,
                 ],
@@ -386,14 +385,14 @@ class Controller_Documentos extends \Controller_App
         }
         // guardar DTE
         $r = $EnvioDte->getDocumentos()[0]->getResumen();
-        $DteEmitido = new Model_DteEmitido($Emisor->rut, $r['TpoDoc'], $r['NroDoc'], (int)$Emisor->certificacion);
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $r['TpoDoc'], $r['NroDoc'], (int)$Emisor->config_ambiente_en_certificacion);
         if ($DteEmitido->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Ya existe un DTE del tipo '.$r['TpoDoc'].' y folio '.$r['NroDoc'].' emitido', 'error'
             );
-            $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->certificacion);
+            $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->config_ambiente_en_certificacion);
         }
-        $cols = ['tasa'=>'TasaImp', 'fecha'=>'FchDoc', 'sucursal_sii'=>'CdgSIISucur', 'receptor'=>'RUTDoc', 'exento'=>'MntExe', 'neto'=>'MntNeto', 'iva'=>'MntIVA', 'total'=>'MntTotal'];
+        $cols = ['tasa'=>'TasaImp', 'fecha'=>'FchDoc', 'receptor'=>'RUTDoc', 'exento'=>'MntExe', 'neto'=>'MntNeto', 'iva'=>'MntIVA', 'total'=>'MntTotal'];
         foreach ($cols as $attr => $col) {
             if ($r[$col]!==false)
                 $DteEmitido->$attr = $r[$col];
@@ -432,7 +431,7 @@ class Controller_Documentos extends \Controller_App
             );
         }
         $DteEmitido->save();
-        $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->certificacion);
+        $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->config_ambiente_en_certificacion);
     }
 
     /**
@@ -750,8 +749,6 @@ class Controller_Documentos extends \Controller_App
         if (!empty($datos['CorreoEmisor']))
             $Emisor->email = substr($datos['CorreoEmisor'], 0, 80);
         $Emisor->actividad_economica = (int)$datos['Acteco'];
-        if (!empty($datos['CdgSIISucur']))
-            $Emisor->sucursal_sii = (int)$datos['CdgSIISucur'];
         if (!empty($datos['DirOrigen']))
             $Emisor->direccion = substr($datos['DirOrigen'], 0, 70);
         if (is_numeric($datos['CmnaOrigen'])) {

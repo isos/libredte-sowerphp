@@ -209,8 +209,8 @@ class Controller_DteCompras extends Controller_Libros
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'RutEnvia' => $Firma->getID(),
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => $Emisor->certificacion ? $Emisor->certificacion_resolucion : $Emisor->resolucion_fecha,
-            'NroResol' =>  $Emisor->certificacion ? 0 : $Emisor->resolucion_numero,
+            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_en_certificacion_resolucion : $Emisor->resolucion_fecha,
+            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->resolucion_numero,
             'TipoOperacion' => 'COMPRA',
             'TipoLibro' => 'MENSUAL',
             'TipoEnvio' => 'TOTAL',
@@ -233,7 +233,7 @@ class Controller_DteCompras extends Controller_Libros
             $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
         }
         // guardar libro de compras
-        $DteCompra = new Model_DteCompra($Emisor->rut, $periodo, (int)$Emisor->certificacion);
+        $DteCompra = new Model_DteCompra($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
         $DteCompra->documentos = $documentos;
         $DteCompra->xml = base64_encode($xml);
         $DteCompra->track_id = $track_id;

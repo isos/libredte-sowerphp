@@ -44,26 +44,10 @@ class Model_Contribuyente extends \Model_App
     public $actividad_economica; ///< integer(32) NULL DEFAULT '' FK:actividad_economica.codigo
     public $telefono; ///< character varying(20) NULL DEFAULT ''
     public $email; ///< character varying(80) NULL DEFAULT ''
-    public $web; ///< character varying(80) NULL DEFAULT ''
     public $direccion; ///< character varying(70) NOT NULL DEFAULT ''
     public $comuna; ///< character(5) NOT NULL DEFAULT '' FK:comuna.codigo
-    public $sucursal_sii; ///< integer(32) NULL DEFAULT ''
-    public $resolucion_fecha; ///< date() NULL DEFAULT ''
-    public $resolucion_numero; ///< smallint(16) NULL DEFAULT ''
     public $usuario; ///< integer(32) NULL DEFAULT '' FK:usuario.id
-    public $certificacion; ///< boolean() NULL DEFAULT ''
-    public $certificacion_resolucion; ///< date() NULL DEFAULT ''
-    public $sii_smtp; ///< character varying(50) NULL DEFAULT ''
-    public $sii_imap; ///< character varying(100) NULL DEFAULT ''
-    public $sii_user; ///< character varying(50) NULL DEFAULT ''
-    public $sii_pass; ///< character varying(255) NULL DEFAULT ''
-    public $intercambio_smtp; ///< character varying(50) NULL DEFAULT ''
-    public $intercambio_imap; ///< character varying(100) NULL DEFAULT ''
-    public $intercambio_user; ///< character varying(50) NULL DEFAULT ''
-    public $intercambio_pass; ///< character varying(255) NULL DEFAULT ''
     public $modificado; ///< timestamp without time zone() NOT NULL DEFAULT 'now()'
-    public $api_token; ///< character varying(255) NULL DEFAULT ''
-    public $api_items; ///< character varying(100) NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
@@ -144,17 +128,6 @@ class Model_Contribuyente extends \Model_App
             'pk'        => false,
             'fk'        => null
         ),
-        'web' => array(
-            'name'      => 'Web',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 80,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
         'direccion' => array(
             'name'      => 'Direccion',
             'comment'   => '',
@@ -177,39 +150,6 @@ class Model_Contribuyente extends \Model_App
             'pk'        => false,
             'fk'        => array('table' => 'comuna', 'column' => 'codigo')
         ),
-        'sucursal_sii' => array(
-            'name'      => 'Sucursal Sii',
-            'comment'   => '',
-            'type'      => 'integer',
-            'length'    => 32,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'resolucion_fecha' => array(
-            'name'      => 'Resolucion Fecha',
-            'comment'   => '',
-            'type'      => 'date',
-            'length'    => null,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'resolucion_numero' => array(
-            'name'      => 'Resolucion Numero',
-            'comment'   => '',
-            'type'      => 'smallint',
-            'length'    => 16,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
         'usuario' => array(
             'name'      => 'Usuario',
             'comment'   => '',
@@ -221,116 +161,6 @@ class Model_Contribuyente extends \Model_App
             'pk'        => false,
             'fk'        => array('table' => 'usuario', 'column' => 'id')
         ),
-        'certificacion' => array(
-            'name'      => 'Certificacion',
-            'comment'   => '',
-            'type'      => 'boolean',
-            'length'    => null,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'certificacion_resolucion' => array(
-            'name'      => 'Certificacion Resolucion',
-            'comment'   => '',
-            'type'      => 'date',
-            'length'    => null,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'sii_smtp' => array(
-            'name'      => 'Sii Smtp',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 50,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'sii_imap' => array(
-            'name'      => 'Sii Imap',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 100,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'sii_user' => array(
-            'name'      => 'Sii User',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 50,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'sii_pass' => array(
-            'name'      => 'Sii Pass',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 255,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'intercambio_smtp' => array(
-            'name'      => 'Intercambio Smtp',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 50,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'intercambio_imap' => array(
-            'name'      => 'Intercambio Imap',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 100,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'intercambio_user' => array(
-            'name'      => 'Intercambio User',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 50,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'intercambio_pass' => array(
-            'name'      => 'Intercambio Pass',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 255,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
         'modificado' => array(
             'name'      => 'Modificado',
             'comment'   => '',
@@ -338,28 +168,6 @@ class Model_Contribuyente extends \Model_App
             'length'    => null,
             'null'      => false,
             'default'   => 'now()',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'api_token' => array(
-            'name'      => 'Api Token',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 255,
-            'null'      => true,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => false,
-            'fk'        => null
-        ),
-        'api_items' => array(
-            'name'      => 'Api Items',
-            'comment'   => '',
-            'type'      => 'character varying',
-            'length'    => 100,
-            'null'      => true,
-            'default'   => '',
             'auto'      => false,
             'pk'        => false,
             'fk'        => null
@@ -375,6 +183,15 @@ class Model_Contribuyente extends \Model_App
         'Model_Comuna' => '\sowerphp\app\Sistema\General\DivisionGeopolitica',
         'Model_Usuario' => '\sowerphp\app\Sistema\Usuarios'
     ); ///< Namespaces que utiliza esta clase
+
+    public static $encriptar = [
+        'email_sii_pass',
+        'email_intercambio_pass',
+        'api_auth_token',
+    ]; ///< columnas de la configuración que se deben encriptar para guardar en la base de datos
+
+    public $contribuyente; ///< Copia de razon_social
+    private $config = null; ///< Caché para configuraciones
 
     /**
      * Constructor del contribuyente
@@ -410,6 +227,143 @@ class Model_Contribuyente extends \Model_App
     }
 
     /**
+     * Método que entrega las configuraciones y parámetros extras para el
+     * contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-27
+     */
+    public function getConfig()
+    {
+        if ($this->config===false)
+            return null;
+        if ($this->config===null) {
+            $config = $this->db->getAssociativeArray('
+                SELECT configuracion, variable, valor, json
+                FROM contribuyente_config
+                WHERE contribuyente = :contribuyente
+            ', [':contribuyente' => $this->rut]);
+            if (!$config) {
+                $this->config = false;
+                return null;
+            }
+            foreach ($config as $configuracion => $datos) {
+                if (!isset($datos[0]))
+                    $datos = [$datos];
+                $this->config[$configuracion] = [];
+                foreach ($datos as $dato) {
+                    $this->config[$configuracion][$dato['variable']] =
+                        $dato['json'] ? json_decode($dato['valor']) : $dato['valor']
+                    ;
+                }
+            }
+        }
+        return $this->config;
+    }
+
+    /**
+     * Método mágico para obtener configuraciones del contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-27
+     */
+    public function __get($name)
+    {
+        if (strpos($name, 'config_')===0) {
+            $this->getConfig();
+            $key = str_replace('config_', '', $name);
+            $c = substr($key, 0, strpos($key, '_'));
+            $v = substr($key, strpos($key, '_')+1);
+            if (!isset($this->config[$c][$v]))
+                return null;
+            $this->$name = $this->config[$c][$v];
+            return $this->$name;
+        } else {
+            throw new \Exception(
+                'Atributo '.$name.' del contribuyente no existe'
+            );
+        }
+    }
+
+    /**
+     * Método para setear los atributos del contribuyente
+     * @param array Arreglo con los datos que se deben asignar
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @version 2016-01-27
+     */
+    public function set($array)
+    {
+        parent::set($array);
+        $this->config = [];
+        foreach($array as $name => $value) {
+            if (strpos($name, 'config_')===0) {
+                $this->$name = $value;
+                $name = str_replace('config_', '', $name);
+                $c = substr($name, 0, strpos($name, '_'));
+                $v = substr($name, strpos($name, '_')+1);
+                if (!empty($value))
+                    $this->config[$c][$v] = in_array($name, self::$encriptar) ? Utility_Data::encrypt($value) : $value;
+                else
+                    $this->config[$c][$v] = null;
+            }
+        }
+    }
+
+    /**
+     * Método que guarda los datos del contribuyente, incluyendo su
+     * configuración y parámetros adicionales
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-27
+     */
+    public function save()
+    {
+        // verificar campos mínimos
+        foreach (['razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna'] as $attr) {
+            if (empty($this->$attr)) {
+                throw new \Exception('Debe especificar: '.$attr);
+            }
+        }
+        // verificar que si se está en producción se haya pasado la fecha y número de resolución
+        if (!$this->config_ambiente_en_certificacion and (empty($this->config_ambiente_produccion_fecha) or empty($this->config_ambiente_produccion_numero))) {
+            throw new \Exception('Para usar la empresa en producción debe indicar la fecha y número de resolución que la autoriza');
+        }
+        if ($this->config_ambiente_en_certificacion and empty($this->config_ambiente_certificacion_fecha)) {
+            throw new \Exception('Para usar la empresa en certificación debe indicar la fecha que la autoriza');
+        }
+        // si se pasó un logo se guarda
+        if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
+            if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
+                throw new \Exception('Formato del logo debe ser PNG', 'error');
+            }
+            $config = \sowerphp\core\Configure::read('dte.logos');
+            \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
+            move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$this->rut.'.png');
+        }
+        // encriptar campos sensibles
+        foreach (self::$encriptar as $col) {
+            if (!empty($this->{'config_'.$col})) {
+                $this->{'config_'.$col} = Utility_Data::encrypt($this->{'config_'.$col});
+            }
+        }
+        // guardar contribuyente
+        if (!parent::save())
+            return false;
+        // guardar configuración
+        foreach ($this->config as $configuracion => $datos) {
+            foreach ($datos as $variable => $valor) {
+                $Config = new Model_ContribuyenteConfig($this->rut, $configuracion, $variable);
+                if (!is_array($valor)) {
+                    $Config->valor = $valor;
+                    $Config->json = 0;
+                } else {
+                    $Config->valor = json_encode($valor);
+                    $Config->json = 1;
+                }
+                $Config->save();
+            }
+        }
+        return true;
+    }
+
+    /**
      * Método que entrega el RUT formateado del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-20
@@ -427,7 +381,7 @@ class Model_Contribuyente extends \Model_App
      */
     public function getAmbiente()
     {
-        return $this->certificacion ? 'certificación' : 'producción';
+        return $this->config_ambiente_en_certificacion ? 'certificación' : 'producción';
     }
 
     /**
@@ -552,7 +506,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_folio AS f, dte_tipo AS t
             WHERE f.dte = t.codigo AND emisor = :rut AND f.certificacion = :certificacion
             ORDER BY f.dte
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
     /**
@@ -566,7 +520,7 @@ class Model_Contribuyente extends \Model_App
     {
         if (!$this->db->beginTransaction(true))
             return false;
-        $DteFolio = new \website\Dte\Admin\Model_DteFolio($this->rut, $dte, (int)$this->certificacion);
+        $DteFolio = new \website\Dte\Admin\Model_DteFolio($this->rut, $dte, (int)$this->config_ambiente_en_certificacion);
         if (!$DteFolio->exists() or !$DteFolio->disponibles) {
             $this->db->rollback();
             return false;
@@ -617,7 +571,7 @@ class Model_Contribuyente extends \Model_App
         ', [
             ':rut' => $this->rut,
             ':dte' => $dte,
-            ':certificacion' => (int)$this->certificacion,
+            ':certificacion' => (int)$this->config_ambiente_en_certificacion,
             ':folio' => $folio,
         ]);
         if (!$caf)
@@ -706,7 +660,7 @@ class Model_Contribuyente extends \Model_App
     {
         // armar filtros
         $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
-        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
             if (isset($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
@@ -741,7 +695,7 @@ class Model_Contribuyente extends \Model_App
     public function countDocumentosEmitidos($filtros = [])
     {
         $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
-        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
             if (isset($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
@@ -759,16 +713,16 @@ class Model_Contribuyente extends \Model_App
      * @param email Email que se quiere obteber: intercambio o sii
      * @return \sowerphp\core\Network_Email
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-01-27
      */
     public function getEmailSmtp($email = 'intercambio')
     {
         return new \sowerphp\core\Network_Email([
             'type' => 'smtp',
-            'host' => $this->{$email.'_smtp'},
-            'user' => $this->{$email.'_user'},
-            'pass' => Utility_Data::decrypt($this->{$email.'_pass'}),
-            'from' => ['email'=>$this->{$email.'_user'}, 'name'=>$this->razon_social],
+            'host' => $this->{'config_email_'.$email.'_smtp'},
+            'user' => $this->{'config_email_'.$email.'_user'},
+            'pass' => Utility_Data::decrypt($this->{'config_email_'.$email.'_pass'}),
+            'from' => ['email'=>$this->{'config_email_'.$email.'_user'}, 'name'=>$this->razon_social],
         ]);
     }
 
@@ -777,14 +731,14 @@ class Model_Contribuyente extends \Model_App
      * @param email Email que se quiere obteber: intercambio o sii
      * @return \sowerphp\core\Network_Email_Imap
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-01-27
      */
     public function getEmailImap($email = 'intercambio')
     {
         $Imap = new \sowerphp\core\Network_Email_Imap([
-            'mailbox' => $this->{$email.'_imap'},
-            'user' => $this->{$email.'_user'},
-            'pass' => Utility_Data::decrypt($this->{$email.'_pass'}),
+            'mailbox' => $this->{'config_email_'.$email.'_imap'},
+            'user' => $this->{'config_email_'.$email.'_user'},
+            'pass' => Utility_Data::decrypt($this->{'config_email_'.$email.'_pass'}),
         ]);
         return $Imap->isConnected() ? $Imap : false;
     }
@@ -809,7 +763,7 @@ class Model_Contribuyente extends \Model_App
                 WHERE emisor = :rut AND certificacion = :certificacion
             )
             ORDER BY periodo DESC
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
     /**
@@ -825,7 +779,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_tipo AS t, dte_emitido AS e, contribuyente AS r
             WHERE t.codigo = e.dte AND t.venta = true AND e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             ORDER BY e.fecha, e.dte, e.folio
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -843,7 +797,7 @@ class Model_Contribuyente extends \Model_App
             WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY e.fecha
             ORDER BY e.fecha
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -860,7 +814,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_tipo AS t, dte_emitido AS e
             WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY t.tipo
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -883,7 +837,7 @@ class Model_Contribuyente extends \Model_App
                 WHERE emisor = :rut AND certificacion = :certificacion
             )
             ORDER BY periodo DESC
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
     /**
@@ -926,7 +880,7 @@ class Model_Contribuyente extends \Model_App
                 contribuyente AS r
             WHERE e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND e.dte = 52
             ORDER BY e.fecha, e.folio
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -944,7 +898,7 @@ class Model_Contribuyente extends \Model_App
             WHERE emisor = :rut AND certificacion = :certificacion AND '.$periodo_col.' = :periodo AND dte = 52
             GROUP BY fecha
             ORDER BY fecha
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -959,7 +913,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_intercambio AS i LEFT JOIN contribuyente AS e ON i.emisor = e.rut LEFT JOIN usuario AS u ON i.usuario = u.id
             WHERE i.receptor = :receptor AND i.certificacion = :certificacion
             ORDER BY i.fecha_hora_email DESC
-        ', [':receptor'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+        ', [':receptor'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
         foreach ($intercambios as &$i) {
             if (!empty($i['razon_social']))
                 $i['emisor']= $i['razon_social'];
@@ -979,7 +933,7 @@ class Model_Contribuyente extends \Model_App
     {
         // armar filtros
         $where = ['d.receptor = :rut', 'd.certificacion = :certificacion'];
-        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'emisor', 'fecha', 'total', 'intercambio', 'usuario'] as $c) {
             if (isset($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
@@ -1009,7 +963,7 @@ class Model_Contribuyente extends \Model_App
     public function countDocumentosRecibidos($filtros = [])
     {
         $where = ['d.receptor = :rut', 'd.certificacion = :certificacion'];
-        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion];
+        $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'emisor', 'fecha', 'total', 'usuario'] as $c) {
             if (isset($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
@@ -1042,7 +996,7 @@ class Model_Contribuyente extends \Model_App
                 WHERE receptor = :rut AND certificacion = :certificacion
             )
             ORDER BY periodo DESC
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
     /**
@@ -1082,7 +1036,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_tipo AS t, dte_recibido AS r, contribuyente AS e
             WHERE t.codigo = r.dte AND t.compra = true AND r.emisor = e.rut AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             ORDER BY r.fecha, r.dte, r.folio
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
         foreach ($compras as &$c) {
             // asignar IVA no recuperable
             if (!empty($c['iva_no_recuperable'])) {
@@ -1116,7 +1070,7 @@ class Model_Contribuyente extends \Model_App
             WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY r.fecha
             ORDER BY r.fecha
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
     /**
@@ -1133,7 +1087,7 @@ class Model_Contribuyente extends \Model_App
             FROM dte_tipo AS t, dte_recibido AS r
             WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
             GROUP BY t.tipo
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->certificacion, ':periodo'=>$periodo]);
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
 }

@@ -4,7 +4,7 @@
 <div class="text-right">
     <a href="dte_intercambios/actualizar" class="btn btn-default">
         <span class="fa fa-refresh"></span>
-        Actualizar bandeja de intercambio: <?=$Emisor->intercambio_user?>
+        Actualizar bandeja de intercambio: <?=$Emisor->config_email_intercambio_user?>
     </a>
     <br/><br/>
 </div>

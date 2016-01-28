@@ -111,7 +111,7 @@ class Controller_DteRecibidos extends \Controller_App
     {
         $Emisor = $this->getContribuyente();
         // obtener dte recibido
-        $DteRecibido = new Model_DteRecibido($emisor, $dte, $folio, (int)$Emisor->certificacion);
+        $DteRecibido = new Model_DteRecibido($emisor, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteRecibido->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE recibido solicitado no existe', 'error'
@@ -156,7 +156,7 @@ class Controller_DteRecibidos extends \Controller_App
         }
         // crear dte recibido
         list($emisor, $dv) = explode('-', str_replace('.', '', $_POST['emisor']));
-        $DteRecibido = new Model_DteRecibido($emisor, $_POST['dte'], (int)$_POST['folio'], (int)$Emisor->certificacion);
+        $DteRecibido = new Model_DteRecibido($emisor, $_POST['dte'], (int)$_POST['folio'], (int)$Emisor->config_ambiente_en_certificacion);
         $DteRecibido->receptor = $Emisor->rut;
         $DteRecibido->tasa = (int)$_POST['tasa'];
         $DteRecibido->fecha = $_POST['fecha'];
@@ -184,7 +184,7 @@ class Controller_DteRecibidos extends \Controller_App
         // si el DTE es de producción y es electrónico entonces se consultará su
         // estado antes de poder guardar, esto evitará agregar documentos que no
         // han sido recibidos en el SII o sus datos son incorrectos
-        if (!$Emisor->certificacion and $DteRecibido->getTipo()->electronico) {
+        if (!$Emisor->config_ambiente_en_certificacion and $DteRecibido->getTipo()->electronico) {
             // obtener firma
             $Firma = $Emisor->getFirma($this->Auth->User->id);
             if (!$Firma) {

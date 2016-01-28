@@ -103,8 +103,8 @@ class Controller_DteGuias extends Controller_Libros
         $Libro->setCaratula([
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => $Emisor->certificacion ? $Emisor->certificacion_resolucion : $Emisor->resolucion_fecha,
-            'NroResol' =>  $Emisor->certificacion ? 0 : $Emisor->resolucion_numero,
+            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_en_certificacion_resolucion : $Emisor->resolucion_fecha,
+            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->resolucion_numero,
             'TipoLibro' => 'ESPECIAL',
             'TipoEnvio' => 'TOTAL',
             'FolioNotificacion' => 1,
@@ -126,7 +126,7 @@ class Controller_DteGuias extends Controller_Libros
             $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
         }
         // guardar libro de ventas
-        $DteGuia = new Model_DteGuia($Emisor->rut, $periodo, (int)$Emisor->certificacion);
+        $DteGuia = new Model_DteGuia($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
         $DteGuia->documentos = $documentos;
         $DteGuia->xml = base64_encode($xml);
         $DteGuia->track_id = $track_id;

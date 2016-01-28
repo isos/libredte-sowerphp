@@ -99,7 +99,7 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método que permite registrar un nuevo contribuyente y asociarlo a un usuario
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-30
+     * @version 2016-01-27
      */
     public function registrar()
     {
@@ -108,18 +108,13 @@ class Controller_Contribuyentes extends \Controller_App
             '_header_extra' => ['js'=>['/dte/js/dte.js']],
             'actividades_economicas' => (new \website\Sistema\General\Model_ActividadEconomicas())->getList(),
             'comunas' => (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getList(),
+            'titulo' => 'Registrar nueva empresa',
+            'descripcion' => 'Aquí podrá registrar una nueva empresa para la cual usted será el usuario administrador de la misma.',
+            'form_id' => 'registrarContribuyente',
+            'boton' => 'Registrar empresa',
         ]);
         // si se envió el formulario se procesa
         if (isset($_POST['submit'])) {
-            // verificar campos mínimos
-            foreach (['rut', 'razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna', 'certificacion_resolucion'] as $attr) {
-                if (empty($_POST[$attr])) {
-                    \sowerphp\core\Model_Datasource_Session::message(
-                        'Debe especificar: '.$attr, 'error'
-                    );
-                    return;
-                }
-            }
             // crear objeto del contribuyente con el rut y verificar que no esté ya asociada a un usuario
             list($rut, $dv) = explode('-', str_replace('.', '', $_POST['rut']));
             $Contribuyente = new Model_Contribuyente($rut);
@@ -140,36 +135,8 @@ class Controller_Contribuyentes extends \Controller_App
             $Contribuyente->set($_POST);
             $Contribuyente->rut = $rut;
             $Contribuyente->dv = $dv;
-            $Contribuyente->certificacion = (int)isset($_POST['certificacion']);
-            if (!empty($_POST['sii_pass'])) {
-                $Contribuyente->sii_pass = Utility_Data::encrypt($_POST['sii_pass']);
-            }
-            if (!empty($_POST['intercambio_pass'])) {
-                $Contribuyente->intercambio_pass = Utility_Data::encrypt($_POST['intercambio_pass']);
-            }
             $Contribuyente->usuario = $this->Auth->User->id;
             $Contribuyente->modificado = date('Y-m-d H:i:s');
-            if (!empty($_POST['api_token'])) {
-                $Contribuyente->api_token = Utility_Data::encrypt($_POST['api_token']);
-            }
-            // si está en producción validar fecha y número de resolución
-            if (!$Contribuyente->certificacion and (empty($Contribuyente->resolucion_fecha) or empty($Contribuyente->resolucion_numero))) {
-                \sowerphp\core\Model_Datasource_Session::message('Para pasar la empresa a producción debe indicar la fecha y número de resolución que la autoriza', 'error');
-                return;
-            }
-            // si se pasó un logo se guarda
-            if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
-                // si el formano no es PNG error
-                if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
-                    \sowerphp\core\Model_Datasource_Session::message('Formato del logo debe ser PNG', 'error');
-                    return;
-                }
-                $config = \sowerphp\core\Configure::read('dte.logos');
-                // redimensionar imagen
-                \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
-                // copiar imagen a directorio final
-                move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$Contribuyente->rut.'.png');
-            }
             // guardar contribuyente
             try {
                 $Contribuyente->save();
@@ -186,16 +153,19 @@ class Controller_Contribuyentes extends \Controller_App
                 // redireccionar
                 \sowerphp\core\Model_Datasource_Session::message('Empresa '.$Contribuyente->razon_social.' registrada y asociada a su usuario', 'ok');
                 $this->redirect('/dte/contribuyentes/seleccionar');
-            } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            } catch (\Exception $e) {
                 \sowerphp\core\Model_Datasource_Session::message('No fue posible registrar la empresa:<br/>'.$e->getMessage(), 'error');
             }
         }
+        // renderizar vista
+        $this->autoRender = false;
+        $this->render('Contribuyentes/registrar_modificar');
     }
 
     /**
      * Método que permite modificar contribuyente previamente registrado
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-29
+     * @version 2016-01-27
      */
     public function modificar($rut)
     {
@@ -216,60 +186,26 @@ class Controller_Contribuyentes extends \Controller_App
             'Contribuyente' => $Contribuyente,
             'actividades_economicas' => (new \website\Sistema\General\Model_ActividadEconomicas())->getList(),
             'comunas' => (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getList(),
+            'titulo' => 'Modificar empresa '.$Contribuyente->razon_social,
+            'descripcion' => 'Aquí podrá modificar los datos de la empresa '.$Contribuyente->razon_social.' RUT '.num($Contribuyente->rut).'-'.$Contribuyente->dv.', para la cual usted es el usuario administrador.',
+            'form_id' => 'modificarContribuyente',
+            'boton' => 'Modificar empresa',
         ]);
-        // editar
+        // editar contribuyente
         if (isset($_POST['submit'])) {
-            // verificar campos mínimos
-            foreach (['razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna', 'certificacion_resolucion'] as $attr) {
-                if (empty($_POST[$attr])) {
-                    \sowerphp\core\Model_Datasource_Session::message(
-                        'Debe especificar: '.$attr, 'error'
-                    );
-                    return;
-                }
-            }
-            // rellenar campos de la empresa
-            foreach (array_keys(Model_Contribuyente::$columnsInfo) as $attr) {
-                if (!empty($_POST[$attr]))
-                    $Contribuyente->$attr = $_POST[$attr];
-            }
-            $Contribuyente->certificacion = (int)isset($_POST['certificacion']);
-            if (!empty($_POST['sii_pass'])) {
-                $Contribuyente->sii_pass = Utility_Data::encrypt($_POST['sii_pass']);
-            }
-            if (!empty($_POST['intercambio_pass'])) {
-                $Contribuyente->intercambio_pass = Utility_Data::encrypt($_POST['intercambio_pass']);
-            }
-            $Contribuyente->usuario = $this->Auth->User->id;
+            $Contribuyente->set($_POST);
             $Contribuyente->modificado = date('Y-m-d H:i:s');
-            $Contribuyente->api_token = !empty($_POST['api_token']) ? Utility_Data::encrypt($_POST['api_token']) : null;
-            // si está en producción validar fecha y número de resolución
-            if (!$Contribuyente->certificacion and (empty($Contribuyente->resolucion_fecha) or empty($Contribuyente->resolucion_numero))) {
-                \sowerphp\core\Model_Datasource_Session::message('Para pasar la empresa a producción debe indicar la fecha y número de resolución que la autoriza', 'error');
-                return;
-            }
-            // si se pasó un logo se guarda
-            if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
-                // si el formano no es PNG error
-                if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
-                    \sowerphp\core\Model_Datasource_Session::message('Formato del logo debe ser PNG', 'error');
-                    return;
-                }
-                $config = \sowerphp\core\Configure::read('dte.logos');
-                // redimensionar imagen
-                \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
-                // copiar imagen a directorio final
-                move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$Contribuyente->rut.'.png');
-            }
-            // guardar contribuyente
             try {
                 $Contribuyente->save();
                 \sowerphp\core\Model_Datasource_Session::message('Empresa '.$Contribuyente->razon_social.' ha sido modificada', 'ok');
                 $this->redirect('/dte/contribuyentes/seleccionar');
-            } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            } catch (\Exception $e) {
                 \sowerphp\core\Model_Datasource_Session::message('No fue posible modificar la empresa:<br/>'.$e->getMessage(), 'error');
             }
         }
+        // renderizar vista
+        $this->autoRender = false;
+        $this->render('Contribuyentes/registrar_modificar');
     }
 
     /**
@@ -367,16 +303,15 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método de la API que permite obtener los datos de un contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-30
+     * @version 2016-01-27
      */
     public function _api_info_GET($rut)
     {
         $Contribuyente = new Model_Contribuyente($rut);
         if (!$Contribuyente->exists())
             $this->Api->send('Contribuyente solicitado no existe', 404);
-        $clean = ['sii_pass', 'intercambio_pass', 'api_token', 'api_items'];
-        foreach($clean as $attr)
-            $Contribuyente->$attr = false;
+        $Contribuyente->config_ambiente_produccion_fecha;
+        $Contribuyente->config_ambiente_produccion_numero;
         $this->Api->send($Contribuyente, 200, JSON_PRETTY_PRINT);
     }
 

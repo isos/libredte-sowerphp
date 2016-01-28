@@ -65,19 +65,25 @@ class Model_Contribuyentes extends \Model_Plural_App
      * @param usuario ID del usuario que se quiere obtener el listado de contribuyentes con los que está autorizado a operar
      * @return Tabla con los usuarios
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-20
+     * @version 2016-01-27
      */
     public function getByUsuario($usuario)
     {
         return $this->db->getTable('
             (
-                SELECT rut, dv, razon_social, giro, certificacion, true AS administrador
-                FROM contribuyente
-                WHERE usuario = :usuario
+                SELECT c.rut, c.dv, c.razon_social, c.giro, a.valor AS certificacion, true AS administrador
+                FROM contribuyente AS c JOIN contribuyente_config AS a ON c.rut = a.contribuyente
+                WHERE
+                    usuario = :usuario
+                    AND a.configuracion = \'ambiente\'
+                    AND a.variable = \'en_certificacion\'
             ) UNION (
-                SELECT rut, dv, razon_social, giro, certificacion, false AS administrador
-                FROM contribuyente
-                WHERE rut IN (SELECT contribuyente FROM contribuyente_usuario WHERE usuario = :usuario)
+                SELECT c.rut, c.dv, c.razon_social, c.giro, a.valor AS certificacion, false AS administrador
+                FROM contribuyente AS c JOIN contribuyente_config AS a ON c.rut = a.contribuyente
+                WHERE
+                    rut IN (SELECT contribuyente FROM contribuyente_usuario WHERE usuario = :usuario)
+                    AND a.configuracion = \'ambiente\'
+                    AND a.variable = \'en_certificacion\'
             )
             ORDER BY administrador DESC, razon_social
         ', [':usuario'=>$usuario]);

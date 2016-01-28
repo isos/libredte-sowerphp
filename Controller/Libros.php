@@ -55,7 +55,7 @@ abstract class Controller_Libros extends \Controller_App
         $Emisor = $this->getContribuyente();
         $detalle = $Emisor->{'get'.$this->config['model']['plural']}($periodo);
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
-        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$detalle and !$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No hay documentos emitidos ni libro del período '.$periodo, 'error'
@@ -99,7 +99,7 @@ abstract class Controller_Libros extends \Controller_App
         $Emisor = $this->getContribuyente();
         // crear objeto del libro
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
-        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Aun no se ha generado el XML del período '.$periodo, 'error'
@@ -156,7 +156,7 @@ abstract class Controller_Libros extends \Controller_App
         $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
-        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Aun no se ha generado el libro del período '.$periodo, 'error'
@@ -215,7 +215,7 @@ abstract class Controller_Libros extends \Controller_App
         $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
-        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Aun no se ha generado el libro del período '.$periodo, 'error'
@@ -282,7 +282,7 @@ abstract class Controller_Libros extends \Controller_App
         $Emisor = $this->getContribuyente();
         // obtener libro envíado
         $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
-        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->certificacion);
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Aun no se ha generado el libro del período '.$periodo, 'error'

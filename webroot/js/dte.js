@@ -6,16 +6,15 @@ function Contribuyente() {
 Contribuyente.setDatos = function (form) {
     var f = document.getElementById(form);
     // resetear campos
-    f.razon_social.value  = "";
-    f.giro.value  = "";
-    f.actividad_economica.value  = "";
-    f.direccion.value  = "";
-    f.comuna.value  = "";
-    f.telefono.value  = "";
-    f.email.value  = "";
-    f.sucursal_sii.value  = "";
-    f.resolucion_fecha.value  = "";
-    f.resolucion_numero.value  = "";
+    f.razon_social.value = "";
+    f.giro.value = "";
+    f.actividad_economica.value = "";
+    f.direccion.value = "";
+    f.comuna.value = "";
+    f.telefono.value = "";
+    f.email.value = "";
+    f.config_ambiente_produccion_fecha.value = "";
+    f.config_ambiente_produccion_numero.value = "";
     // si no se indicó el rut no se hace nada más
     if (__.empty(f.rut.value))
         return;
@@ -32,17 +31,16 @@ Contribuyente.setDatos = function (form) {
         type: "GET",
         url: _url+'/api/dte/contribuyentes/info/'+rut,
         dataType: "json",
-        success: function (contribuyente) {
-            f.razon_social.value  = contribuyente.razon_social;
-            f.giro.value  = contribuyente.giro;
-            f.actividad_economica.value  = contribuyente.actividad_economica;
-            f.direccion.value  = contribuyente.direccion;
-            f.comuna.value  = contribuyente.comuna;
-            f.telefono.value  = contribuyente.telefono;
-            f.email.value  = contribuyente.email;
-            f.sucursal_sii.value  = contribuyente.sucursal_sii;
-            f.resolucion_fecha.value  = contribuyente.resolucion_fecha;
-            f.resolucion_numero.value  = contribuyente.resolucion_numero;
+        success: function (c) {
+            f.razon_social.value = c.razon_social;
+            f.giro.value = c.giro;
+            f.actividad_economica.value = c.actividad_economica;
+            f.direccion.value = c.direccion;
+            f.comuna.value = c.comuna;
+            f.telefono.value = c.telefono;
+            f.email.value = c.email;
+            f.config_ambiente_produccion_fecha.value = c.config_ambiente_produccion_fecha !== undefined ? c.config_ambiente_produccion_fecha : null;
+            f.config_ambiente_produccion_numero.value = c.config_ambiente_produccion_numero !== undefined ? c.config_ambiente_produccion_numero : null ;
         },
         error: function (jqXHR) {
             console.log(jqXHR.responseJSON);
@@ -58,16 +56,15 @@ function Emisor() {
 Emisor.setDatos = function (form) {
     var f = document.getElementById(form);
     // resetear campos
-    f.RznSoc.value  = "";
-    f.GiroEmis.value  = "";
-    f.Acteco.value  = "";
-    f.DirOrigen.value  = "";
-    f.CmnaOrigen.value  = "";
-    f.Telefono.value  = "";
-    f.CorreoEmisor.value  = "";
-    f.CdgSIISucur.value  = "";
-    f.FchResol.value  = "";
-    f.NroResol.value  = "";
+    f.RznSoc.value = "";
+    f.GiroEmis.value = "";
+    f.Acteco.value = "";
+    f.DirOrigen.value = "";
+    f.CmnaOrigen.value = "";
+    f.Telefono.value = "";
+    f.CorreoEmisor.value = "";
+    f.FchResol.value = "";
+    f.NroResol.value = "";
     // si no se indicó el rut no se hace nada más
     if (__.empty(f.RUTEmisor.value))
         return;
@@ -84,17 +81,16 @@ Emisor.setDatos = function (form) {
         type: "GET",
         url: _url+'/api/dte/contribuyentes/info/'+rut,
         dataType: "json",
-        success: function (contribuyente) {
-            f.RznSoc.value  = contribuyente.razon_social;
-            f.GiroEmis.value  = contribuyente.giro;
-            f.Acteco.value  = contribuyente.actividad_economica;
-            f.DirOrigen.value  = contribuyente.direccion;
-            f.CmnaOrigen.value  = contribuyente.comuna;
-            f.Telefono.value  = contribuyente.telefono;
-            f.CorreoEmisor.value  = contribuyente.email;
-            f.CdgSIISucur.value  = contribuyente.sucursal_sii;
-            f.FchResol.value  = contribuyente.resolucion_fecha;
-            f.NroResol.value  = contribuyente.resolucion_numero;
+        success: function (c) {
+            f.RznSoc.value = c.razon_social;
+            f.GiroEmis.value = c.giro;
+            f.Acteco.value = c.actividad_economica;
+            f.DirOrigen.value = c.direccion;
+            f.CmnaOrigen.value = c.comuna;
+            f.Telefono.value = c.telefono;
+            f.CorreoEmisor.value = c.email;
+            f.FchResol.value = c.config_ambiente_produccion_fecha;
+            f.NroResol.value = c.config_ambiente_produccion_numero;
         },
         error: function (jqXHR) {
             console.log(jqXHR.responseJSON);
@@ -110,12 +106,12 @@ function Receptor() {
 Receptor.setDatos = function (form) {
     var f = document.getElementById(form);
     // resetear campos
-    f.RznSocRecep.value  = "";
-    f.GiroRecep.value  = "";
-    f.DirRecep.value  = "";
-    f.CmnaRecep.value  = "";
-    f.Contacto.value  = "";
-    f.CorreoRecep.value  = "";
+    f.RznSocRecep.value = "";
+    f.GiroRecep.value = "";
+    f.DirRecep.value = "";
+    f.CmnaRecep.value = "";
+    f.Contacto.value = "";
+    f.CorreoRecep.value = "";
     // si no se indicó el rut no se hace nada más
     if (__.empty(f.RUTRecep.value))
         return;
@@ -132,13 +128,13 @@ Receptor.setDatos = function (form) {
         type: "GET",
         url: _url+'/api/dte/contribuyentes/info/'+rut,
         dataType: "json",
-        success: function (contribuyente) {
-            f.RznSocRecep.value  = contribuyente.razon_social;
-            f.GiroRecep.value  = contribuyente.giro.substr(0, 40);
-            f.DirRecep.value  = contribuyente.direccion;
-            f.CmnaRecep.value  = contribuyente.comuna;
-            f.Contacto.value  = contribuyente.telefono;
-            f.CorreoRecep.value  = contribuyente.email;
+        success: function (c) {
+            f.RznSocRecep.value = c.razon_social;
+            f.GiroRecep.value = c.giro.substr(0, 40);
+            f.DirRecep.value = c.direccion;
+            f.CmnaRecep.value = c.comuna;
+            f.Contacto.value = c.telefono;
+            f.CorreoRecep.value = c.email;
         },
         error: function (jqXHR) {
             console.log(jqXHR.responseJSON);
@@ -176,7 +172,7 @@ DTE.setItem = function (contribuyente, codigo) {
                 cols[3].childNodes[0].childNodes[0].value = item.IndExe !== undefined ? item.IndExe : 0;
                 cols[5].childNodes[0].childNodes[0].value = item.UnmdItem !== undefined ? item.UnmdItem : '';
                 cols[6].childNodes[0].childNodes[0].value = item.PrcItem !== undefined ? item.PrcItem : '';
-                cols[7].childNodes[0].childNodes[0].value = item.ValorDR !== undefined ? item.ValorDR : '';
+                cols[7].childNodes[0].childNodes[0].value = item.ValorDR !== undefined ? item.ValorDR : 0;
                 cols[8].childNodes[0].childNodes[0].value = item.TpoValor !== undefined ? item.TpoValor : '%';
                 // foco en cantidad sólo si se logró obtener el código
                 if (item.VlrCodigo !== undefined) {

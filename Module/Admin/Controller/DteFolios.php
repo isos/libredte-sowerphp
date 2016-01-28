@@ -72,7 +72,7 @@ class Controller_DteFolios extends \Controller_App
                 return;
             }
             // crear mantenedor del folio
-            $DteFolio = new Model_DteFolio($Emisor->rut, $_POST['dte'], (int)$Emisor->certificacion);
+            $DteFolio = new Model_DteFolio($Emisor->rut, $_POST['dte'], (int)$Emisor->config_ambiente_en_certificacion);
             if (!$DteFolio->exists()) {
                 $DteFolio->siguiente = 0;
                 $DteFolio->disponibles = 0;
@@ -146,7 +146,7 @@ class Controller_DteFolios extends \Controller_App
                 return;
             }
             // verificar que el folio que se está subiendo sea para el ambiente actual de la empresa
-            $ambiente_empresa = $Emisor->certificacion ? 'certificación' : 'producción';
+            $ambiente_empresa = $Emisor->config_ambiente_en_certificacion ? 'certificación' : 'producción';
             $ambiente_caf = $Folios->getCertificacion() ? 'certificación' : 'producción';
             if ($ambiente_empresa!=$ambiente_caf) {
                 \sowerphp\core\Model_Datasource_Session::message(
@@ -203,7 +203,7 @@ class Controller_DteFolios extends \Controller_App
     public function modificar($dte)
     {
         $Emisor = $this->getContribuyente();
-        $DteFolio = new Model_DteFolio($Emisor->rut, $dte, (int)$Emisor->certificacion);
+        $DteFolio = new Model_DteFolio($Emisor->rut, $dte, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteFolio->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No existe el mantenedor de folios solicitado', 'error'
@@ -227,7 +227,12 @@ class Controller_DteFolios extends \Controller_App
             }
             // guardar y redireccionar
             try {
-                $DteFolio->calcularDisponibles();
+                if (!$DteFolio->calcularDisponibles()) {
+                    \sowerphp\core\Model_Datasource_Session::message(
+                        'No fue posible actualizar el mantenedor de folios', 'error'
+                    );
+                    return;
+                }
                 \sowerphp\core\Model_Datasource_Session::message(
                     'Mantenedor de folios para tipo '.$DteFolio->dte.' actualizado', 'ok'
                 );

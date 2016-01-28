@@ -308,7 +308,7 @@ class Model_DteEmitido extends \Model_App
     {
         $aux = [
             'Email receptor' => $this->getReceptor()->email,
-            'Email intercambio' => $this->getReceptor()->intercambio_user,
+            'Email intercambio' => $this->getReceptor()->config_email_intercambio_user,
             'DTE T'.$this->dte.'F'.$this->folio => isset($this->getDatos()['Encabezado']['Receptor']['CorreoRecep']) ? $this->getDatos()['Encabezado']['Receptor']['CorreoRecep'] : false,
         ];
         $emails = [];
