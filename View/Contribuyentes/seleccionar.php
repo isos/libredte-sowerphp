@@ -9,7 +9,7 @@ foreach ($empresas as &$e) {
         $acciones .= ' <a href="usuarios/'.$e['rut'].'" title="Mantenedor usuarios autorizados a operar con la empresa '.$e['razon_social'].'"><span class="fa fa-users btn btn-default"></span></a> ';
     }
     $acciones .= '<a href="seleccionar/'.$e['rut'].'" title="Operar con la empresa '.$e['razon_social'].'"><span class="fa fa-check btn btn-default"></span></a>';
-    $e[] = $acciones;
+    $e[] = '<div class="text-right">'.$acciones.'</div>';
     // modificar columnas
     $e['rut'] = num($e['rut']).'-'.$e['dv'];
     $e['certificacion'] = $e['certificacion'] ? 'Certificación' : 'Producción';
@@ -17,6 +17,8 @@ foreach ($empresas as &$e) {
     unset($e['dv']);
 }
 array_unshift($empresas, ['RUT', 'Razón social', 'Giro', 'Ambiente', 'Administrador', 'Acciones']);
-new \sowerphp\general\View_Helper_Table($empresas);
+$t = new \sowerphp\general\View_Helper_Table();
+$t->setColsWidth([null, null, null, null, null, 150]);
+echo $t->generate($empresas);
 ?>
 <a class="btn btn-primary btn-lg btn-block" href="registrar" role="button">Registrar una nueva empresa y ser el administrador de la misma</a>
