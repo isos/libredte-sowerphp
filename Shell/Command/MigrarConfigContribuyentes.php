@@ -27,7 +27,7 @@ namespace website\Dte;
  * Comando para migrar las configuraciones de los contribuyentes a nuevo esquema
  * que utiliza la tabla: contribuyente_config
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-01-27
+ * @version 2016-01-28
  */
 class Shell_Command_MigrarConfigContribuyentes extends \Shell_App
 {
@@ -45,7 +45,7 @@ class Shell_Command_MigrarConfigContribuyentes extends \Shell_App
         'intercambio_smtp' => 'email_intercambio_smtp',
         'intercambio_imap' => 'email_intercambio_imap',
         'intercambio_user' => 'email_intercambio_user',
-        'intercambio_user' => 'email_intercambio_user',
+        'intercambio_pass' => 'email_intercambio_pass',
         'api_token' => 'api_auth_token',
         'api_items' => 'api_url_items',
     ]; ///< Columnas que se deberán migrar
