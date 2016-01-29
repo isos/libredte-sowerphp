@@ -36,11 +36,11 @@
         'desc' => 'Mantenedor para poder cargar la firma electrónica del usuario',
         'icon' => 'fa fa-certificate',
     ],
-    /*'/respaldos/exportar' => [
+    '/respaldos/exportar' => [
         'name' => 'Exportar datos',
         'desc' => 'Exportar datos del sistema para respaldo o migración',
         'icon' => 'fa fa-download',
-    ],*/
+    ],
     /*'/respaldos/importar' => [
         'name' => 'Importar datos',
         'desc' => 'Importar datos al sistema para restaurar respaldo o migración',
