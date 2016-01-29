@@ -437,7 +437,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el XML de los DTEs solicitados
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-11-21
+     * @version 2016-01-28
      */
     public function _api_generar_xml_POST()
     {
@@ -528,20 +528,9 @@ class Controller_Documentos extends \Controller_App
                 file_put_contents($dir.'/dte_'.$this->Api->data['Emisor']['RUTEmisor'].'_'.$DTE->getID().'.xml', $DTE->saveXML());
             }
         }
-        // guardar datos de emisor, receptor y estadísticas
-        if (isset($this->Api->data['resolucion'])) {
-            $resolucion = [];
-            if (!empty($this->Api->data['resolucion']['FchResol']))
-                $resolucion['FchResol'] = $this->Api->data['resolucion']['FchResol'];
-            if (isset($this->Api->data['resolucion']['NroResol']))
-                $resolucion['NroResol'] = $this->Api->data['resolucion']['NroResol'];
-            $this->guardarEmisor($this->Api->data['Emisor'], $resolucion);
-        } else {
-            $this->guardarEmisor($this->Api->data['Emisor']);
-        }
+        // guardar datos de emisor y receptor
+        $this->guardarEmisor($this->Api->data['Emisor']);
         $this->guardarReceptor($this->Api->data['Receptor']);
-        list($emisor, $dv) = explode('-', $this->Api->data['Emisor']['RUTEmisor']);
-        list($receptor, $dv) = explode('-', $this->Api->data['Receptor']['RUTRecep']);
         // entregar archivo comprimido que incluirá cada uno de los DTEs
         \sasco\LibreDTE\File::compress($dir, ['format'=>'zip', 'delete'=>true]);
     }
@@ -730,11 +719,11 @@ class Controller_Documentos extends \Controller_App
     }
 
     /**
-     * Método que guarda un Emisor
+     * Método que guarda los datos del Emisor
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-01-28
      */
-    private function guardarEmisor($datos, $resolucion = [])
+    private function guardarEmisor($datos)
     {
         list($emisor, $dv) = explode('-', $datos['RUTEmisor']);
         $Emisor = new Model_Contribuyente($emisor);
@@ -759,10 +748,6 @@ class Controller_Documentos extends \Controller_App
                 return false;
             $Emisor->comuna = $comuna;
         }
-        if (!empty($resolucion['FchResol']))
-            $Emisor->resolucion_fecha = $resolucion['FchResol'];
-        if (isset($resolucion['NroResol']))
-            $Emisor->resolucion_numero = $resolucion['NroResol'];
         $Emisor->modificado = date('Y-m-d H:i:s');
         try {
             $Emisor->save();
