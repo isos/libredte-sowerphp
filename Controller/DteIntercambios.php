@@ -115,7 +115,7 @@ class Controller_DteIntercambios extends \Controller_App
         $Imap = $Emisor->getEmailImap();
         if (!$Imap) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible conectar mediante IMAP a '.$Emisor->intercambio_imap.', verificar mailbox, usuario y/o contraseña de correo de intercambio:<br/>'.implode('<br/>', imap_errors()), 'error'
+                'No fue posible conectar mediante IMAP a '.$Emisor->config_email_intercambio_imap.', verificar mailbox, usuario y/o contraseña de correo de intercambio:<br/>'.implode('<br/>', imap_errors()), 'error'
             );
             $this->redirect('/dte/dte_intercambios');
         }

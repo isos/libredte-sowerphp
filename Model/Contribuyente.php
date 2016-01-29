@@ -223,6 +223,7 @@ class Model_Contribuyente extends \Model_App
                 }
             }
             $this->contribuyente = &$this->razon_social;
+            $this->getConfig();
         }
     }
 
@@ -230,7 +231,7 @@ class Model_Contribuyente extends \Model_App
      * Método que entrega las configuraciones y parámetros extras para el
      * contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-01-29
      */
     public function getConfig()
     {
@@ -251,6 +252,9 @@ class Model_Contribuyente extends \Model_App
                     $datos = [$datos];
                 $this->config[$configuracion] = [];
                 foreach ($datos as $dato) {
+                    if (in_array($configuracion.'_'.$dato['variable'], self::$encriptar)) {
+                        $dato['valor'] = Utility_Data::decrypt($dato['valor']);
+                    }
                     $this->config[$configuracion][$dato['variable']] =
                         $dato['json'] ? json_decode($dato['valor']) : $dato['valor']
                     ;
@@ -278,7 +282,28 @@ class Model_Contribuyente extends \Model_App
             return $this->$name;
         } else {
             throw new \Exception(
-                'Atributo '.$name.' del contribuyente no existe'
+                'Atributo '.$name.' del contribuyente no existe (no se puede obtener)'
+            );
+        }
+    }
+
+    /**
+     * Método mágico asignar una configuración del contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-29
+     */
+    public function __set($name, $value)
+    {
+        if (strpos($name, 'config_')===0) {
+            $key = str_replace('config_', '', $name);
+            $c = substr($key, 0, strpos($key, '_'));
+            $v = substr($key, strpos($key, '_')+1);
+            $value = ($value===false or $value===0) ? '0' : ((!is_array($value) and !is_object($value)) ? (string)$value : $value);
+            $this->config[$c][$v] = isset($value[0]) ? $value : null;
+            $this->$name = $this->config[$c][$v];
+        } else {
+            throw new \Exception(
+                'Atributo '.$name.' del contribuyente no existe (no se puede asignar)'
             );
         }
     }
@@ -287,23 +312,14 @@ class Model_Contribuyente extends \Model_App
      * Método para setear los atributos del contribuyente
      * @param array Arreglo con los datos que se deben asignar
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-28
+     * @version 2016-01-29
      */
     public function set($array)
     {
         parent::set($array);
-        $this->config = [];
         foreach($array as $name => $value) {
             if (strpos($name, 'config_')===0) {
                 $this->$name = $value;
-                $name = str_replace('config_', '', $name);
-                $c = substr($name, 0, strpos($name, '_'));
-                $v = substr($name, strpos($name, '_')+1);
-                $value = ($value===false or $value===0) ? '0' : ((!is_array($value) and !is_object($value)) ? (string)$value : $value);
-                if (isset($value[0]))
-                    $this->config[$c][$v] = in_array($name, self::$encriptar) ? Utility_Data::encrypt($value) : $value;
-                else
-                    $this->config[$c][$v] = null;
             }
         }
     }
@@ -340,28 +356,25 @@ class Model_Contribuyente extends \Model_App
                 \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
                 move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$this->rut.'.png');
             }
-            // encriptar campos sensibles
-            foreach (self::$encriptar as $col) {
-                if (!empty($this->{'config_'.$col})) {
-                    $this->{'config_'.$col} = Utility_Data::encrypt($this->{'config_'.$col});
-                }
-            }
         }
         // guardar contribuyente
         if (!parent::save())
             return false;
         // guardar configuración
-        if ($registrado) {
+        if ($this->config) {
             foreach ($this->config as $configuracion => $datos) {
                 foreach ($datos as $variable => $valor) {
                     $Config = new Model_ContribuyenteConfig($this->rut, $configuracion, $variable);
                     if (!is_array($valor) and !is_object($valor)) {
-                        $Config->valor = $valor;
                         $Config->json = 0;
                     } else {
-                        $Config->valor = json_encode($valor);
+                        $valor = json_encode($valor);
                         $Config->json = 1;
                     }
+                    if (in_array($configuracion.'_'.$variable, self::$encriptar)) {
+                        $valor = Utility_Data::encrypt($valor);
+                    }
+                    $Config->valor = $valor;
                     $Config->save();
                 }
             }
@@ -727,7 +740,7 @@ class Model_Contribuyente extends \Model_App
             'type' => 'smtp',
             'host' => $this->{'config_email_'.$email.'_smtp'},
             'user' => $this->{'config_email_'.$email.'_user'},
-            'pass' => Utility_Data::decrypt($this->{'config_email_'.$email.'_pass'}),
+            'pass' => $this->{'config_email_'.$email.'_pass'},
             'from' => ['email'=>$this->{'config_email_'.$email.'_user'}, 'name'=>$this->razon_social],
         ]);
     }
@@ -744,7 +757,7 @@ class Model_Contribuyente extends \Model_App
         $Imap = new \sowerphp\core\Network_Email_Imap([
             'mailbox' => $this->{'config_email_'.$email.'_imap'},
             'user' => $this->{'config_email_'.$email.'_user'},
-            'pass' => Utility_Data::decrypt($this->{'config_email_'.$email.'_pass'}),
+            'pass' => $this->{'config_email_'.$email.'_pass'},
         ]);
         return $Imap->isConnected() ? $Imap : false;
     }

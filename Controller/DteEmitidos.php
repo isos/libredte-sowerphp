@@ -256,7 +256,7 @@ class Controller_DteEmitidos extends \Controller_App
         $Imap = $Emisor->getEmailImap('sii');
         if (!$Imap) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible conectar mediante IMAP a '.$Emisor->sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()), 'error'
+                'No fue posible conectar mediante IMAP a '.$Emisor->config_email_sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()), 'error'
             );
             $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
         }

@@ -183,7 +183,7 @@ echo $f->input([
 ]);
 echo $f->input([
     'name' => 'config_email_sii_pass',
-    'value' => isset($Contribuyente) ? \website\Dte\Utility_Data::decrypt($Contribuyente->config_email_sii_pass) : null,
+    'value' => isset($Contribuyente) ? $Contribuyente->config_email_sii_pass : null,
     'label' => 'Contraseña',
     'check' => 'notempty',
 ]);
@@ -218,7 +218,7 @@ echo $f->input([
 ]);
 echo $f->input([
     'name' => 'config_email_intercambio_pass',
-    'value' => isset($Contribuyente) ? \website\Dte\Utility_Data::decrypt($Contribuyente->config_email_intercambio_pass) : null,
+    'value' => isset($Contribuyente) ? $Contribuyente->config_email_intercambio_pass : null,
     'label' => 'Contraseña',
     'check' => 'notempty',
 ]);
@@ -259,7 +259,7 @@ echo $f->input([
 echo $f->input([
     'name' => 'config_api_auth_token',
     'label' => 'Token',
-    'value' => isset($Contribuyente) ? \website\Dte\Utility_Data::decrypt($Contribuyente->config_api_auth_token) : null,
+    'value' => isset($Contribuyente) ? $Contribuyente->config_api_auth_token : null,
     'help' => 'Token opcional para autenticación a través de <em>HTTP Basic Auth</em>. Se enviará al servicio el token como usuario y una X como contraseña.',
     'attr' => 'maxlength="255"',
 ]);
