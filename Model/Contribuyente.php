@@ -273,6 +273,7 @@ class Model_Contribuyente extends \Model_App
     public function __get($name)
     {
         if (strpos($name, 'config_')===0) {
+            $this->getConfig();
             $key = str_replace('config_', '', $name);
             $c = substr($key, 0, strpos($key, '_'));
             $v = substr($key, strpos($key, '_')+1);
