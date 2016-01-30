@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Clase para todas las acciones asociadas a documentos (incluyendo API)
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-25
+ * @version 2016-01-29
  */
 class Controller_Documentos extends \Controller_App
 {
@@ -56,9 +56,44 @@ class Controller_Documentos extends \Controller_App
     }
 
     /**
+     * Función de la API para consultar por un DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-29
+     */
+    public function _api_consultar_POST()
+    {
+        // verificar si se pasaron credenciales de un usuario
+        $User = $this->Api->getAuthUser();
+        if (is_string($User)) {
+            $this->Api->send($User, 401);
+        }
+        // verificar que se hayan pasado los índices básicos
+        foreach (['emisor', 'dte', 'folio', 'fecha', 'total'] as $key) {
+            if (!isset($this->Api->data[$key]))
+                $this->Api->send('Falta índice/variable '.$key.' por POST', 500);
+        }
+        // verificar si el emisor existe
+        $Emisor = new Model_Contribuyente($this->Api->data['emisor']);
+        if (!$Emisor->exists() or !$Emisor->usuario) {
+            $this->Api->send('Emisor no está registrado en la aplicación', 404);
+        }
+        // buscar si existe el DTE en el ambiente que el emisor esté usando
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $this->Api->data['dte'], $this->Api->data['folio'], (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists()) {
+            $this->Api->send($Emisor->razon_social.' no tiene emitido el DTE solicitado en el ambiente de '.$Emisor->getAmbiente(), 404);
+        }
+        // verificar que coincida fecha de emisión y monto total del DTE
+        if ($DteEmitido->fecha!=$this->Api->data['fecha'] or $DteEmitido->total!=$this->Api->data['total']) {
+            $this->Api->send('DTE existe, pero fecha y/o monto no coinciden con los registrados', 501);
+        }
+        // enviar DteEmitido
+        return $DteEmitido;
+    }
+
+    /**
      * Acción que permite buscar y consultar un DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-12
+     * @version 2016-01-29
      */
     public function consultar($dte = null)
     {
@@ -69,31 +104,141 @@ class Controller_Documentos extends \Controller_App
         ]);
         // si se solicitó un documento se busca
         if (isset($_POST['submit'])) {
-            // verificar si el emisor existe
-            $Emisor = new Model_Contribuyente($_POST['emisor']);
-            if (!$Emisor->exists() or !$Emisor->usuario) {
+            $r = $this->consume('/api/dte/documentos/consultar', $_POST);
+            if ($r['status']['code']!=200) {
                 \sowerphp\core\Model_Datasource_Session::message(
-                    'Emisor no está registrado en la aplicación', 'error'
-                );
-                return;
-            }
-            // buscar si existe el DTE en el ambiente que el emisor esté usando
-            $DteEmitido = new Model_DteEmitido($Emisor->rut, $_POST['dte'], $_POST['folio'], (int)$Emisor->config_ambiente_en_certificacion);
-            if (!$DteEmitido->exists()) {
-                \sowerphp\core\Model_Datasource_Session::message(
-                    $Emisor->razon_social.' no tiene emitido el DTE solicitado en el ambiente de '.$Emisor->getAmbiente(), 'error'
-                );
-                return;
-            }
-            // verificar que coincida fecha de emisión y monto total del DTE
-            if ($DteEmitido->fecha!=$_POST['fecha'] or $DteEmitido->total!=$_POST['total']) {
-                \sowerphp\core\Model_Datasource_Session::message(
-                    'DTE existe, pero fecha y/o monto no coinciden con los registrados', 'error'
+                    str_replace("\n", '<br/>', $r['body']), 'error'
                 );
                 return;
             }
             // asignar DTE a la vista
-            $this->set('DteEmitido', $DteEmitido);
+            $this->set('DteEmitido', (new Model_DteEmitido())->set($r['body']));
+        }
+    }
+
+    /**
+     * Método que corrije el tipo de documento en caso de ser factura o boleta
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-30
+     */
+    private function getTipoDTE($tipo, $Detalle)
+    {
+        if (!in_array($tipo, [33, 34, 39,41]))
+            return $tipo;
+        // determinar tipo de documento
+        $netos = 0;
+        $exentos = 0;
+        if (!isset($Detalle[0]))
+            $Detalle = [$Detalle];
+        foreach ($Detalle as $d) {
+            if (!empty($d['IndExe']))
+                $exentos++;
+            else
+                $netos++;
+        }
+        // el documento es factura
+        if ($tipo == 33 or $tipo == 34) {
+            if ($tipo == 33 and !$netos and $exentos)
+                return 34;
+            if ($tipo == 34 and !$exentos and $netos)
+                return 33;
+        }
+        // es boleta
+        else if ($tipo == 39 or $tipo == 41) {
+            if ($tipo == 39 and !$netos and $exentos)
+                return 41;
+            if ($tipo == 41 and !$exentos and $netos)
+                return 39;
+        }
+        // retornar tipo original ya que estaba bien
+        return $tipo;
+    }
+
+    /**
+     * Función de la API que permite emitir un DTE generando su documento
+     * temporal. El documento generado no tiene folio, no está firmado y no es
+     * enviado al SII. Luego se debe usar la función generar de la API para
+     * generar el DTE final y enviarlo al SII.
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-30
+     */
+    public function _api_emitir_POST()
+    {
+        // verificar si se pasaron credenciales de un usuario
+        $User = $this->Api->getAuthUser();
+        if (is_string($User)) {
+            $this->Api->send($User, 401);
+        }
+        // verificar datos del DTE pasados
+        if (!is_array($this->Api->data)) {
+            $this->Api->send('Debe enviar el DTE como un arreglo', 500);
+        }
+        // buscar emisor del DTE y verificar que usuario tenga permisos para
+        // trabajar con el emisor
+        if (!isset($this->Api->data['Encabezado']['Emisor']['RUTEmisor'])) {
+            $this->Api->send('Debe especificar RUTEmisor', 500);
+        }
+        $Emisor = new Model_Contribuyente($this->Api->data['Encabezado']['Emisor']['RUTEmisor']);
+        if (!$Emisor->usuario) {
+            $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
+        }
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        // guardar datos del receptor
+        $Receptor = $this->guardarReceptor($this->Api->data['Encabezado']['Receptor']);
+        if (!$Receptor) {
+            $this->Api->send('No fue posible guardar al receptor');
+        }
+        // construir arreglo con datos del DTE
+        $default = [
+            'Encabezado' => [
+                'IdDoc' => [
+                    'TipoDTE' => 33,
+                    'Folio' => 0,
+                    'FchEmis' => date('Y-m-d'),
+                ],
+                'Emisor' => [
+                    'RUTEmisor' => $Emisor->rut.'-'.$Emisor->dv,
+                    'RznSoc' => $Emisor->razon_social,
+                    'GiroEmis' => $Emisor->giro,
+                    'Telefono' => $Emisor->telefono ? $Emisor->telefono : false,
+                    'CorreoEmisor' => $Emisor->email ? $Emisor->email : false,
+                    'Acteco' => $Emisor->actividad_economica,
+                    'DirOrigen' => $Emisor->direccion,
+                    'CmnaOrigen' => $Emisor->getComuna()->comuna,
+                ],
+            ]
+        ];
+        $dte = \sowerphp\core\Utility_Array::mergeRecursiveDistinct($default, $this->Api->data);
+        // verificar tipo de documento
+        $dte['Encabezado']['IdDoc']['TipoDTE'] = $this->getTipoDTE(
+            $dte['Encabezado']['IdDoc']['TipoDTE'], $dte['Detalle']
+        );
+        if (!$Emisor->documentoAutorizado($dte['Encabezado']['IdDoc']['TipoDTE'])) {
+            $this->Api->send('No está autorizado a emitir el tipo de documento '.$dte['Encabezado']['IdDoc']['TipoDTE'], 401);
+        }
+        // crear objeto Dte y documento temporal
+        $Dte = new \sasco\LibreDTE\Sii\Dte($dte);
+        $resumen = $Dte->getResumen();
+        $DteTmp = new Model_DteTmp();
+        $DteTmp->datos = json_encode($Dte->getDatos());
+        $DteTmp->emisor = $Emisor->rut;
+        $DteTmp->receptor = $Receptor->rut;
+        $DteTmp->dte = $resumen['TpoDoc'];
+        $DteTmp->codigo = md5($DteTmp->datos);
+        $DteTmp->fecha = $resumen['FchDoc'];
+        $DteTmp->total = $resumen['MntTotal'];
+        try {
+            $DteTmp->save();
+            return [
+                'emisor' => $DteTmp->emisor,
+                'receptor' => $DteTmp->receptor,
+                'dte' => $DteTmp->dte,
+                'codigo' => $DteTmp->codigo,
+            ];
+        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            $this->Api->send('No fue posible guardar el DTE temporal: '.$e->getMessage(), 500);
         }
     }
 
@@ -140,7 +285,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-02
+     * @version 2016-01-30
      */
     public function previsualizacion()
     {
@@ -308,63 +453,77 @@ class Controller_Documentos extends \Controller_App
                 ];
             }
         }
-        // crear objeto Dte y asignar variables para la vista
-        $Dte = new \sasco\LibreDTE\Sii\Dte($dte);
-        $resumen = $Dte->getResumen();
-        $DteTmp = new Model_DteTmp();
-        $DteTmp->datos = json_encode($Dte->getDatos());
-        $DteTmp->emisor = $Emisor->rut;
-        $DteTmp->receptor = $Receptor->rut;
-        $DteTmp->dte = $resumen['TpoDoc'];
-        $DteTmp->codigo = md5($DteTmp->datos);
-        $DteTmp->fecha = $resumen['FchDoc'];
-        $DteTmp->total = $resumen['MntTotal'];
-        try {
-            $DteTmp->save();
-        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+        // consumir servicio web para crear documento temporal
+        $response = $this->consume('/api/dte/documentos/emitir', $dte);
+        if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible guardar el DTE temporal: '.$e->getMessage()
+                $response['body'], 'error'
             );
             $this->redirect('/dte/documentos/emitir');
         }
+        $DteTmp = new Model_DteTmp(
+            $response['body']['emisor'],
+            $response['body']['receptor'],
+            $response['body']['dte'],
+            $response['body']['codigo']
+        );
+        $Dte = new \sasco\LibreDTE\Sii\Dte($dte);
         $this->set([
-            'resumen' => $resumen,
+            'resumen' => $Dte->getResumen(),
             'DteTmp' => $DteTmp,
         ]);
     }
 
     /**
-     * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
-     * al SII
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-02
+     * Función de la API que permite emitir un DTE a partir de un documento
+     * temporal, asignando folio, firmando y enviando al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-30
      */
-    public function generar($receptor, $dte, $codigo)
+    public function _api_generar_POST()
     {
-        $Emisor = $this->getContribuyente();
+        // verificar si se pasaron credenciales de un usuario
+        $User = $this->Api->getAuthUser();
+        if (is_string($User)) {
+            $this->Api->send($User, 401);
+        }
+        // verificar datos del DTE pasados
+        if (!is_array($this->Api->data)) {
+            $this->Api->send('Debe enviar los datos del DTE temporal como arreglo', 500);
+        }
+        // buscar datos mínimos
+        foreach (['emisor', 'receptor', 'dte', 'codigo'] as $col) {
+            if (!isset($this->Api->data[$col])) {
+                $this->Api->send('Debe especificar: '.$col, 500);
+            }
+        }
+        // crear emisor y verificar permisos
+        $Emisor = new Model_Contribuyente($this->Api->data['emisor']);
+        if (!$Emisor->usuario) {
+            $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
+        }
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
         // obtener DTE temporal
-        $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
+        $DteTmp = new Model_DteTmp(
+            $this->Api->data['emisor'],
+            $this->Api->data['receptor'],
+            $this->Api->data['dte'],
+            $this->Api->data['codigo']
+        );
         if (!$DteTmp->exists()) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No existe el DTE temporal solicitado', 'error'
-            );
-            $this->redirect('/dte/documentos/emitir');
+            $this->Api->send('No existe el DTE temporal solicitado', 404);
         }
         // obtener firma electrónica
-        $Firma = $Emisor->getFirma($this->Auth->User->id);
+        $Firma = $Emisor->getFirma($User->id);
         if (!$Firma) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
-            );
-            $this->redirect('/dte/admin/firma_electronicas');
+            $this->Api->send('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 500);
         }
         // solicitar folio
         $FolioInfo = $Emisor->getFolio($DteTmp->dte);
         if (!$FolioInfo) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible obtener un folio para el DTE de tipo '.$DteTmp->dte, 'error'
-            );
-            $this->redirect('/dte/dte_tmps');
+            $this->Api->send('No fue posible obtener un folio para el DTE de tipo '.$DteTmp->dte, 500);
         }
         // si quedan pocos folios y se debe alertar al usuario admnistrador de la empresa se hace
         if ($FolioInfo->DteFolio->disponibles<=$FolioInfo->DteFolio->alerta and !$FolioInfo->DteFolio->alertado) {
@@ -374,23 +533,17 @@ class Controller_Documentos extends \Controller_App
                 $FolioInfo->DteFolio->save();
             }
         }
-        // armar xml a partir de json del DTE temporal
+        // armar xml a partir del DTE temporal
         $EnvioDte = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma);
         $xml = $EnvioDte->generar();
         if (!$xml) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible generar el XML del EnvioDTE. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            $this->redirect('/dte/documentos/emitir');
+            $this->Api->send('No fue posible generar el XML del EnvioDTE. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
         }
         // guardar DTE
         $r = $EnvioDte->getDocumentos()[0]->getResumen();
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $r['TpoDoc'], $r['NroDoc'], (int)$Emisor->config_ambiente_en_certificacion);
         if ($DteEmitido->exists()) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'Ya existe un DTE del tipo '.$r['TpoDoc'].' y folio '.$r['NroDoc'].' emitido', 'error'
-            );
-            $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->config_ambiente_en_certificacion);
+            $this->Api->send('Ya existe un DTE del tipo '.$r['TpoDoc'].' y folio '.$r['NroDoc'].' emitido', 500);
         }
         $cols = ['tasa'=>'TasaImp', 'fecha'=>'FchDoc', 'receptor'=>'RUTDoc', 'exento'=>'MntExe', 'neto'=>'MntNeto', 'iva'=>'MntIVA', 'total'=>'MntTotal'];
         foreach ($cols as $attr => $col) {
@@ -399,7 +552,8 @@ class Controller_Documentos extends \Controller_App
         }
         $DteEmitido->receptor = substr($DteEmitido->receptor, 0, -2);
         $DteEmitido->xml = base64_encode($xml);
-        $DteEmitido->usuario = $this->Auth->User->id;
+        $DteEmitido->usuario = $User->id;
+        $DteEmitido->save();
         // guardar referencias si existen
         $datos = json_decode($DteTmp->datos, true);
         if (isset($datos['Referencia'])) {
@@ -419,19 +573,47 @@ class Controller_Documentos extends \Controller_App
         // eliminar DTE temporal
         $DteTmp->delete();
         // enviar DTE al SII y redireccionar a página del DTE
-        $track_id = $EnvioDte->enviar();
-        if ($track_id) {
-            $DteEmitido->track_id = $track_id;
+        if (!defined('_LibreDTE_CERTIFICACION_') and $Emisor->config_ambiente_en_certificacion) {
+            define('_LibreDTE_CERTIFICACION_', true);
+        }
+        $DteEmitido->track_id = $EnvioDte->enviar();
+        if ($DteEmitido->track_id)
+            $DteEmitido->save();
+        return $DteEmitido;
+    }
+
+    /**
+     * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
+     * al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @version 2016-01-30
+     */
+    public function generar($receptor, $dte, $codigo)
+    {
+        $Emisor = $this->getContribuyente();
+        $response = $this->consume('/api/dte/documentos/generar', [
+            'emisor' => $Emisor->rut,
+            'receptor' => $receptor,
+            'dte' => $dte,
+            'codigo' => $codigo,
+        ]);
+        if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'Documento emitido y envíado al SII, ahora debe verificar estado del envío. TrackID: '.$track_id, 'ok'
+                $response['body'], 'error'
+            );
+            $this->redirect('/dte/dte_tmps');
+        }
+        $DteEmitido = (new Model_DteEmitido())->set($response['body']);
+        if ($DteEmitido->track_id) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Documento emitido y envíado al SII, ahora debe verificar estado del envío. TrackID: '.$DteEmitido->track_id, 'ok'
             );
         } else {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Documento emitido, pero no pudo ser envíado al SII, debe reenviar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'warning'
             );
         }
-        $DteEmitido->save();
-        $this->redirect('/dte/dte_emitidos/ver/'.$r['TpoDoc'].'/'.$r['NroDoc'].'/'.(int)$Emisor->config_ambiente_en_certificacion);
+        $this->redirect('/dte/dte_emitidos/ver/'.$DteEmitido->dte.'/'.$DteEmitido->folio.'/'.$DteEmitido->certificacion);
     }
 
     /**
@@ -760,14 +942,14 @@ class Controller_Documentos extends \Controller_App
     /**
      * Método que guarda un Receptor
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-01-30
      */
     private function guardarReceptor($datos)
     {
         list($receptor, $dv) = explode('-', $datos['RUTRecep']);
         $Receptor = new Model_Contribuyente($receptor);
         if ($Receptor->usuario)
-            return null;
+            return $Receptor;
         $Receptor->dv = $dv;
         $Receptor->razon_social = substr($datos['RznSocRecep'], 0, 100);
         if (!empty($datos['GiroRecep']))
@@ -791,7 +973,7 @@ class Controller_Documentos extends \Controller_App
         $Receptor->modificado = date('Y-m-d H:i:s');
         try {
             $Receptor->save();
-            return true;
+            return $Receptor;
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             return false;
         }
