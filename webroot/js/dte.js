@@ -183,6 +183,14 @@ DTE.setItem = function (contribuyente, codigo) {
                 DTE.calcular();
             },
             error: function (jqXHR) {
+                cols[0].childNodes[0].childNodes[0].value = '';
+                cols[1].childNodes[0].childNodes[0].value = '';
+                cols[2].childNodes[0].childNodes[0].value = '';
+                cols[3].childNodes[0].childNodes[0].value = 0;
+                cols[5].childNodes[0].childNodes[0].value = '';
+                cols[6].childNodes[0].childNodes[0].value = '';
+                cols[7].childNodes[0].childNodes[0].value = 0;
+                cols[8].childNodes[0].childNodes[0].value = '%';
                 console.log(jqXHR.responseJSON);
             }
         });
