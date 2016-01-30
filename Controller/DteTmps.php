@@ -101,6 +101,38 @@ class Controller_DteTmps extends \Controller_App
     }
 
     /**
+     * Método que genera la previsualización del XML del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @version 2016-01-30
+     */
+    public function xml($receptor, $dte, $codigo)
+    {
+        $Emisor = $this->getContribuyente();
+        // obtener datos JSON del DTE
+        $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
+        if (!$DteTmp->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No existe el DTE temporal solicitado', 'error'
+            );
+            $this->redirect('/dte/dte_tmps');
+        }
+        // armar xml a partir de datos del dte temporal
+        $xml = $DteTmp->getEnvioDte()->generar();
+        if (!$xml) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible crear el XML para previsualización:<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
+            );
+            $this->redirect('/dte/dte_tmps');
+        }
+        // entregar xml
+        header('Content-Type: application/xml; charset=ISO-8859-1');
+        header('Content-Length: '.strlen($xml));
+        header('Content-Disposition: attachement; filename="'.$receptor.'_'.$dte.'_'.$codigo.'.xml"');
+        print $xml;
+        exit;
+    }
+
+    /**
      * Método que elimina un DTE temporal
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
      * @version 2015-09-23
