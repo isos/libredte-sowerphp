@@ -257,10 +257,17 @@ echo $f->input([
 <p>LibreDTE puede comunicarse con la aplicación web de su empresa a través de servicios web. A continuación puede ingresar las URL para diferentes consultas que LibreDTE debería poder hacer a su aplicación. Puede revisar la <a href="http://wiki.libredte.cl/doku.php/sowerphp/integracion">documentación de la integración</a> para obtener detalles de las salidas esperadas para cada consulta.</p>
 <?php
 echo $f->input([
-    'name' => 'config_api_auth_token',
-    'label' => 'Token',
-    'value' => isset($Contribuyente) ? $Contribuyente->config_api_auth_token : null,
-    'help' => 'Token opcional para autenticación a través de <em>HTTP Basic Auth</em>. Se enviará al servicio el token como usuario y una X como contraseña.',
+    'name' => 'config_api_auth_user',
+    'label' => 'Usuario o token',
+    'value' => isset($Contribuyente) ? $Contribuyente->config_api_auth_user : null,
+    'help' => 'Usuario o token opcional para autenticación a través de <em>HTTP Basic Auth</em>',
+    'attr' => 'maxlength="255"',
+]);
+echo $f->input([
+    'name' => 'config_api_auth_pass',
+    'label' => 'Contraseña',
+    'value' => isset($Contribuyente) ? $Contribuyente->config_api_auth_pass : null,
+    'help' => 'Si no se especifíca la contraseña se enviará al servicio web el usuario/token y una X como contraseña',
     'attr' => 'maxlength="255"',
 ]);
 echo $f->input([

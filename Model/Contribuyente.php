@@ -187,7 +187,8 @@ class Model_Contribuyente extends \Model_App
     public static $encriptar = [
         'email_sii_pass',
         'email_intercambio_pass',
-        'api_auth_token',
+        'api_auth_user',
+        'api_auth_pass',
     ]; ///< columnas de la configuración que se deben encriptar para guardar en la base de datos
 
     public $contribuyente; ///< Copia de razon_social
@@ -267,12 +268,11 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método mágico para obtener configuraciones del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-01-30
      */
     public function __get($name)
     {
         if (strpos($name, 'config_')===0) {
-            $this->getConfig();
             $key = str_replace('config_', '', $name);
             $c = substr($key, 0, strpos($key, '_'));
             $v = substr($key, strpos($key, '_')+1);
@@ -329,7 +329,7 @@ class Model_Contribuyente extends \Model_App
      * configuración y parámetros adicionales
      * @param registrado Se usa para indicar que el contribuyente que se esta guardando es uno registrado por un usuario (se validan otros datos)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-28
+     * @version 2016-01-30
      */
     public function save($registrado = false)
     {
@@ -371,7 +371,7 @@ class Model_Contribuyente extends \Model_App
                         $valor = json_encode($valor);
                         $Config->json = 1;
                     }
-                    if (in_array($configuracion.'_'.$variable, self::$encriptar)) {
+                    if (in_array($configuracion.'_'.$variable, self::$encriptar) and $valor!==null) {
                         $valor = Utility_Data::encrypt($valor);
                     }
                     $Config->valor = $valor;

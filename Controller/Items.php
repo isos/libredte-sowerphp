@@ -36,7 +36,7 @@ class Controller_Items extends \Controller_App
      * Recurso de la API que permite obtener los datos de un item a partir de su
      * código
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-01-30
      */
     public function _api_info_GET($codigo, $empresa)
     {
@@ -48,8 +48,12 @@ class Controller_Items extends \Controller_App
             $this->Api->send('Empresa no tiene configurada API para consultar items', 500);
         // consultar item
         $rest = new \sowerphp\core\Network_Http_Rest();
-        if ($Empresa->config_api_auth_token)
-            $rest->setAuth($Empresa->config_api_auth_token);
+        if ($Empresa->config_api_auth_user) {
+            if ($Empresa->config_api_auth_pass)
+                $rest->setAuth($Empresa->config_api_auth_user, $Empresa->config_api_auth_pass);
+            else
+                $rest->setAuth($Empresa->config_api_auth_user);
+        }
         $response = $rest->get($Empresa->config_api_url_items.$codigo);
         $this->Api->send($response['body'], $response['status']['code']);
     }
