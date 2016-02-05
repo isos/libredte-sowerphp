@@ -160,7 +160,7 @@ class Controller_Documentos extends \Controller_App
      * enviado al SII. Luego se debe usar la función generar de la API para
      * generar el DTE final y enviarlo al SII.
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-02-05
      */
     public function _api_emitir_POST()
     {
@@ -182,7 +182,7 @@ class Controller_Documentos extends \Controller_App
         if (!$Emisor->usuario) {
             $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
         }
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/emitir')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         // guardar datos del receptor
@@ -478,7 +478,7 @@ class Controller_Documentos extends \Controller_App
      * Función de la API que permite emitir un DTE a partir de un documento
      * temporal, asignando folio, firmando y enviando al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-02-05
      */
     public function _api_generar_POST()
     {
@@ -502,7 +502,7 @@ class Controller_Documentos extends \Controller_App
         if (!$Emisor->usuario) {
             $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
         }
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/generar')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         // obtener DTE temporal

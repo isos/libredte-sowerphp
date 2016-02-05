@@ -468,17 +468,39 @@ class Model_Contribuyente extends \Model_App
      * @param usuario ID del usuario que se quiere saber si está autorizado
      * @return =true si está autorizado
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-20
+     * @version 2016-02-05
      */
-    public function usuarioAutorizado($usuario)
+    public function usuarioAutorizado($usuario, $permisos = [])
     {
+        // si es el administrador de la empresa se le autoriza
         if ($usuario == $this->usuario)
             return true;
+        // si la aplicación sólo tiene configurada una empresa se le autoriza.
+        // para verificar que tenga acceso a cierta funcionalidad se usarán los
+        // permisos normales (basados en grupos) de sowerphp
+        if (\sowerphp\core\Configure::read('dte.empresa'))
+            return true;
+        // se busca si el usuario es parte de los que pueden trabajar con el
+        // contribuyente, se valida el permiso en particular que se esté
+        // pidiendo y el permiso 'todos' (es como validar a sysadmin en Auth)
+        if (!is_array($permisos))
+            $permisos = [$permisos];
+        if (!in_array('todos', $permisos))
+            $permisos[] = 'todos';
+        $vars = [':rut'=>$this->rut, ':usuario'=>$usuario];
+        $permisos_bind = [];
+        foreach ($permisos as $i => $permiso) {
+            $permisos_bind[] = 'permiso'.$i;
+            $vars['permiso'.$i] = $permiso;
+        }
         return (bool)$this->db->getValue('
             SELECT COUNT(*)
             FROM contribuyente_usuario
-            WHERE contribuyente = :rut AND usuario = :usuario
-        ', [':rut'=>$this->rut, ':usuario'=>$usuario]);
+            WHERE
+                contribuyente = :rut
+                AND usuario = :usuario
+                AND permiso IN ('.implode(', ', $permisos_bind).')
+        ', $vars);
     }
 
     /**
