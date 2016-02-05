@@ -490,8 +490,8 @@ class Model_Contribuyente extends \Model_App
         $vars = [':rut'=>$this->rut, ':usuario'=>$usuario];
         $permisos_bind = [];
         foreach ($permisos as $i => $permiso) {
-            $permisos_bind[] = 'permiso'.$i;
-            $vars['permiso'.$i] = $permiso;
+            $permisos_bind[] = ':permiso'.$i;
+            $vars[':permiso'.$i] = $permiso;
         }
         return (bool)$this->db->getValue('
             SELECT COUNT(*)
