@@ -1,5 +1,5 @@
-LibreDTE: Módulo Dte para el framework SowerPHP
-===============================================
+LibreDTE: Módulo facturación electrónica (Dte) para framework SowerPHP
+======================================================================
 
 LibreDTE es un proyecto que tiene por objetivo proveer facturación electrónica
 libre para Chile.
