@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de libro de guías de despacho
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-27
+ * @version 2016-02-12
  */
 class Controller_DteGuias extends Controller_Libros
 {
@@ -38,24 +38,6 @@ class Controller_DteGuias extends Controller_Libros
             'plural' => 'Guias',
         ]
     ]; ///< Configuración para las acciones del controlador
-
-    protected $libro_cols = [
-        'folio' => 'Folio',
-        'anulado' => 'Anulado',
-        'operacion' => 'Operacion',
-        'tipo' => 'TpoOper',
-        'fecha' => 'FchDoc',
-        'rut' => 'RUTDoc',
-        'razon_social' => 'RznSoc',
-        'neto' => 'MntNeto',
-        'tasa' => 'TasaImp',
-        'iva' => 'IVA',
-        'total' => 'MntTotal',
-        'modificado' => 'MntModificado',
-        'ref_dte' => 'TpoDocRef',
-        'ref_folio' => 'FolioDocRef',
-        'ref_fecha' => 'FchDocRef',
-    ]; ///< Columnas del archivo CSV del libro
 
     /**
      * Acción que envía el archivo XML del libro de guías al SII
@@ -93,7 +75,7 @@ class Controller_DteGuias extends Controller_Libros
             $d = [];
             foreach ($guia as $k => $v) {
                 if ($v!==null)
-                    $d[$this->libro_cols[$k]] = $v;
+                    $d[Model_DteGuia::$libro_cols[$k]] = $v;
             }
             // agregar detalle al libro
             $Libro->agregar($d);
@@ -103,8 +85,8 @@ class Controller_DteGuias extends Controller_Libros
         $Libro->setCaratula([
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_en_certificacion_resolucion : $Emisor->resolucion_fecha,
-            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->resolucion_numero,
+            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_certificacion_fecha : $Emisor->config_ambiente_produccion_fecha,
+            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->config_ambiente_produccion_numero,
             'TipoLibro' => 'ESPECIAL',
             'TipoEnvio' => 'TOTAL',
             'FolioNotificacion' => 1,

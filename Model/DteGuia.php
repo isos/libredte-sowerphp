@@ -148,4 +148,34 @@ class Model_DteGuia extends Model_Libro
         'Model_Contribuyente' => 'website\Dte'
     ); ///< Namespaces que utiliza esta clase
 
+    public static $libro_cols = [
+        'folio' => 'Folio',
+        'anulado' => 'Anulado',
+        'operacion' => 'Operacion',
+        'tipo' => 'TpoOper',
+        'fecha' => 'FchDoc',
+        'rut' => 'RUTDoc',
+        'razon_social' => 'RznSoc',
+        'neto' => 'MntNeto',
+        'tasa' => 'TasaImp',
+        'iva' => 'IVA',
+        'total' => 'MntTotal',
+        'modificado' => 'MntModificado',
+        'ref_dte' => 'TpoDocRef',
+        'ref_folio' => 'FolioDocRef',
+        'ref_fecha' => 'FchDocRef',
+    ]; ///< Columnas del archivo CSV del libro
+
+    /**
+     * Método que entrega el resumen real (de los detalles registrados) del
+     * libro
+     * @todo Programar método (por ahora no se está usando)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-12
+     */
+    public function getResumen()
+    {
+        return [];
+    }
+
 }

@@ -148,4 +148,43 @@ class Model_DteCompra extends Model_Libro
         'Model_Contribuyente' => 'website\Dte'
     ); ///< Namespaces que utiliza esta clase
 
+    public static $libro_cols = [
+        'Tipo Doc',
+        'Folio',
+        'Rut Contraparte',
+        'Tasa Impuesto',
+        'Razón Social Contraparte',
+        'Tipo Impuesto[1=IVA:2=LEY 18211]',
+        'Fecha Emisión',
+        'Anulado[A]',
+        'Monto Exento',
+        'Monto Neto',
+        'Monto IVA (Recuperable)',
+        'Cod IVA no Rec',
+        'Monto IVA no Rec',
+        'IVA Uso Común',
+        'Factor IVA Uso Comun',
+        'Cod Otro Imp (Con Crédito)',
+        'Tasa Otro Imp (Con Crédito)',
+        'Monto Otro Imp (Con Crédito)',
+        'Monto Total',
+        'Monto Otro Imp Sin Crédito',
+        'Monto Activo Fijo',
+        'Monto IVA Activo Fijo',
+        'IVA No Retenido',
+        'Sucursal SII',
+    ]; ///< Columnas del archivo CSV del libro
+
+    /**
+     * Método que entrega el resumen real (de los detalles registrados) del
+     * libro
+     * @todo Programar método (por ahora no se está usando)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-12
+     */
+    public function getResumen()
+    {
+        return [];
+    }
+
 }

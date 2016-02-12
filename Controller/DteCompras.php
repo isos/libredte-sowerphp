@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de compras
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-29
+ * @version 2016-02-12
  */
 class Controller_DteCompras extends Controller_Libros
 {
@@ -38,33 +38,6 @@ class Controller_DteCompras extends Controller_Libros
             'plural' => 'Compras',
         ]
     ]; ///< Configuración para las acciones del controlador
-
-    protected $libro_cols = [
-        'Tipo Doc',
-        'Folio',
-        'Rut Contraparte',
-        'Tasa Impuesto',
-        'Razón Social Contraparte',
-        'Tipo Impuesto[1=IVA:2=LEY 18211]',
-        'Fecha Emisión',
-        'Anulado[A]',
-        'Monto Exento',
-        'Monto Neto',
-        'Monto IVA (Recuperable)',
-        'Cod IVA no Rec',
-        'Monto IVA no Rec',
-        'IVA Uso Común',
-        'Factor IVA Uso Comun',
-        'Cod Otro Imp (Con Crédito)',
-        'Tasa Otro Imp (Con Crédito)',
-        'Monto Otro Imp (Con Crédito)',
-        'Monto Total',
-        'Monto Otro Imp Sin Crédito',
-        'Monto Activo Fijo',
-        'Monto IVA Activo Fijo',
-        'IVA No Retenido',
-        'Sucursal SII',
-    ]; ///< Columnas del archivo CSV del libro
 
     protected $detalle_cols = [
         'dte' => 'TpoDoc',
@@ -121,7 +94,7 @@ class Controller_DteCompras extends Controller_Libros
                 $DteRecibido = new Model_DteRecibido();
                 $DteRecibido->set($datos);
                 $DteRecibido->emisor = explode('-', str_replace('.', '', $datos['rut']))[0];
-                $DteRecibido->certificacion = $Receptor->certificacion;
+                $DteRecibido->certificacion = $Receptor->config_ambiente_en_certificacion;
                 $DteRecibido->receptor = $Receptor->rut;
                 $DteRecibido->usuario = $this->Auth->User->id;
                 try {

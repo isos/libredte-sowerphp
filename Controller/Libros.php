@@ -48,7 +48,7 @@ abstract class Controller_Libros extends \Controller_App
     /**
      * Acción que muestra la información del libro para cierto período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-25
+     * @version 2016-02-12
      */
     public function ver($periodo)
     {
@@ -65,15 +65,16 @@ abstract class Controller_Libros extends \Controller_App
         $this->set([
             'Emisor' => $Emisor,
             'Libro' => $Libro,
+            'resumen' => $Libro->getResumen(),
             'detalle' => $detalle,
-            'libro_cols' => $this->libro_cols,
+            'libro_cols' => $class::$libro_cols,
         ]);
     }
 
     /**
      * Acción que descarga los datos del libro del período en un archivo CSV
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-25
+     * @version 2016-02-12
      */
     public function csv($periodo)
     {
@@ -85,7 +86,8 @@ abstract class Controller_Libros extends \Controller_App
             );
             $this->redirect('/dte/'.$this->request->params['controller']);
         }
-        array_unshift($detalle, $this->libro_cols);
+        $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
+        array_unshift($detalle, $class::$libro_cols);
         \sowerphp\general\Utility_Spreadsheet_CSV::generate($detalle, strtolower($this->config['model']['plural']).'_'.$Emisor->rut.'-'.$Emisor->dv.'_'.$periodo);
     }
 

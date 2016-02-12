@@ -17,6 +17,7 @@ $(function() {
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#datos" aria-controls="datos" role="tab" data-toggle="tab">Datos básicos</a></li>
+        <li role="presentation"><a href="#resumen" aria-controls="resumen" role="tab" data-toggle="tab">Resumen</a></li>
 <?php if ($n_ventas) : ?>
         <li role="presentation"><a href="#detalle" aria-controls="detalle" role="tab" data-toggle="tab">Detalle</a></li>
         <li role="presentation"><a href="#estadisticas" aria-controls="estadisticas" role="tab" data-toggle="tab">Estadísticas</a></li>
@@ -66,6 +67,74 @@ new \sowerphp\general\View_Helper_Table([
     </div>
 </div>
 <!-- FIN DATOS BÁSICOS -->
+
+<!-- INICIO RESUMEN -->
+<div role="tabpanel" class="tab-pane" id="resumen">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Documentos con detalle registrado
+        </div>
+        <div class="panel-body">
+<?php
+foreach ($resumen as &$r) {
+    foreach ($r as &$v) {
+        if ($v)
+            $v = num($v);
+    }
+}
+$titulos = ['Tipo Doc.', '# docs', 'Anulados', 'Op. exen.', 'Exento', 'Neto', 'IVA', 'IVA propio', 'IVA terc.', 'Ley 18211', 'Monto total', 'No fact.', 'Total periodo'];
+array_unshift($resumen, $titulos);
+new \sowerphp\general\View_Helper_Table($resumen);
+?>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            Enviar libro agregando resúmenes manuales
+        </div>
+        <div class="panel-body">
+<?php
+$f = new \sowerphp\general\View_Helper_Form(false);
+echo $f->begin([
+    'id'=>'enviar_sii',
+    'action'=>$_base.'/dte/dte_ventas/enviar_sii/'.$Libro->periodo,
+    'onsubmit'=>'Form.check(\'enviar_sii\') && Form.checkSend()'
+]);
+echo $f->input([
+    'type' => 'js',
+    'id' => 'resumenes',
+    'titles' => $titulos,
+    'inputs' => [
+        ['name'=>'TpoDoc', 'check'=>'notempty integer'],
+        ['name'=>'TotDoc', 'check'=>'notempty integer'],
+        ['name'=>'TotAnulado', 'check'=>'integer'],
+        ['name'=>'TotOpExe', 'check'=>'integer'],
+        ['name'=>'TotMntExe', 'check'=>'integer'],
+        ['name'=>'TotMntNeto', 'check'=>'integer'],
+        ['name'=>'TotMntIVA', 'check'=>'integer'],
+        ['name'=>'TotIVAPropio', 'check'=>'integer'],
+        ['name'=>'TotIVATerceros', 'check'=>'integer'],
+        ['name'=>'TotLey18211', 'check'=>'integer'],
+        ['name'=>'TotMntTotal', 'check'=>'notempty integer'],
+        ['name'=>'TotMntNoFact', 'check'=>'integer'],
+        ['name'=>'TotMntPeriodo', 'check'=>'integer'],
+    ],
+]);
+?>
+            <div class="row">
+                <div class="form-group col-md-offset-3 col-md-6">
+                    <button type="submit" name="submit" class="btn btn-info" style="width:100%">
+                        Enviar libro al SII incorporando los resúmenes manuales
+                    </button>
+                </div>
+            </div>
+<?php
+echo $f->end(false);
+?>
+        </div>
+    </div>
+</div>
+<!-- FIN RESUMEN -->
 
 <?php if ($n_ventas) : ?>
 

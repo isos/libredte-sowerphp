@@ -39,28 +39,11 @@ class Controller_DteVentas extends Controller_Libros
         ]
     ]; ///< Configuración para las acciones del controlador
 
-    protected $libro_cols = [
-        'dte' => 'TpoDoc',
-        'folio' => 'NroDoc',
-        'tasa' => 'TasaImp',
-        'fecha' => 'FchDoc',
-        'sucursal_sii' => 'CdgSIISucur',
-        'rut' => 'RUTDoc',
-        'razon_social' => 'RznSoc',
-        'exento' => 'MntExe',
-        'neto' => 'MntNeto',
-        'iva' => 'MntIVA',
-        'impuesto_codigo' => 'CodImp',
-        'impuesto_tasa' => 'TasaImp',
-        'impuesto_monto' => 'MntImp',
-        'total' => 'MntTotal'
-    ];
-
     /**
      * Acción que envía el archivo XML del libro de ventas al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-27
+     * @version 2016-02-12
      */
     public function enviar_sii($periodo)
     {
@@ -93,7 +76,7 @@ class Controller_DteVentas extends Controller_Libros
             foreach ($venta as $k => $v) {
                 if (strpos($k, 'impuesto_')!==0) {
                     if ($v!==null)
-                        $d[$this->libro_cols[$k]] = $v;
+                        $d[Model_DteVenta::$libro_cols[$k]] = $v;
                 }
             }
             // agregar otros impuestos
@@ -112,12 +95,42 @@ class Controller_DteVentas extends Controller_Libros
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'RutEnvia' => $Firma->getID(),
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_en_certificacion_resolucion : $Emisor->resolucion_fecha,
-            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->resolucion_numero,
+            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_certificacion_fecha : $Emisor->config_ambiente_produccion_fecha,
+            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->config_ambiente_produccion_numero,
             'TipoOperacion' => 'VENTA',
             'TipoLibro' => 'MENSUAL',
             'TipoEnvio' => 'TOTAL',
         ]);
+        // si se viene de post entoces se setean resúmenes manuales
+        if (isset($_POST['TpoDoc'])) {
+            $resumen = [];
+            $n_tipos = count($_POST['TpoDoc']);
+            for ($i=0; $i<$n_tipos; $i++) {
+                $cols = [
+                    'TpoDoc',
+                    'TotDoc',
+                    'TotAnulado',
+                    'TotOpExe',
+                    'TotMntExe',
+                    'TotMntNeto',
+                    'TotMntIVA',
+                    'TotIVAPropio',
+                    'TotIVATerceros',
+                    'TotLey18211',
+                    'TotMntTotal',
+                    'TotMntNoFact',
+                    'TotMntPeriodo',
+                ];
+                $row = [];
+                foreach ($cols as $col) {
+                    if (!empty($_POST[$col][$i])) {
+                        $row[$col] = $_POST[$col][$i];
+                    }
+                }
+                $resumen[] = $row;
+            }
+            $Libro->setResumen($resumen);
+        }
         // obtener XML
         $Libro->setFirma($Firma);
         $xml = $Libro->generar();

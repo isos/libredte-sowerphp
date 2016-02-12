@@ -148,4 +148,88 @@ class Model_DteVenta extends Model_Libro
         'Model_Contribuyente' => 'website\Dte'
     ); ///< Namespaces que utiliza esta clase
 
+    public static $libro_cols = [
+        'dte' => 'TpoDoc',
+        'folio' => 'NroDoc',
+        'tasa' => 'TasaImp',
+        'fecha' => 'FchDoc',
+        'sucursal_sii' => 'CdgSIISucur',
+        'rut' => 'RUTDoc',
+        'razon_social' => 'RznSoc',
+        'exento' => 'MntExe',
+        'neto' => 'MntNeto',
+        'iva' => 'MntIVA',
+        'impuesto_codigo' => 'CodImp',
+        'impuesto_tasa' => 'TasaImp',
+        'impuesto_monto' => 'MntImp',
+        'total' => 'MntTotal'
+    ]; ///< Columnas del detalle del libro de ventas
+
+    /**
+     * Método que entrega el objeto del emisor del libro
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-12
+     */
+    public function getEmisor()
+    {
+        return (new Model_Contribuyentes())->get($this->emisor);
+    }
+
+    /**
+     * Método que entrega el resumen real (de los detalles registrados) del
+     * libro
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-12
+     */
+    public function getResumen()
+    {
+        $ventas = $this->getEmisor()->getVentas($this->periodo);
+        $Libro = new \sasco\LibreDTE\Sii\LibroCompraVenta();
+        foreach ($ventas as $venta) {
+            // armar detalle para agregar al libro
+            $d = [];
+            foreach ($venta as $k => $v) {
+                if (strpos($k, 'impuesto_')!==0) {
+                    if ($v!==null)
+                        $d[self::$libro_cols[$k]] = $v;
+                }
+            }
+            // agregar otros impuestos
+            if (!empty($venta['impuesto_codigo'])) {
+                $d['OtrosImp'] = [
+                    'CodImp' => $venta['impuesto_codigo'],
+                    'TasaImp' => $venta['impuesto_tasa'],
+                    'MntImp' => $venta['impuesto_monto'],
+                ];
+            }
+            // agregar detalle al libro
+            $Libro->agregar($d);
+        }
+        $resumen = $Libro->getResumen();
+        // limpiar resumen
+        $campos = [
+            'TpoDoc',
+            'TotDoc',
+            'TotAnulado',
+            'TotOpExe',
+            'TotMntExe',
+            'TotMntNeto',
+            'TotMntIVA',
+            'TotIVAPropio',
+            'TotIVATerceros',
+            'TotLey18211',
+            'TotMntTotal',
+            'TotMntNoFact',
+            'TotMntPeriodo',
+        ];
+        foreach ($resumen as &$r) {
+            foreach ($r as $var => &$value) {
+                if (!in_array($var, $campos)) {
+                    unset($r[$var]);
+                }
+            }
+        }
+        return $resumen;
+    }
+
 }
