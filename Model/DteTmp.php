@@ -141,9 +141,9 @@ class Model_DteTmp extends \Model_App
      * Método que genera el XML de EnvioDTE a partir de los datos ya
      * normalizados de un DTE temporal
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-27
+     * @version 2016-02-13
      */
-    public function getEnvioDte($folio = 0, \sasco\LibreDTE\Sii\Folios $Folios = null, \sasco\LibreDTE\FirmaElectronica $Firma = null)
+    public function getEnvioDte($folio = 0, \sasco\LibreDTE\Sii\Folios $Folios = null, \sasco\LibreDTE\FirmaElectronica $Firma = null, $RutReceptor = null)
     {
         $dte = json_decode($this->datos, true);
         if (!$dte)
@@ -161,7 +161,7 @@ class Model_DteTmp extends \Model_App
         $Emisor = $this->getEmisor();
         $EnvioDte->setCaratula([
             'RutEnvia' => $Firma ? $Firma->getID() : false,
-            'RutReceptor' => $Emisor->config_ambiente_en_certificacion ? '60803000-K' : $Dte->getReceptor(),
+            'RutReceptor' => $RutReceptor ? $RutReceptor : $Dte->getReceptor(),
             'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_certificacion_fecha : $Emisor->config_ambiente_produccion_fecha,
             'NroResol' => $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->config_ambiente_produccion_numero,
         ]);

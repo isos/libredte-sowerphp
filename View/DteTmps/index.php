@@ -10,7 +10,7 @@ foreach ($dtes as &$dte) {
         $dte->getReceptor()->rut.'-'.$dte->getReceptor()->dv,
         $dte->getReceptor()->razon_social,
         $dte->getDte()->tipo,
-        $dte->fecha,
+        \sowerphp\general\Utility_Date::format($dte->fecha),
         num($dte->total),
         $acciones
     ];

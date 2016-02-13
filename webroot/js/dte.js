@@ -344,5 +344,5 @@ DTE.check = function () {
         return false;
     // pedir confirmación de generación de factura
     DTE.calcular();
-    return Form.checkSend('Confirmar '+document.getElementById("TpoDocField").selectedOptions[0].textContent+' por $'+$('input[name="total"]').val()+' a '+$('input[name="RUTRecep"]').val());
+    return Form.checkSend('Confirmar '+document.getElementById("TpoDocField").selectedOptions[0].textContent+' por $'+__.num($('input[name="total"]').val())+' a '+$('input[name="RUTRecep"]').val());
 }

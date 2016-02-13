@@ -1,5 +1,11 @@
 <h1>Previsualización DTE</h1>
 <?php
+foreach (['MntExe', 'MntNeto', 'MntIVA', 'MntTotal'] as $m) {
+    if ($resumen[$m]) {
+        $resumen[$m] = num($resumen[$m]);
+    }
+}
+$resumen['FchDoc'] = \sowerphp\general\Utility_Date::format($resumen['FchDoc']);
 new \sowerphp\general\View_Helper_Table([
     ['Tipo', 'Folio', 'Tasa IVA', 'Fecha emisión', 'Sucursal SII', 'RUT receptor', 'Razón social receptor', 'Exento', 'Neto', 'IVA', 'Total'],
     $resumen

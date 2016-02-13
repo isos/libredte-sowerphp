@@ -478,7 +478,7 @@ class Controller_Documentos extends \Controller_App
      * Función de la API que permite emitir un DTE a partir de un documento
      * temporal, asignando folio, firmando y enviando al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-05
+     * @version 2016-02-13
      */
     public function _api_generar_POST()
     {
@@ -570,13 +570,18 @@ class Controller_Documentos extends \Controller_App
                 $DteReferencia->save();
             }
         }
-        // eliminar DTE temporal
+        // obtener EnvioDTE para el SII y eliminar DTE temporal
+        $EnvioDteSII = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma, '60803000-K');
+        if (!$EnvioDteSII->generar()) {
+            $DteEmitido->delete();
+            $this->Api->send('No fue posible generar el XML del EnvioDTE para enviar al SII. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
+        }
         $DteTmp->delete();
         // enviar DTE al SII y redireccionar a página del DTE
         if (!defined('_LibreDTE_CERTIFICACION_') and $Emisor->config_ambiente_en_certificacion) {
             define('_LibreDTE_CERTIFICACION_', true);
         }
-        $DteEmitido->track_id = $EnvioDte->enviar();
+        $DteEmitido->track_id = $EnvioDteSII->enviar();
         if ($DteEmitido->track_id)
             $DteEmitido->save();
         return $DteEmitido;
