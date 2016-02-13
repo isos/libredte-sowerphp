@@ -123,11 +123,19 @@ class Controller_DteCompras extends Controller_Libros
      * Acción que envía el archivo XML del libro de compras al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-29
+     * @version 2016-02-13
      */
     public function enviar_sii($periodo)
     {
         $Emisor = $this->getContribuyente();
+        // si el libro fue enviado y no es rectifica error
+        $DteCompra = new Model_DteCompra($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
+        if ($DteCompra->track_id and empty($_POST['CodAutRec'])) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Libro del período '.$periodo.' ya fue enviado, ahora sólo puede  hacer rectificaciones', 'error'
+            );
+            $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
+        }
         // si el periodo es mayor o igual al actual no se puede enviar
         if ($periodo >= date('Ym')) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -178,16 +186,21 @@ class Controller_DteCompras extends Controller_Libros
             $Libro->agregar($d);
         }
         // agregar carátula al libro
-        $Libro->setCaratula([
+        $caratula = [
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'RutEnvia' => $Firma->getID(),
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
-            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_en_certificacion_resolucion : $Emisor->resolucion_fecha,
-            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->resolucion_numero,
+            'FchResol' => $Emisor->config_ambiente_en_certificacion ? $Emisor->config_ambiente_certificacion_fecha : $Emisor->config_ambiente_produccion_fecha,
+            'NroResol' =>  $Emisor->config_ambiente_en_certificacion ? 0 : $Emisor->config_ambiente_produccion_numero,
             'TipoOperacion' => 'COMPRA',
             'TipoLibro' => 'MENSUAL',
             'TipoEnvio' => 'TOTAL',
-        ]);
+        ];
+        if (!empty($_POST['CodAutRec'])) {
+            $caratula['TipoLibro'] = 'RECTIFICA';
+            $caratula['CodAutRec'] = $_POST['CodAutRec'];
+        }
+        $Libro->setCaratula($caratula);
         // obtener XML
         $Libro->setFirma($Firma);
         $xml = $Libro->generar();
@@ -206,10 +219,11 @@ class Controller_DteCompras extends Controller_Libros
             $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
         }
         // guardar libro de compras
-        $DteCompra = new Model_DteCompra($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
         $DteCompra->documentos = $documentos;
         $DteCompra->xml = base64_encode($xml);
         $DteCompra->track_id = $track_id;
+        $DteCompra->revision_estado = null;
+        $DteCompra->revision_detalle = null;
         $DteCompra->save();
         \sowerphp\core\Model_Datasource_Session::message(
             'Libro de compras período '.$periodo.' envíado', 'ok'

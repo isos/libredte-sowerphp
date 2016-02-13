@@ -127,6 +127,31 @@ abstract class Controller_Libros extends \Controller_App
     abstract public function enviar_sii($periodo);
 
     /**
+     * Acción que permite solicitar código de autorización para rectificar un
+     * libro ya enviado al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-13
+     */
+    public function enviar_rectificacion($periodo)
+    {
+        $Emisor = $this->getContribuyente();
+        // crear objeto del libro
+        $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$Libro->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No ha enviado el libro del período '.$periodo.' SII, no puede rectificar', 'error'
+            );
+            $this->redirect(str_replace('enviar_rectificacion', 'ver', $this->request->request));
+        }
+        // asignar variables vista
+        $this->set([
+            'Emisor' => $Emisor,
+            'periodo' => $periodo,
+        ]);
+    }
+
+    /**
      * Acción para enviar el libro de un período sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-12-25

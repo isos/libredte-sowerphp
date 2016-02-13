@@ -58,10 +58,14 @@ new \sowerphp\general\View_Helper_Table([
 <?php if ($Libro->track_id) : ?>
         <p>
             <a class="btn btn-info" href="<?=$_base?>/dte/dte_ventas/actualizar_estado/<?=$Libro->periodo?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_ventas/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del libro al SII">solicitar nueva revisión</a></span>
+            <span style="font-size:0.8em">
+                <a href="<?=$_base?>/dte/dte_ventas/solicitar_revision/<?=$Libro->periodo?>" title="Solicitar nueva revisión del libro al SII">solicitar nueva revisión</a>
+                <br/>
+                <a href="<?=$_base?>/dte/dte_ventas/enviar_rectificacion/<?=$Libro->periodo?>" title="Enviar rectificación del libro al SII">enviar rectificación</a>
+            </span>
         </p>
 <?php else: ?>
-        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_ventas/enviar_sii/<?=$Libro->periodo?>" role="button">Enviar libro al SII</a></p>
+        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_ventas/enviar_sii/<?=$Libro->periodo?>" role="button" onclick="return Form.checkSend('¿Confirmar el envio del libro al SII?')">Enviar libro al SII</a></p>
 <?php endif; ?>
         </div>
     </div>
@@ -119,6 +123,12 @@ echo $f->input([
         ['name'=>'TotMntNoFact', 'check'=>'integer'],
         ['name'=>'TotMntPeriodo', 'check'=>'integer'],
     ],
+]);
+$f->setStyle('horizontal');
+echo $f->input([
+    'name' => 'CodAutRec',
+    'label'=>'Autorización rectificación',
+    'help' => 'Código de autorización de rectificación obtenido desde el SII (sólo si es rectificación)',
 ]);
 ?>
             <div class="row">

@@ -43,11 +43,19 @@ class Controller_DteVentas extends Controller_Libros
      * Acción que envía el archivo XML del libro de ventas al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-12
+     * @version 2016-02-13
      */
     public function enviar_sii($periodo)
     {
         $Emisor = $this->getContribuyente();
+        // si el libro fue enviado y no es rectifica error
+        $DteVenta = new Model_DteVenta($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
+        if ($DteVenta->track_id and empty($_POST['CodAutRec'])) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Libro del período '.$periodo.' ya fue enviado, ahora sólo puede  hacer rectificaciones', 'error'
+            );
+            $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
+        }
         // si el periodo es mayor o igual al actual no se puede enviar
         if ($periodo >= date('Ym')) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -91,7 +99,7 @@ class Controller_DteVentas extends Controller_Libros
             $Libro->agregar($d);
         }
         // agregar carátula al libro
-        $Libro->setCaratula([
+        $caratula = [
             'RutEmisorLibro' => $Emisor->rut.'-'.$Emisor->dv,
             'RutEnvia' => $Firma->getID(),
             'PeriodoTributario' => substr($periodo, 0, 4).'-'.substr($periodo, 4),
@@ -100,8 +108,13 @@ class Controller_DteVentas extends Controller_Libros
             'TipoOperacion' => 'VENTA',
             'TipoLibro' => 'MENSUAL',
             'TipoEnvio' => 'TOTAL',
-        ]);
-        // si se viene de post entoces se setean resúmenes manuales
+        ];
+        if (!empty($_POST['CodAutRec'])) {
+            $caratula['TipoLibro'] = 'RECTIFICA';
+            $caratula['CodAutRec'] = $_POST['CodAutRec'];
+        }
+        $Libro->setCaratula($caratula);
+        // se setean resúmenes manuales enviados por post
         if (isset($_POST['TpoDoc'])) {
             $resumen = [];
             $n_tipos = count($_POST['TpoDoc']);
@@ -149,10 +162,11 @@ class Controller_DteVentas extends Controller_Libros
             $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
         }
         // guardar libro de ventas
-        $DteVenta = new Model_DteVenta($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
         $DteVenta->documentos = $documentos;
         $DteVenta->xml = base64_encode($xml);
         $DteVenta->track_id = $track_id;
+        $DteVenta->revision_estado = null;
+        $DteVenta->revision_detalle = null;
         $DteVenta->save();
         \sowerphp\core\Model_Datasource_Session::message(
             'Libro de ventas período '.$periodo.' envíado', 'ok'
