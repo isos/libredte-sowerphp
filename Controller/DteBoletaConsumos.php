@@ -93,7 +93,7 @@ class Controller_DteBoletaConsumos extends \Controller_Maintainer
             \sowerphp\core\Model_Datasource_Session::message(
                 'No fue posible generar el reporte de consumo de folios<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
             );
-            $this->redirect('/dte/dte_boleta_consumos');
+            $this->redirect('/dte/dte_boleta_consumos/listar');
         }
         // entregar XML
         $file = 'consumo_folios_'.$Emisor->rut.'-'.$Emisor->dv.'_'.$dia.'.xml';
@@ -111,11 +111,12 @@ class Controller_DteBoletaConsumos extends \Controller_Maintainer
      */
     public function enviar_sii($dia)
     {
+        $filterListar = !empty($_GET['listar']) ? base64_decode($_GET['listar']) : '';
         if ($dia>=date('Y-m-d')) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Sólo se pueden enviar consumos de folios de días pasados', 'error'
             );
-            $this->redirect('/dte/dte_boleta_consumos');
+            $this->redirect('/dte/dte_boleta_consumos/listar'.$filterListar);
         }
         $Emisor = $this->getContribuyente();
         $DteBoletaConsumo = new Model_DteBoletaConsumo($Emisor->rut, $dia, (int)$Emisor->config_ambiente_en_certificacion);
@@ -129,7 +130,6 @@ class Controller_DteBoletaConsumos extends \Controller_Maintainer
                 'Reporte de consumo de folios del día '.$dia.' fue envíado al SII. Ahora debe consultar su estado con el Track ID '.$track_id, 'ok'
             );
         }
-        $filterListar = !empty($_GET['listar']) ? base64_decode($_GET['listar']) : '';
         $this->redirect('/dte/dte_boleta_consumos/listar'.$filterListar);
     }
 
