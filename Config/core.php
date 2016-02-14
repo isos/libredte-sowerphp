@@ -34,7 +34,7 @@
     '/dte_tmps' => [
         'name' => 'Documentos temporales',
         'desc' => 'Revisar documentos temporales',
-        'icon' => 'fa fa-list',
+        'icon' => 'fa fa-file-o',
     ],
     '/dte_emitidos/listar' => [
         'name' => 'Documentos emitidos',
@@ -47,7 +47,7 @@
         'icon' => 'fa fa-sign-in',
     ],
     '/dte_intercambios' => [
-        'name' => 'Intercambio entre contribuyentes',
+        'name' => 'Bandeja de intercambio',
         'desc' => 'Menú de intercambio de DTE entre contribuyentes',
         'icon' => 'fa fa-exchange',
     ],
@@ -65,6 +65,16 @@
         'name' => 'Libro de guías',
         'desc' => 'Acceder al Libro de Guías de despacho',
         'icon' => 'fa fa-book',
+    ],
+    '/dte_boletas' => [
+        'name' => 'Libro de boletas',
+        'desc' => 'Acceder al Libro de Boletas',
+        'icon' => 'fa fa-book',
+    ],
+    '/dte_boleta_consumos/listar/1/dia/D' => [
+        'name' => 'Consumo de folios',
+        'desc' => 'Reporte de consumo de folios de boletas',
+        'icon' => 'fa fa-archive',
     ],
     '/admin' => [
         'name' => 'Administración',

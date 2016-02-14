@@ -264,7 +264,7 @@ DTE.calcular = function () {
 
 DTE.check = function () {
     var status = true, TpoDoc = parseInt(document.getElementById("TpoDocField").value);
-    var dte_check_detalle = [33, 34];
+    var dte_check_detalle = [33, 34, 39, 41];
     var n_itemAfecto = 0, n_itemExento = 0;
     // revisión general formulario
     if (!Form.check())
@@ -297,8 +297,8 @@ DTE.check = function () {
                 return false;
             }
         }
-        // si el documento es 34 forzar que todos los detalles sean exentos
-        if (TpoDoc==34) {
+        // si el documento es 34 o 41 forzar que todos los detalles sean exentos
+        if (TpoDoc==34 || TpoDoc==41) {
             $('select[name="IndExe[]"]').get(i).value = 1;
         }
         // contabilizar items afectos
@@ -309,9 +309,15 @@ DTE.check = function () {
     });
     if (!status)
         return false;
-    // si no hay afecto pero si exento y el documento es 33 se cambia a 34
-    if (!n_itemAfecto && n_itemExento && TpoDoc==33) {
-        document.getElementById("TpoDocField").value = 34;
+    // si no hay afecto pero si exento y el documento es 33 se cambia a 34 o
+    // si es 39 se cambia a 41
+    if (!n_itemAfecto && n_itemExento) {
+        if (TpoDoc==33) {
+            document.getElementById("TpoDocField").value = 34;
+        }
+        if (TpoDoc==39) {
+            document.getElementById("TpoDocField").value = 41;
+        }
     }
     // revisión referencia del dte
     $('select[name="CodRef[]"]').each(function (i, e) {

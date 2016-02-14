@@ -498,4 +498,21 @@ CREATE TABLE dte_guia (
 		ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- tabla para consumo de folios de boletas
+DROP TABLE IF EXISTS dte_boleta_consumo CASCADE;
+CREATE TABLE dte_boleta_consumo (
+        emisor INTEGER NOT NULL,
+        dia DATE NOT NULL,
+        certificacion BOOLEAN NOT NULL DEFAULT false,
+        secuencia INTEGER NOT NULL,
+        xml TEXT NOT NULL,
+        track_id INTEGER,
+        revision_estado VARCHAR(100),
+        revision_detalle TEXT,
+        CONSTRAINT dte_boleta_consumo_pk PRIMARY KEY (emisor, dia, certificacion),
+        CONSTRAINT dte_boleta_consumo_emisor_fk FOREIGN KEY (emisor)
+                REFERENCES contribuyente (rut) MATCH FULL
+                ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 COMMIT;

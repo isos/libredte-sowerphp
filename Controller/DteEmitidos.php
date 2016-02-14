@@ -96,7 +96,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que muestra la página de un DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-02-14
      */
     public function ver($dte, $folio)
     {
@@ -116,17 +116,25 @@ class Controller_DteEmitidos extends \Controller_App
             'Receptor' => $DteEmitido->getReceptor(),
             'emails' => $DteEmitido->getEmails(),
             'referencias' => $DteEmitido->getReferencias(),
+            'enviar_sii' => !in_array($DteEmitido->dte, [39, 41]),
         ]);
     }
 
     /**
      * Acción que envía el DTE al SII si este no ha sido envíado (no tiene track_id)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2016-02-14
      */
     public function enviar_sii($dte, $folio)
     {
         $Emisor = $this->getContribuyente();
+        // si es boleta no se puede enviar
+        if (in_array($dte, [39, 41])) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Documento de tipo '.$dte.' no se envía al SII', 'warning'
+            );
+            $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
+        }
         // obtener DTE emitido
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists()) {

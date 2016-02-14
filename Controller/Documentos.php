@@ -285,7 +285,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-30
+     * @version 2016-02-13
      */
     public function previsualizacion()
     {
@@ -406,6 +406,10 @@ class Controller_Documentos extends \Controller_App
                 if (!empty($_POST[$d][$i])) {
                     $detalle[$d] = $_POST[$d][$i];
                 }
+            }
+            // si es boleta y el item no es exento se le agrega el IVA al precio
+            if ($dte['Encabezado']['IdDoc']['TipoDTE']==39 and (!isset($detalle['IndExe']) or !$detalle['IndExe'])) {
+                $detalle['PrcItem'] += round($detalle['PrcItem'] * (\sasco\LibreDTE\Sii::getIVA()/100));
             }
             // descuento
             if (!empty($_POST['ValorDR'][$i]) and !empty($_POST['TpoValor'][$i])) {
@@ -570,20 +574,24 @@ class Controller_Documentos extends \Controller_App
                 $DteReferencia->save();
             }
         }
-        // obtener EnvioDTE para el SII y eliminar DTE temporal
-        $EnvioDteSII = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma, '60803000-K');
-        if (!$EnvioDteSII->generar()) {
-            $DteEmitido->delete();
-            $this->Api->send('No fue posible generar el XML del EnvioDTE para enviar al SII. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
+        // obtener EnvioDTE para el SII y enviar si no es boleta
+        if (!in_array($DteEmitido->dte, [39, 41])) {
+            $EnvioDteSII = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma, '60803000-K');
+            if (!$EnvioDteSII->generar()) {
+                $DteEmitido->delete();
+                $this->Api->send('No fue posible generar el XML del EnvioDTE para enviar al SII. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
+            }
+            if (!defined('_LibreDTE_CERTIFICACION_') and $Emisor->config_ambiente_en_certificacion) {
+                define('_LibreDTE_CERTIFICACION_', true);
+            }
+            $DteEmitido->track_id = $EnvioDteSII->enviar();
+            if ($DteEmitido->track_id) {
+                $DteEmitido->save();
+            }
         }
+        // eliminar DTE temporal
         $DteTmp->delete();
-        // enviar DTE al SII y redireccionar a página del DTE
-        if (!defined('_LibreDTE_CERTIFICACION_') and $Emisor->config_ambiente_en_certificacion) {
-            define('_LibreDTE_CERTIFICACION_', true);
-        }
-        $DteEmitido->track_id = $EnvioDteSII->enviar();
-        if ($DteEmitido->track_id)
-            $DteEmitido->save();
+        // entregar DTE emitido al cliente de la API
         return $DteEmitido;
     }
 
@@ -591,7 +599,7 @@ class Controller_Documentos extends \Controller_App
      * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
      * al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-30
+     * @version 2016-02-14
      */
     public function generar($receptor, $dte, $codigo)
     {
@@ -609,16 +617,22 @@ class Controller_Documentos extends \Controller_App
             $this->redirect('/dte/dte_tmps');
         }
         $DteEmitido = (new Model_DteEmitido())->set($response['body']);
-        if ($DteEmitido->track_id) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'Documento emitido y envíado al SII, ahora debe verificar estado del envío. TrackID: '.$DteEmitido->track_id, 'ok'
-            );
+        if (!in_array($DteEmitido->dte, [39, 41])) {
+            if ($DteEmitido->track_id) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Documento emitido y envíado al SII, ahora debe verificar estado del envío. TrackID: '.$DteEmitido->track_id, 'ok'
+                );
+            } else {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Documento emitido, pero no pudo ser envíado al SII, debe reenviar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'warning'
+                );
+            }
         } else {
             \sowerphp\core\Model_Datasource_Session::message(
-                'Documento emitido, pero no pudo ser envíado al SII, debe reenviar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'warning'
+                'Documento emitido', 'ok'
             );
         }
-        $this->redirect('/dte/dte_emitidos/ver/'.$DteEmitido->dte.'/'.$DteEmitido->folio.'/'.$DteEmitido->certificacion);
+        $this->redirect('/dte/dte_emitidos/ver/'.$DteEmitido->dte.'/'.$DteEmitido->folio);
     }
 
     /**

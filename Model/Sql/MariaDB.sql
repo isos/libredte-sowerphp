@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS dte_intercambio_recepcion_dte CASCADE;
 DROP TABLE IF EXISTS dte_intercambio_resultado CASCADE;
 DROP TABLE IF EXISTS dte_intercambio_resultado_dte CASCADE;
 DROP TABLE IF EXISTS dte_guia CASCADE;
+DROP TABLE IF EXISTS dte_boleta_consumo CASCADE;
 SET foreign_key_checks = 1;
 
 -- tabla para firmas electrónicas
@@ -497,6 +498,22 @@ CREATE TABLE dte_guia (
 	CONSTRAINT dte_guia_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL
 		ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- tabla para consumo de folios de boletas
+CREATE TABLE dte_boleta_consumo (
+        emisor INTEGER NOT NULL,
+        dia DATE NOT NULL,
+        certificacion BOOLEAN NOT NULL DEFAULT false,
+        secuencia INTEGER NOT NULL,
+        xml TEXT NOT NULL,
+        track_id INTEGER,
+        revision_estado VARCHAR(100),
+        revision_detalle TEXT,
+        CONSTRAINT dte_boleta_consumo_pk PRIMARY KEY (emisor, dia, certificacion),
+        CONSTRAINT dte_boleta_consumo_emisor_fk FOREIGN KEY (emisor)
+                REFERENCES contribuyente (rut) MATCH FULL
+                ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 COMMIT;

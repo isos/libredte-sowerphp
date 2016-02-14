@@ -24,41 +24,43 @@ $(function() {
 <!-- INICIO DATOS BÁSICOS -->
 <div role="tabpanel" class="tab-pane active" id="datos">
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-<?=$enviar_sii?9:12?>">
 <?php
 new \sowerphp\general\View_Helper_Table([
     ['Documento', 'Folio', 'Receptor', 'Exento', 'Neto', 'IVA', 'Total'],
     [$DteEmitido->getTipo()->tipo, $DteEmitido->folio, $Receptor->razon_social, num($DteEmitido->exento), num($DteEmitido->neto), num($DteEmitido->iva), num($DteEmitido->total)],
 ]);
 ?>
-        <div class="row">
-            <div class="col-md-6">
-                <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/pdf/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
-                    <span class="fa fa-file-pdf-o" style="font-size:24px"></span>
-                    Descargar documento en PDF
-                </a>
-            </div>
-            <div class="col-md-6">
-                <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/xml/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
-                    <span class="fa fa-file-code-o" style="font-size:24px"></span>
-                    Descargar documento en XML
-                </a>
+            <div class="row">
+                <div class="col-md-6">
+                    <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/pdf/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
+                        <span class="fa fa-file-pdf-o" style="font-size:24px"></span>
+                        Descargar documento en PDF
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/xml/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
+                        <span class="fa fa-file-code-o" style="font-size:24px"></span>
+                        Descargar documento en XML
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-3 center bg-info">
-        <span class="lead">Track ID SII: <?=$DteEmitido->track_id?></span>
-        <p><strong><?=$DteEmitido->revision_estado?></strong></p>
-        <p><?=$DteEmitido->revision_detalle?></p>
+<?php if ($enviar_sii) : ?>
+        <div class="col-md-3 center bg-info">
+            <span class="lead">Track ID SII: <?=$DteEmitido->track_id?></span>
+            <p><strong><?=$DteEmitido->revision_estado?></strong></p>
+            <p><?=$DteEmitido->revision_detalle?></p>
 <?php if ($DteEmitido->track_id) : ?>
-        <p>
-            <a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/actualizar_estado/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Actualizar estado</a><br/>
-            <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a></span>
-        </p>
+            <p>
+                <a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/actualizar_estado/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Actualizar estado</a><br/>
+                <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a></span>
+            </p>
 <?php else: ?>
-        <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/enviar_sii/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Enviar documento al SII</a></p>
+            <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/enviar_sii/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Enviar documento al SII</a></p>
 <?php endif; ?>
         </div>
+<?php endif; ?>
     </div>
 </div>
 <!-- INICIO DATOS BÁSICOS -->

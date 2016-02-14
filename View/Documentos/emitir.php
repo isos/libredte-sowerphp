@@ -15,8 +15,8 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     </div>
     <!-- DATOS DEL EMISOR -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name'=>'GiroEmis', 'placeholder' => 'Giro del emisor', 'value'=>(isset($DteEmisor)?$DteEmisor['GiroEmis']:$Emisor->giro), 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
-        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'Acteco', 'options' => $actividades_economicas, 'value'=>(isset($DteEmisor)?$DteEmisor['Acteco']:$Emisor->actividad_economica), 'check' => 'notempty'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name'=>'GiroEmis', 'placeholder' => 'Giro del emisor', 'value'=>(isset($DteEmisor)?(isset($DteEmisor['GiroEmis'])?$DteEmisor['GiroEmis']:$DteEmisor['GiroEmisor']):$Emisor->giro), 'check' => 'notempty', 'attr' => 'maxlength="80"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'Acteco', 'options' => $actividades_economicas, 'value'=>((isset($DteEmisor) and isset($DteEmisor['Acteco']))?$DteEmisor['Acteco']:$Emisor->actividad_economica), 'check' => 'notempty'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['name' => 'DirOrigen', 'placeholder' => 'Dirección del emisor', 'value'=>(isset($DteEmisor['DirOrigen'])?$DteEmisor['DirOrigen']:$Emisor->direccion), 'check' => 'notempty', 'attr' => 'maxlength="70"'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['type' => 'select', 'name' => 'CmnaOrigen', 'value' => (isset($DteEmisor)?$DteEmisor['CmnaOrigen']:$Emisor->comuna), 'options' => $comunas, 'check' => 'notempty'])?></div>
     </div>
@@ -79,6 +79,10 @@ if (isset($DteEmitido)) {
         $Detalle = [$Detalle];
     $detalle = [];
     foreach ($Detalle as $d) {
+        if ($DteEmitido->dte==39 and (!isset($d['IndExe']) or !$d['IndExe'])) {
+            $d['PrcItem'] = round($d['PrcItem']/(1+(\sasco\LibreDTE\Sii::getIVA())/100));
+            $d['MontoItem'] = $d['PrcItem'] * $d['QtyItem'];
+        }
         $detalle[] = [
             'VlrCodigo' => isset($d['CdgItem']['VlrCodigo']) ? $d['CdgItem']['VlrCodigo'] : '',
             'NmbItem' => isset($d['NmbItem']) ? $d['NmbItem'] : '',

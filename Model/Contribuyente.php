@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Clase para mapear la tabla contribuyente de la base de datos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-27
+ * @version 2016-02-14
  */
 class Model_Contribuyente extends \Model_App
 {
@@ -783,6 +783,123 @@ class Model_Contribuyente extends \Model_App
             'pass' => $this->{'config_email_'.$email.'_pass'},
         ]);
         return $Imap->isConnected() ? $Imap : false;
+    }
+
+    /**
+     * Método que entrega el resumen de las boletas por períodos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-14
+     */
+    public function getResumenBoletasPeriodos()
+    {
+        $periodo = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(fecha, "%Y%m")';
+        return $this->db->getTable('
+            SELECT '.$periodo.' AS periodo, COUNT(*) AS emitidas
+            FROM dte_emitido
+            WHERE emisor = :rut AND certificacion = :certificacion AND dte IN (39, 41)
+            GROUP BY '.$periodo.'
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
+     * Método que entrega el resumen de las boletas de un período
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-14
+     */
+    public function getBoletas($periodo)
+    {
+        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(e.fecha, \'YYYYmm\')' : 'DATE_FORMAT(e.fecha, "%Y%m")';
+        return $this->db->getTable('
+            SELECT
+                e.dte,
+                e.folio,
+                e.fecha,
+                '.$this->db->concat('r.rut', '-', 'r.dv').' AS rut,
+                e.exento,
+                e.total,
+                a.codigo AS anulada
+            FROM
+                dte_emitido AS e
+                LEFT JOIN dte_referencia AS a ON
+                    a.emisor = e.emisor
+                    AND a.referencia_dte = e.dte
+                    AND a.referencia_folio = e.folio
+                    AND a.certificacion = e.certificacion
+                    AND a.codigo = 1,
+                contribuyente AS r
+            WHERE
+                e.receptor = r.rut
+                AND e.emisor = :rut
+                AND e.certificacion = :certificacion
+                AND e.dte IN (39, 41)
+                AND '.$periodo_col.' = :periodo
+            ORDER BY e.fecha, e.dte, e.folio
+        ', [
+            ':rut' => $this->rut,
+            ':certificacion' => (int)$this->config_ambiente_en_certificacion,
+            ':periodo' => $periodo,
+        ]);
+    }
+
+    /**
+     * Método que entrega los documentos para el reporte de consumo de folios de
+     * las boletas electrónicas
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-14
+     */
+    public function getDocumentosConsumoFolios($desde, $hasta = null)
+    {
+        if (!$hasta)
+            $hasta = $desde;
+        return $this->db->getTable('
+            (
+                SELECT
+                    dte,
+                    folio,
+                    tasa,
+                    fecha,
+                    exento,
+                    neto,
+                    iva,
+                    total
+                FROM
+                    dte_emitido AS e
+                WHERE
+                    fecha BETWEEN :desde AND :hasta
+                    AND emisor = :rut
+                    AND certificacion = :certificacion
+                    AND dte IN (39, 41)
+            ) UNION (
+                SELECT
+                    e.dte,
+                    e.folio,
+                    e.tasa,
+                    e.fecha,
+                    e.exento,
+                    e.neto,
+                    e.iva,
+                    e.total
+                FROM
+                    dte_referencia AS r
+                    JOIN dte_emitido AS e ON
+                        r.emisor = e.emisor
+                        AND r.dte = e.dte
+                        AND r.folio = e.folio
+                        AND r.certificacion = e.certificacion
+                WHERE
+                    r.emisor = :rut
+                    AND r.dte = 61
+                    AND r.certificacion = :certificacion
+                    AND r.referencia_dte IN (39, 41)
+                    AND e.fecha BETWEEN :desde AND :hasta
+            )
+            ORDER BY fecha, dte, folio
+        ', [
+            ':rut' => $this->rut,
+            ':certificacion' => (int)$this->config_ambiente_en_certificacion,
+            ':desde' => $desde,
+            ':hasta' => $hasta,
+        ]);
     }
 
     /**
