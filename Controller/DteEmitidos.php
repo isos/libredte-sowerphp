@@ -360,7 +360,7 @@ class Controller_DteEmitidos extends \Controller_App
         $webVerificacion = $this->request->url.'/boletas';
         $data = [
             'xml' => $DteEmitido->xml,
-            'cedible' => $cedible,
+            'cedible' => !in_array($DteEmitido->dte, [39,41]) ? $cedible : false,
             'compress' => false,
             'webVerificacion' => in_array($DteEmitido->dte, [39,41]) ? $webVerificacion : false,
         ];
