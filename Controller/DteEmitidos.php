@@ -357,10 +357,12 @@ class Controller_DteEmitidos extends \Controller_App
             $this->redirect('/dte/documentos/consultar');
         }
         // armar datos con archivo XML y flag para indicar si es cedible o no
+        $webVerificacion = $this->request->url.'/boletas';
         $data = [
             'xml' => $DteEmitido->xml,
             'cedible' => $cedible,
             'compress' => false,
+            'webVerificacion' => in_array($DteEmitido->dte, [39,41]) ? $webVerificacion : false,
         ];
         // si hay un logo para la empresa se usa
         $logo = \sowerphp\core\Configure::read('dte.logos.dir').'/'.$Emisor->rut.'.png';
