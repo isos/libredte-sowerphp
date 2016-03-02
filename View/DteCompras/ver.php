@@ -54,7 +54,7 @@ new \sowerphp\general\View_Helper_Table([
         <span class="lead">Track ID SII: <?=$Libro->track_id?></span>
         <p><strong><?=$Libro->revision_estado?></strong></p>
         <p><?=str_replace("\n", '<br/>', $Libro->revision_detalle)?></p>
-<?php if ($Libro->track_id) : ?>
+<?php if ($Libro->track_id and $Libro->getEstado()!='LRH') : ?>
         <p>
             <a class="btn btn-info" href="<?=$_base?>/dte/dte_compras/actualizar_estado/<?=$Libro->periodo?>" role="button">Actualizar estado</a><br/>
             <span style="font-size:0.8em">

@@ -43,14 +43,14 @@ class Controller_DteVentas extends Controller_Libros
      * Acción que envía el archivo XML del libro de ventas al SII
      * Si no hay documentos en el período se enviará sin movimientos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-13
+     * @version 2016-03-02
      */
     public function enviar_sii($periodo)
     {
         $Emisor = $this->getContribuyente();
         // si el libro fue enviado y no es rectifica error
         $DteVenta = new Model_DteVenta($Emisor->rut, $periodo, (int)$Emisor->config_ambiente_en_certificacion);
-        if ($DteVenta->track_id and empty($_POST['CodAutRec'])) {
+        if ($DteVenta->track_id and empty($_POST['CodAutRec']) and $DteVenta->getEstado()!='LRH') {
             \sowerphp\core\Model_Datasource_Session::message(
                 'Libro del período '.$periodo.' ya fue enviado, ahora sólo puede  hacer rectificaciones', 'error'
             );

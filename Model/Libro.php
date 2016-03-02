@@ -60,4 +60,16 @@ abstract class Model_Libro extends \Model_App
         }
     }
 
+    /**
+     * Método que entrega el estado (de 3 letras) del envío del libro
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-02
+     */
+    public function getEstado()
+    {
+        if (!$this->revision_estado)
+            return null;
+        return substr($this->revision_estado, 0, 3);
+    }
+
 }
