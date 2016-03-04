@@ -188,7 +188,7 @@ class Controller_Documentos extends \Controller_App
         // guardar datos del receptor
         $Receptor = $this->guardarReceptor($this->Api->data['Encabezado']['Receptor']);
         if (!$Receptor) {
-            $this->Api->send('No fue posible guardar al receptor');
+            $this->Api->send('No fue posible guardar al receptor', 500);
         }
         // construir arreglo con datos del DTE
         $default = [
@@ -922,7 +922,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Método que guarda los datos del Emisor
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-28
+     * @version 2016-03-04
      */
     private function guardarEmisor($datos)
     {
@@ -945,14 +945,13 @@ class Controller_Documentos extends \Controller_App
             $Emisor->comuna = $datos['CmnaOrigen'];
         } else {
             $comuna = (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getComunaByName($datos['CmnaOrigen']);
-            if (!$comuna)
-                return false;
-            $Emisor->comuna = $comuna;
+            if ($comuna) {
+                $Emisor->comuna = $comuna;
+            }
         }
         $Emisor->modificado = date('Y-m-d H:i:s');
         try {
-            $Emisor->save();
-            return true;
+            return $Emisor->save();
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             return false;
         }
@@ -961,7 +960,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Método que guarda un Receptor
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-03-04
      */
     private function guardarReceptor($datos)
     {
@@ -984,15 +983,14 @@ class Controller_Documentos extends \Controller_App
                 $Receptor->comuna = $datos['CmnaRecep'];
             } else {
                 $comuna = (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getComunaByName($datos['CmnaRecep']);
-                if (!$comuna)
-                    return false;
-                $Receptor->comuna = $comuna;
+                if ($comuna) {
+                    $Receptor->comuna = $comuna;
+                }
             }
         }
         $Receptor->modificado = date('Y-m-d H:i:s');
         try {
-            $Receptor->save();
-            return $Receptor;
+            return $Receptor->save() ? $Receptor : false;
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             return false;
         }
