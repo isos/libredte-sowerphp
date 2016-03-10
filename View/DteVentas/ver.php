@@ -37,16 +37,22 @@ new \sowerphp\general\View_Helper_Table([
 ]);
 ?>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <a class="btn btn-default btn-lg btn-block<?=!$n_ventas?' disabled':''?>" href="<?=$_base?>/dte/dte_ventas/csv/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-excel-o" style="font-size:24px"></span>
-                    Descargar libro de ventas en CSV
+                    Descargar CSV
                 </a>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <a class="btn btn-default btn-lg btn-block<?=!$Libro->xml?' disabled':''?>" href="<?=$_base?>/dte/dte_ventas/pdf/<?=$Libro->periodo?>" role="button">
+                    <span class="fa fa-file-pdf-o" style="font-size:24px"></span>
+                    Descargar PDF
+                </a>
+            </div>
+            <div class="col-md-4">
                 <a class="btn btn-default btn-lg btn-block<?=!$Libro->xml?' disabled':''?>" href="<?=$_base?>/dte/dte_ventas/xml/<?=$Libro->periodo?>" role="button">
                     <span class="fa fa-file-code-o" style="font-size:24px"></span>
-                    Descargar libro de ventas en XML
+                    Descargar XML
                 </a>
             </div>
         </div>

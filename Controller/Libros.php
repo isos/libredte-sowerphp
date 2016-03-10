@@ -92,6 +92,45 @@ abstract class Controller_Libros extends \Controller_App
     }
 
     /**
+     * Acción que descarga el archivo PDF del libro
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-09
+     */
+    public function pdf($periodo)
+    {
+        $Emisor = $this->getContribuyente();
+        // crear objeto del libro
+        $class = __NAMESPACE__.'\Model_Dte'.$this->config['model']['singular'];
+        $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$Libro->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Aun no se ha generado el XML del período '.$periodo, 'error'
+            );
+            $this->redirect(str_replace('pdf', 'ver', $this->request->request));
+        }
+        // definir xml y nombre archivo
+        $xml = base64_decode($Libro->xml);
+        $file = strtolower($this->config['model']['plural']).'_'.$Emisor->rut.'-'.$Emisor->dv.'_'.$periodo.'.pdf';
+        // entregar PDF de Compra o Venta
+        if (in_array($this->config['model']['singular'], ['Compra', 'Venta'])) {
+            $LibroCompraVenta = new \sasco\LibreDTE\Sii\LibroCompraVenta();
+            $LibroCompraVenta->loadXML($xml);
+            $pdf = new \sasco\LibreDTE\Sii\PDF\LibroCompraVenta();
+            $pdf->setFooterText();
+            $pdf->agregar($LibroCompraVenta->toArray());
+            $pdf->Output($file, 'D');
+        }
+        // entregar libro de guías
+        else {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Libro en PDF no está implementado', 'error'
+            );
+            $this->redirect(str_replace('pdf', 'ver', $this->request->request));
+        }
+        exit;
+    }
+
+    /**
      * Acción que descarga el archivo XML del libro
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-12-25
