@@ -54,7 +54,13 @@ new \sowerphp\general\View_Helper_Table([
 <?php if ($DteEmitido->track_id) : ?>
             <p>
                 <a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/actualizar_estado/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Actualizar estado</a><br/>
-                <span style="font-size:0.8em"><a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a></span>
+                <span style="font-size:0.8em">
+                    <a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a>
+<?php if ($DteEmitido->getEstado()=='R') : ?>
+                    <br/>
+                    <a href="<?=$_base?>/dte/dte_emitidos/eliminar/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Eliminar documento" onclick="return Form.checkSend('¿Confirmar la eliminación del DTE?')">eliminar documento</a>
+<?php endif; ?>
+                </span>
             </p>
 <?php else: ?>
             <p><a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/enviar_sii/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Enviar documento al SII</a></p>

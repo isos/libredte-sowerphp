@@ -381,4 +381,52 @@ class Model_DteEmitido extends \Model_App
         return $Resultado->exists() ? $Resultado : false;
     }
 
+    /**
+     * Método que entrega el estado del envío del DTE al SII
+     * @return R: si es RSC, RCT, RCH, =null otros casos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-17
+     */
+    public function getEstado()
+    {
+        $espacio = strpos($this->revision_estado, ' ');
+        $estado = $espacio ? substr($this->revision_estado, 0, $espacio) : $this->revision_estado;
+        return in_array($estado, ['RSC', 'RCT', 'RCH']) ? 'R' : null;
+    }
+
+    /**
+     * Método que elimina el DTE, y si no hay DTE posterior del mismo tipo,
+     * restaura el folio para que se volver a utilizar.
+     * Sólo se pueden eliminar DTE que estén rechazados
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-17
+     */
+    public function delete()
+    {
+        if ($this->getEstado()!='R')
+            return false;
+        $this->db->beginTransaction(true);
+        $DteFolio = new \website\Dte\Admin\Model_DteFolio($this->emisor, $this->dte, (int)$this->certificacion);
+        if ($DteFolio->siguiente == ($this->folio+1)) {
+            $DteFolio->siguiente--;
+            $DteFolio->disponibles++;
+            try {
+                if (!$DteFolio->save(false)) {
+                    $this->db->rollback();
+                    return false;
+                }
+            } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                $this->db->rollback();
+                return false;
+            }
+        }
+        debug('delete');
+        if (!parent::delete()) {
+            $this->db->rollback();
+            return false;
+        }
+        $this->db->commit();
+        return true;
+    }
+
 }

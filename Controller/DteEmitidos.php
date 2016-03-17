@@ -94,6 +94,42 @@ class Controller_DteEmitidos extends \Controller_App
     }
 
     /**
+     * Acción que permite eliminar un DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-17
+     */
+    public function eliminar($dte, $folio)
+    {
+        $Emisor = $this->getContribuyente();
+        // obtener DTE emitido
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No existe el DTE solicitado', 'error'
+            );
+            $this->redirect('/dte/dte_emitidos/listar');
+        }
+        // si el DTE no está rechazado no se puede eliminar
+        if ($DteEmitido->getEstado()!='R') {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No es posible eliminar el DTE ya que no está rechazado', 'error'
+            );
+            $this->redirect('/dte/dte_emitidos/ver/'.$dte.'/'.$folio);
+        }
+        // eliminar DTE
+        if (!$DteEmitido->delete()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible eliminar el DTE', 'error'
+            );
+        } else {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'DTE eliminado', 'ok'
+            );
+        }
+        $this->redirect('/dte/dte_emitidos/listar');
+    }
+
+    /**
      * Acción que muestra la página de un DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-02-14
