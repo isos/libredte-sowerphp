@@ -549,10 +549,18 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite obtener la información de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2016-03-18
      */
     public function _api_info_GET($dte, $folio, $contribuyente = null)
     {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
         $Emisor = $this->getContribuyente();
         if (!$Emisor) {
             if (!$contribuyente)
@@ -561,11 +569,46 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
             $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
         $DteEmitido->xml = false;
-        return $DteEmitido;
+        $this->Api->send($DteEmitido, 200, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Acción de la API que permite obtener el XML de un DTE emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-18
+     */
+    public function _api_xml_GET($dte, $folio, $contribuyente = null)
+    {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Emisor = $this->getContribuyente();
+        if (!$Emisor) {
+            if (!$contribuyente)
+                $this->Api->send('Debe indicar el emisor', 500);
+            $Emisor = new Model_Contribuyente($contribuyente);
+            if (!$Emisor->exists())
+                $this->Api->send('Emisor no existe', 404);
+        }
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists())
+            $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
+        return $DteEmitido->xml;
     }
 
 }

@@ -303,10 +303,18 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método de la API que permite obtener los datos de un contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-03-18
      */
     public function _api_info_GET($rut)
     {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
         $Contribuyente = new Model_Contribuyente($rut);
         if (!$Contribuyente->exists())
             $this->Api->send('Contribuyente solicitado no existe', 404);
