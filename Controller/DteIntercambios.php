@@ -331,7 +331,7 @@ class Controller_DteIntercambios extends \Controller_App
     /**
      * Acción que procesa y responde al intercambio recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-10-08
+     * @version 2016-03-19
      */
     public function responder($codigo)
     {
@@ -520,8 +520,6 @@ class Controller_DteIntercambios extends \Controller_App
                     $EmisorIntercambio->direccion = $emisor['DirOrigen'];
                     $EmisorIntercambio->comuna = $comuna;
                 }
-                if (!empty($emisor['CdgSIISucur']))
-                    $EmisorIntercambio->sucursal_sii = (int)$emisor['CdgSIISucur'];
                 $EmisorIntercambio->modificado = date('Y-m-d H:i:s');
                 $EmisorIntercambio->save();
             }
