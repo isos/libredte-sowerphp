@@ -32,8 +32,9 @@ namespace website\Dte;
 class Shell_Command_EnviarRCOF extends \Shell_App
 {
 
-    public function main($grupo = null)
+    public function main($grupo = null, $certificacion = 0)
     {
+        define('_LibreDTE_CERTIFICACION_', (boolean)$certificacion);
         $from_unix_time = mktime(0, 0, 0, date('m'), date('d'), date('Y'));
         $day_before = strtotime('yesterday', $from_unix_time);
         $dia = date('Y-m-d', $day_before);
@@ -45,7 +46,7 @@ class Shell_Command_EnviarRCOF extends \Shell_App
         return 0;
     }
 
-    private function enviar($rut, $dia)
+    private function enviar($rut, $dia, $retry = 10)
     {
         $Contribuyente = new Model_Contribuyente($rut);
         if (!$Contribuyente->exists()) {
@@ -54,19 +55,31 @@ class Shell_Command_EnviarRCOF extends \Shell_App
         if ($this->verbose) {
             $this->out('Enviando RCOF del contribuyente '.$Contribuyente->razon_social);
         }
-        if (!defined('_LibreDTE_CERTIFICACION_') and $Contribuyente->config_ambiente_en_certificacion) {
-            define('_LibreDTE_CERTIFICACION_', true);
+        if ($Contribuyente->config_ambiente_en_certificacion != _LibreDTE_CERTIFICACION_) {
+            if ($this->verbose) {
+                $this->out('  Contribuyente no está en el ambiente del envío');
+            }
+            return;
         }
         $DteBoletaConsumo = new Model_DteBoletaConsumo($Contribuyente->rut, $dia, (int)$Contribuyente->config_ambiente_en_certificacion);
-        try {
-            $track_id = $DteBoletaConsumo->enviar();
-            if (!$track_id and $this->verbose) {
+        for ($i=0; $i<$retry; $i++) {
+            $track_id = false;
+            try {
+                $track_id = $DteBoletaConsumo->enviar();
+            } catch (\Exception $e) {
+                if ($this->verbose) {
+                    $this->out('  '.$e->getMessage());
+                }
+            }
+            if ($track_id) {
+                break;
+            }
+        }
+        if (!$track_id) {
+            if ($this->verbose) {
                 $this->out('  No fue posible enviar el reporte');
             }
-        } catch (\Exception $e) {
-            if ($this->verbose) {
-                $this->out('  '.$e->getMessage());
-            }
+            $Contribuyente->notificar('RCOF '.$dia.' falló', 'No fue posible enviar el reporte del día '.$dia);
         }
     }
 
@@ -77,7 +90,7 @@ class Shell_Command_EnviarRCOF extends \Shell_App
         $db = \sowerphp\core\Model_Datasource_Database::get();
         if ($grupo) {
             return $db->getCol('
-                SELECT c.rut
+                SELECT DISTINCT c.rut
                 FROM
                     contribuyente AS c
                     JOIN contribuyente_config AS cc ON cc.contribuyente = c.rut
