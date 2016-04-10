@@ -276,81 +276,23 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que actualiza el estado del envío del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-30
+     * @version 2016-04-10
      */
     public function actualizar_estado($dte, $folio)
     {
         $Emisor = $this->getContribuyente();
-        // obtener DTE emitido
-        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
-        if (!$DteEmitido->exists()) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No existe el DTE solicitado', 'error'
-            );
-            $this->redirect('/dte/dte_emitidos/listar');
+        $rest = new \sowerphp\core\Network_Http_Rest();
+        $rest->setAuth($this->Auth->User->hash);
+        $response = $rest->get($this->request->url.'/api/dte/dte_emitidos/actualizar_estado/'.$dte.'/'.$folio.'/'.$Emisor->rut);
+        if ($response===false) {
+            \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
         }
-        // si no tiene track id error
-        if (!$DteEmitido->track_id) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'DTE no tiene Track ID, primero debe enviarlo al SII', 'error'
-            );
-            $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
+        else if ($response['status']['code']!=200) {
+            \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
         }
-        // buscar correo con respuesta
-        $Imap = $Emisor->getEmailImap('sii');
-        if (!$Imap) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible conectar mediante IMAP a '.$Emisor->config_email_sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()), 'error'
-            );
-            $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
+        else {
+            \sowerphp\core\Model_Datasource_Session::message('Se actualizó el estado del DTE', 'ok');
         }
-        $asunto = 'Resultado de Revision Envio '.$DteEmitido->track_id.' - '.$Emisor->rut.'-'.$Emisor->dv;
-        $uids = $Imap->search('FROM @sii.cl SUBJECT "'.$asunto.'" UNSEEN');
-        if (!$uids) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No se encontró respuesta de envío del DTE, espere unos segundos o solicite nueva revisión.'
-            );
-            $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
-        }
-        // procesar emails recibidos
-        foreach ($uids as $uid) {
-            $estado = $detalle = null;
-            $m = $Imap->getMessage($uid);
-            if (!$m)
-                continue;
-            foreach ($m['attachments'] as $file) {
-                if ($file['type']!='application/xml')
-                    continue;
-                $xml = new \SimpleXMLElement($file['data'], LIBXML_COMPACT);
-                // obtener estado y detalle
-                if (isset($xml->REVISIONENVIO)) {
-                    if ($xml->REVISIONENVIO->REVISIONDTE->TIPODTE==$DteEmitido->dte and $xml->REVISIONENVIO->REVISIONDTE->FOLIO==$DteEmitido->folio) {
-                        $estado = (string)$xml->REVISIONENVIO->REVISIONDTE->ESTADO;
-                        $detalle = (string)$xml->REVISIONENVIO->REVISIONDTE->DETALLE;
-                    }
-                } else {
-                    $estado = (string)$xml->IDENTIFICACION->ESTADO;
-                    $detalle = (int)$xml->ESTADISTICA->SUBTOTAL->ACEPTA ? 'DTE aceptado' : 'DTE no aceptado';
-                }
-            }
-            if (isset($estado)) {
-                $DteEmitido->revision_estado = $estado;
-                $DteEmitido->revision_detalle = $detalle;
-                try {
-                    $DteEmitido->save();
-                    \sowerphp\core\Model_Datasource_Session::message(
-                        'Se actualizó el estado del DTE', 'ok'
-                    );
-                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-                    \sowerphp\core\Model_Datasource_Session::message(
-                        'El estado se obtuvo pero no fue posible guardarlo en la base de datos<br/>'.$e->getMessage(), 'error'
-                    );
-                }
-                // marcar email como leído
-                $Imap->setSeen($uid);
-            }
-        }
-        // redireccionar
         $this->redirect(str_replace('actualizar_estado', 'ver', $this->request->request));
     }
 
@@ -609,6 +551,89 @@ class Controller_DteEmitidos extends \Controller_App
         if (!$DteEmitido->exists())
             $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
         return $DteEmitido->xml;
+    }
+
+    /**
+     * Acción de la API que permite actualizar el estado de envio del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-04-10
+     */
+    public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null)
+    {
+        // verificar permisos y crear DteEmitido
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Emisor = $this->getContribuyente();
+        if (!$Emisor) {
+            if (!$contribuyente)
+                $this->Api->send('Debe indicar el emisor', 500);
+            $Emisor = new Model_Contribuyente($contribuyente);
+            if (!$Emisor->exists())
+                $this->Api->send('Emisor no existe', 404);
+        }
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists())
+            $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
+        // si no tiene track id error
+        if (!$DteEmitido->track_id) {
+            $this->Api->send('DTE no tiene Track ID, primero debe enviarlo al SII', 500);
+        }
+        // buscar correo con respuesta
+        $Imap = $Emisor->getEmailImap('sii');
+        if (!$Imap) {
+            $this->Api->send('No fue posible conectar mediante IMAP a '.$Emisor->config_email_sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()), 500);
+        }
+        $asunto = 'Resultado de Revision Envio '.$DteEmitido->track_id.' - '.$Emisor->rut.'-'.$Emisor->dv;
+        $uids = $Imap->search('FROM @sii.cl SUBJECT "'.$asunto.'" UNSEEN');
+        if (!$uids) {
+            $this->Api->send('No se encontró respuesta de envío del DTE, espere unos segundos o solicite nueva revisión.', 404);
+        }
+        // procesar emails recibidos
+        foreach ($uids as $uid) {
+            $estado = $detalle = null;
+            $m = $Imap->getMessage($uid);
+            if (!$m)
+                continue;
+            foreach ($m['attachments'] as $file) {
+                if ($file['type']!='application/xml')
+                    continue;
+                $xml = new \SimpleXMLElement($file['data'], LIBXML_COMPACT);
+                // obtener estado y detalle
+                if (isset($xml->REVISIONENVIO)) {
+                    if ($xml->REVISIONENVIO->REVISIONDTE->TIPODTE==$DteEmitido->dte and $xml->REVISIONENVIO->REVISIONDTE->FOLIO==$DteEmitido->folio) {
+                        $estado = (string)$xml->REVISIONENVIO->REVISIONDTE->ESTADO;
+                        $detalle = (string)$xml->REVISIONENVIO->REVISIONDTE->DETALLE;
+                    }
+                } else {
+                    $estado = (string)$xml->IDENTIFICACION->ESTADO;
+                    $detalle = (int)$xml->ESTADISTICA->SUBTOTAL->ACEPTA ? 'DTE aceptado' : 'DTE no aceptado';
+                }
+            }
+            if (isset($estado)) {
+                $DteEmitido->revision_estado = $estado;
+                $DteEmitido->revision_detalle = $detalle;
+                try {
+                    $DteEmitido->save();
+                    $Imap->setSeen($uid);
+                    $this->Api->send([
+                        'track_id' => $DteEmitido->track_id,
+                        'revision_estado' => $estado,
+                        'revision_detalle' => $detalle
+                    ], 200, JSON_PRETTY_PRINT);
+                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                    $this->Api->send('El estado se obtuvo pero no fue posible guardarlo en la base de datos<br/>'.$e->getMessage(), 500);
+                }
+            }
+        }
     }
 
 }
