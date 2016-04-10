@@ -1,11 +1,11 @@
 <?php
 
 /**
- * SowerPHP: Minimalist Framework for PHP
- * Copyright (C) SowerPHP (http://sowerphp.org)
+ * LibreDTE
+ * Copyright (C) SASCO SpA (https://sasco.cl)
  *
  * Este programa es software libre: usted puede redistribuirlo y/o
- * modificarlo bajo los términos de la Licencia Pública General GNU
+ * modificarlo bajo los términos de la Licencia Pública General Affero de GNU
  * publicada por la Fundación para el Software Libre, ya sea la versión
  * 3 de la Licencia, o (a su elección) cualquier versión posterior de la
  * misma.
@@ -13,12 +13,12 @@
  * Este programa se distribuye con la esperanza de que sea útil, pero
  * SIN GARANTÍA ALGUNA; ni siquiera la garantía implícita
  * MERCANTIL o de APTITUD PARA UN PROPÓSITO DETERMINADO.
- * Consulte los detalles de la Licencia Pública General GNU para obtener
- * una información más detallada.
+ * Consulte los detalles de la Licencia Pública General Affero de GNU para
+ * obtener una información más detallada.
  *
- * Debería haber recibido una copia de la Licencia Pública General GNU
+ * Debería haber recibido una copia de la Licencia Pública General Affero de GNU
  * junto a este programa.
- * En caso contrario, consulte <http://www.gnu.org/licenses/gpl.html>.
+ * En caso contrario, consulte <http://www.gnu.org/licenses/agpl.html>.
  */
 
 // namespace del modelo
@@ -39,10 +39,10 @@ class Model_ImpuestoAdicional extends \Model_App
     protected $_table = 'impuesto_adicional'; ///< Tabla del modelo
 
     // Atributos de la clase (columnas en la base de datos)
-    public $codigo; ///< Código asignado por el SII al impuesto: smallint(16) NOT NULL DEFAULT '' PK 
-    public $retencion_total; ///< Código asignado por el SII al impuesto en caso de ser retención total: smallint(16) NULL DEFAULT '' 
-    public $nombre; ///< Nombre del impuesto: character varying(70) NOT NULL DEFAULT '' 
-    public $descripcion; ///< Descripción del impuesto (según ley que aplica al mismo): text() NOT NULL DEFAULT '' 
+    public $codigo; ///< Código asignado por el SII al impuesto: smallint(16) NOT NULL DEFAULT '' PK
+    public $retencion_total; ///< Código asignado por el SII al impuesto en caso de ser retención total: smallint(16) NULL DEFAULT ''
+    public $nombre; ///< Nombre del impuesto: character varying(70) NOT NULL DEFAULT ''
+    public $descripcion; ///< Descripción del impuesto (según ley que aplica al mismo): text() NOT NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
