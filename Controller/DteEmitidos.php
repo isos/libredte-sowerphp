@@ -152,7 +152,7 @@ class Controller_DteEmitidos extends \Controller_App
             'Receptor' => $DteEmitido->getReceptor(),
             'emails' => $DteEmitido->getEmails(),
             'referencias' => $DteEmitido->getReferencias(),
-            'enviar_sii' => !in_array($DteEmitido->dte, [39, 41]),
+            'enviar_sii' => !(in_array($DteEmitido->dte, [39, 41]) or $DteEmitido->track_id == -1),
         ]);
     }
 
@@ -489,6 +489,30 @@ class Controller_DteEmitidos extends \Controller_App
     }
 
     /**
+     * Acción que permite cargar un archivo XML como DTE emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-04-12
+     */
+    public function cargar_xml()
+    {
+        if (isset($_POST['submit']) and !$_FILES['xml']['error']) {
+            $rest = new \sowerphp\core\Network_Http_Rest();
+            $rest->setAuth($this->Auth->User->hash);
+            $response = $rest->post($this->request->url.'/api/dte/dte_emitidos/cargar_xml', json_encode(base64_encode(file_get_contents($_FILES['xml']['tmp_name']))));
+            if ($response===false) {
+                \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
+            }
+            else if ($response['status']['code']!=200) {
+                \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
+            }
+            else {
+                $dte = $response['body'];
+                \sowerphp\core\Model_Datasource_Session::message('XML del DTE T'.$dte['dte'].'F'.$dte['folio'].' fue cargado correctamente', 'ok');
+            }
+        }
+    }
+
+    /**
      * Acción de la API que permite obtener la información de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-03-18
@@ -634,6 +658,62 @@ class Controller_DteEmitidos extends \Controller_App
                 }
             }
         }
+    }
+
+    /**
+     * Acción de la API que permite cargar el XML de un DTE como documento
+     * emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-04-12
+     */
+    public function _api_cargar_xml_POST()
+    {
+        // verificar usuario autenticado
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        // cargar XML
+        $xml = base64_decode(json_decode($this->Api->data));
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        $EnvioDte->loadXML($xml);
+        $Documentos = $EnvioDte->getDocumentos();
+        if (count($Documentos)!=1) {
+            $this->Api->send('Sólo puede cargar XML que contengan un DTE', 500);
+        }
+        $Caratula = $EnvioDte->getCaratula();
+        // verificar permisos del usuario autenticado sobre el emisor del DTE
+        $Emisor = new Model_Contribuyente($Caratula['RutEmisor']);
+        $certificacion = !(bool)$Caratula['NroResol'];
+        if (!$Emisor->exists())
+            $this->Api->send('Emisor no existe', 404);
+        if (!$Emisor->usuarioAutorizado($User->id)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        // crear Objeto del DteEmitido y verificar si ya existe
+        $Dte = $Documentos[0];
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $Dte->getTipo(), $Dte->getFolio(), (int)$certificacion);
+        if ($DteEmitido->exists()) {
+            $this->Api->send('XML enviado ya está registrado', 500);
+        }
+        // guardar DteEmitido
+        $r = $Dte->getResumen();
+        $cols = ['tasa'=>'TasaImp', 'fecha'=>'FchDoc', 'receptor'=>'RUTDoc', 'exento'=>'MntExe', 'neto'=>'MntNeto', 'iva'=>'MntIVA', 'total'=>'MntTotal'];
+        foreach ($cols as $attr => $col) {
+            if ($r[$col]!==false)
+                $DteEmitido->$attr = $r[$col];
+        }
+        $DteEmitido->receptor = substr($DteEmitido->receptor, 0, -2);
+        $DteEmitido->xml = base64_encode($xml);
+        $DteEmitido->usuario = $User->id;
+        $DteEmitido->track_id = -1;
+        $DteEmitido->save();
+        $DteEmitido->xml = null;
+        $this->Api->send($DteEmitido, 200, JSON_PRETTY_PRINT);
     }
 
 }
