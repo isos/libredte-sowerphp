@@ -160,7 +160,7 @@ class Controller_Documentos extends \Controller_App
      * enviado al SII. Luego se debe usar la función generar de la API para
      * generar el DTE final y enviarlo al SII.
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-19
+     * @version 2016-04-20
      */
     public function _api_emitir_POST()
     {
@@ -171,24 +171,24 @@ class Controller_Documentos extends \Controller_App
         }
         // verificar datos del DTE pasados
         if (!is_array($this->Api->data)) {
-            $this->Api->send('Debe enviar el DTE como un arreglo', 500);
+            $this->Api->send('Debe enviar el DTE como un objeto JSON', 400);
         }
         // buscar emisor del DTE y verificar que usuario tenga permisos para
         // trabajar con el emisor
         if (!isset($this->Api->data['Encabezado']['Emisor']['RUTEmisor'])) {
-            $this->Api->send('Debe especificar RUTEmisor', 500);
+            $this->Api->send('Debe especificar RUTEmisor en el objeto JSON', 404);
         }
         $Emisor = new Model_Contribuyente($this->Api->data['Encabezado']['Emisor']['RUTEmisor']);
         if (!$Emisor->usuario) {
-            $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
+            $this->Api->send('Contribuyente no está registrado en la aplicación', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/emitir')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        if ((!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/documentos/emitir')) and !$User->inGroup(['soporte'])) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         // guardar datos del receptor
         $Receptor = $this->guardarReceptor($this->Api->data['Encabezado']['Receptor']);
         if (!$Receptor) {
-            $this->Api->send('No fue posible guardar al receptor', 500);
+            $this->Api->send('No fue posible guardar los datos del receptor', 507);
         }
         // construir arreglo con datos del DTE
         $default = [
@@ -216,7 +216,7 @@ class Controller_Documentos extends \Controller_App
             $dte['Encabezado']['IdDoc']['TipoDTE'], $dte['Detalle']
         );
         if (!$Emisor->documentoAutorizado($dte['Encabezado']['IdDoc']['TipoDTE'])) {
-            $this->Api->send('No está autorizado a emitir el tipo de documento '.$dte['Encabezado']['IdDoc']['TipoDTE'], 401);
+            $this->Api->send('No está autorizado a emitir el tipo de documento '.$dte['Encabezado']['IdDoc']['TipoDTE'], 403);
         }
         // crear objeto Dte y documento temporal
         $Dte = new \sasco\LibreDTE\Sii\Dte($dte, isset($_GET['normalizar'])?(bool)$_GET['normalizar']:true);
@@ -230,15 +230,18 @@ class Controller_Documentos extends \Controller_App
         $DteTmp->fecha = $resumen['FchDoc'];
         $DteTmp->total = $resumen['MntTotal'];
         try {
-            $DteTmp->save();
-            return [
-                'emisor' => $DteTmp->emisor,
-                'receptor' => $DteTmp->receptor,
-                'dte' => $DteTmp->dte,
-                'codigo' => $DteTmp->codigo,
-            ];
+            if ($DteTmp->save()) {
+                return [
+                    'emisor' => $DteTmp->emisor,
+                    'receptor' => $DteTmp->receptor,
+                    'dte' => $DteTmp->dte,
+                    'codigo' => $DteTmp->codigo,
+                ];
+            } else {
+                $this->Api->send('No fue posible guardar el DTE temporal', 507);
+            }
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-            $this->Api->send('No fue posible guardar el DTE temporal: '.$e->getMessage(), 500);
+            $this->Api->send('No fue posible guardar el DTE temporal: '.$e->getMessage(), 507);
         }
     }
 
