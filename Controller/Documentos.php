@@ -742,7 +742,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-15
+     * @version 2016-04-22
      */
     public function _api_generar_pdf_POST()
     {
@@ -753,7 +753,7 @@ class Controller_Documentos extends \Controller_App
         }
         // si hubo problemas al subir el archivo error
         if (!isset($this->Api->data['xml']) and (!isset($_FILES['xml']) or $_FILES['xml']['error'])) {
-            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 500);
+            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 400);
         }
         // recuperar contenido del archivo xml
         if (isset($this->Api->data['xml'])) {
@@ -785,7 +785,7 @@ class Controller_Documentos extends \Controller_App
         if (is_dir($dir))
             \sasco\LibreDTE\File::rmdir($dir);
         if (!mkdir($dir))
-            $this->Api->send('No fue posible crear directorio temporal para DTEs', 500);
+            $this->Api->send('No fue posible crear directorio temporal para DTEs', 507);
         // procesar cada DTEs e ir agregándolo al PDF
         foreach ($Documentos as $DTE) {
             if (!$DTE->getDatos())
