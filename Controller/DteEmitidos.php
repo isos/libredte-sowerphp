@@ -46,7 +46,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que permite mostrar los documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-04
+     * @version 2016-05-25
      */
     public function listar($pagina = 1)
     {
@@ -64,6 +64,14 @@ class Controller_DteEmitidos extends \Controller_App
         $searchUrl = isset($_GET['search'])?('?search='.$_GET['search']):'';
         try {
             $documentos_total = $Emisor->countDocumentosEmitidos($filtros);
+            if (!empty($pagina)) {
+                $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
+                $filtros['offset'] = ($pagina-1)*$filtros['limit'];
+                $paginas = $documentos_total ? ceil($documentos_total/$filtros['limit']) : 0;
+                if ($pagina != 1 && $pagina > $paginas) {
+                    $this->redirect('/dte/'.$this->request->params['controller'].'/listar'.$searchUrl);
+                }
+            } else $paginas = 1;
             $documentos = $Emisor->getDocumentosEmitidos($filtros);
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -72,14 +80,6 @@ class Controller_DteEmitidos extends \Controller_App
             $documentos_total = 0;
             $documentos = [];
         }
-        if (!empty($pagina)) {
-            $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
-            $filtros['offset'] = ($pagina-1)*$filtros['limit'];
-            $paginas = $documentos_total ? ceil($documentos_total/$filtros['limit']) : 0;
-            if ($pagina != 1 && $pagina > $paginas) {
-                $this->redirect('/dte/'.$this->request->params['controller'].'/listar'.$searchUrl);
-            }
-        } else $paginas = 1;
         $this->set([
             'Emisor' => $Emisor,
             'documentos' => $documentos,
