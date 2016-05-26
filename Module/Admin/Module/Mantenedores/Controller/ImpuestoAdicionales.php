@@ -21,35 +21,21 @@
  * En caso contrario, consulte <http://www.gnu.org/licenses/agpl.html>.
  */
 
-// namespace del modelo
-namespace website\Dte\Admin;
+// namespace del controlador
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para mapear la tabla iva_no_recuperable de la base de datos
- * Comentario de la tabla: Tipos de IVA no recuperable
- * Esta clase permite trabajar sobre un conjunto de registros de la tabla iva_no_recuperable
+ * Clase para el controlador asociado a la tabla impuesto_adicional de la base de
+ * datos
+ * Comentario de la tabla: Impuestos adicionales (y retenciones)
+ * Esta clase permite controlar las acciones entre el modelo y vista para la
+ * tabla impuesto_adicional
  * @author SowerPHP Code Generator
  * @version 2015-09-27 18:24:13
  */
-class Model_IvaNoRecuperables extends \Model_Plural_App
+class Controller_ImpuestoAdicionales extends \Controller_Maintainer
 {
 
-    // Datos para la conexión a la base de datos
-    protected $_database = 'default'; ///< Base de datos del modelo
-    protected $_table = 'iva_no_recuperable'; ///< Tabla del modelo
-
-    /**
-     * Método que entrega el listado de ivas no recuperables
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-27
-     */
-    public function getList()
-    {
-        return $this->db->getTable('
-            SELECT codigo, '.$this->db->concat('codigo', ' - ', 'tipo').'
-            FROM iva_no_recuperable
-            ORDER BY codigo
-        ');
-    }
+    protected $namespace = __NAMESPACE__; ///< Namespace del controlador y modelos asociados
 
 }

@@ -21,21 +21,21 @@
  * En caso contrario, consulte <http://www.gnu.org/licenses/agpl.html>.
  */
 
-// namespace del controlador
-namespace website\Dte\Admin;
+// namespace del modelo
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para el controlador asociado a la tabla impuesto_adicional de la base de
- * datos
- * Comentario de la tabla: Impuestos adicionales (y retenciones)
- * Esta clase permite controlar las acciones entre el modelo y vista para la
- * tabla impuesto_adicional
+ * Clase para mapear la tabla dte_referencia_tipo de la base de datos
+ * Comentario de la tabla:
+ * Esta clase permite trabajar sobre un conjunto de registros de la tabla dte_referencia_tipo
  * @author SowerPHP Code Generator
- * @version 2015-09-27 18:24:13
+ * @version 2015-09-25 15:27:00
  */
-class Controller_ImpuestoAdicionales extends \Controller_Maintainer
+class Model_DteReferenciaTipos extends \Model_Plural_App
 {
 
-    protected $namespace = __NAMESPACE__; ///< Namespace del controlador y modelos asociados
+    // Datos para la conexión a la base de datos
+    protected $_database = 'default'; ///< Base de datos del modelo
+    protected $_table = 'dte_referencia_tipo'; ///< Tabla del modelo
 
 }

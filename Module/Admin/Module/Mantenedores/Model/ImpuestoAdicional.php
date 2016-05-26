@@ -22,14 +22,14 @@
  */
 
 // namespace del modelo
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
  * Clase para mapear la tabla impuesto_adicional de la base de datos
  * Comentario de la tabla: Impuestos adicionales (y retenciones)
  * Esta clase permite trabajar sobre un registro de la tabla impuesto_adicional
  * @author SowerPHP Code Generator
- * @version 2015-09-27 18:24:13
+ * @version 2016-02-27 18:55:57
  */
 class Model_ImpuestoAdicional extends \Model_App
 {
@@ -42,6 +42,8 @@ class Model_ImpuestoAdicional extends \Model_App
     public $codigo; ///< Código asignado por el SII al impuesto: smallint(16) NOT NULL DEFAULT '' PK
     public $retencion_total; ///< Código asignado por el SII al impuesto en caso de ser retención total: smallint(16) NULL DEFAULT ''
     public $nombre; ///< Nombre del impuesto: character varying(70) NOT NULL DEFAULT ''
+    public $tipo; ///< character(1) NULL DEFAULT ''
+    public $tasa; ///< smallint(16) NULL DEFAULT ''
     public $descripcion; ///< Descripción del impuesto (según ley que aplica al mismo): text() NOT NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
@@ -74,6 +76,28 @@ class Model_ImpuestoAdicional extends \Model_App
             'type'      => 'character varying',
             'length'    => 70,
             'null'      => false,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'tipo' => array(
+            'name'      => 'Tipo',
+            'comment'   => '',
+            'type'      => 'character',
+            'length'    => 1,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
+        'tasa' => array(
+            'name'      => 'Tasa',
+            'comment'   => '',
+            'type'      => 'smallint',
+            'length'    => 16,
+            'null'      => true,
             'default'   => '',
             'auto'      => false,
             'pk'        => false,

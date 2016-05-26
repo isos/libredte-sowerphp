@@ -22,18 +22,18 @@
  */
 
 // namespace del controlador
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para el controlador asociado a la tabla contribuyente_dte de la base de
+ * Clase para el controlador asociado a la tabla dte_referencia_tipo de la base de
  * datos
  * Comentario de la tabla:
  * Esta clase permite controlar las acciones entre el modelo y vista para la
- * tabla contribuyente_dte
+ * tabla dte_referencia_tipo
  * @author SowerPHP Code Generator
- * @version 2015-09-21 12:31:02
+ * @version 2015-09-25 15:27:00
  */
-class Controller_ContribuyenteDtes extends \Controller_Maintainer
+class Controller_DteReferenciaTipos extends \Controller_Maintainer
 {
 
     protected $namespace = __NAMESPACE__; ///< Namespace del controlador y modelos asociados

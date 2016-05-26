@@ -21,21 +21,21 @@
  * En caso contrario, consulte <http://www.gnu.org/licenses/agpl.html>.
  */
 
-// namespace del modelo
-namespace website\Dte\Admin;
+// namespace del controlador
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para mapear la tabla contribuyente_dte de la base de datos
- * Comentario de la tabla:
- * Esta clase permite trabajar sobre un conjunto de registros de la tabla contribuyente_dte
+ * Clase para el controlador asociado a la tabla dte_tipo de la base de
+ * datos
+ * Comentario de la tabla: Tipos de documentos (electrónicos y no electrónicos)
+ * Esta clase permite controlar las acciones entre el modelo y vista para la
+ * tabla dte_tipo
  * @author SowerPHP Code Generator
  * @version 2015-09-21 12:31:02
  */
-class Model_ContribuyenteDtes extends \Model_Plural_App
+class Controller_DteTipos extends \Controller_Maintainer
 {
 
-    // Datos para la conexión a la base de datos
-    protected $_database = 'default'; ///< Base de datos del modelo
-    protected $_table = 'contribuyente_dte'; ///< Tabla del modelo
+    protected $namespace = __NAMESPACE__; ///< Namespace del controlador y modelos asociados
 
 }

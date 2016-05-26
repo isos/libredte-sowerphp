@@ -22,18 +22,18 @@
  */
 
 // namespace del controlador
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para el controlador asociado a la tabla dte_referencia_tipo de la base de
+ * Clase para el controlador asociado a la tabla iva_no_recuperable de la base de
  * datos
- * Comentario de la tabla:
+ * Comentario de la tabla: Tipos de IVA no recuperable
  * Esta clase permite controlar las acciones entre el modelo y vista para la
- * tabla dte_referencia_tipo
+ * tabla iva_no_recuperable
  * @author SowerPHP Code Generator
- * @version 2015-09-25 15:27:00
+ * @version 2015-09-27 18:24:13
  */
-class Controller_DteReferenciaTipos extends \Controller_Maintainer
+class Controller_IvaNoRecuperables extends \Controller_Maintainer
 {
 
     protected $namespace = __NAMESPACE__; ///< Namespace del controlador y modelos asociados

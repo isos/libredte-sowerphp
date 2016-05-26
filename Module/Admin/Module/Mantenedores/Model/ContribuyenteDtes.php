@@ -22,20 +22,20 @@
  */
 
 // namespace del modelo
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para mapear la tabla dte_referencia_tipo de la base de datos
+ * Clase para mapear la tabla contribuyente_dte de la base de datos
  * Comentario de la tabla:
- * Esta clase permite trabajar sobre un conjunto de registros de la tabla dte_referencia_tipo
- * @author SowerPHP Code Generator
- * @version 2015-09-25 15:27:00
+ * Esta clase permite trabajar sobre un conjunto de registros de la tabla contribuyente_dte
+ * @author SowerPHP Code Generatornamespace website\Dte\Admin;
+ * @version 2015-09-21 12:31:02
  */
-class Model_DteReferenciaTipos extends \Model_Plural_App
+class Model_ContribuyenteDtes extends \Model_Plural_App
 {
 
     // Datos para la conexión a la base de datos
     protected $_database = 'default'; ///< Base de datos del modelo
-    protected $_table = 'dte_referencia_tipo'; ///< Tabla del modelo
+    protected $_table = 'contribuyente_dte'; ///< Tabla del modelo
 
 }

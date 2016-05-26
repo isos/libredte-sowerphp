@@ -22,59 +22,56 @@
  */
 
 // namespace del modelo
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para mapear la tabla contribuyente_dte de la base de datos
- * Comentario de la tabla:
- * Esta clase permite trabajar sobre un registro de la tabla contribuyente_dte
+ * Clase para mapear la tabla iva_no_recuperable de la base de datos
+ * Comentario de la tabla: Tipos de IVA no recuperable
+ * Esta clase permite trabajar sobre un registro de la tabla iva_no_recuperable
  * @author SowerPHP Code Generator
- * @version 2015-09-21 12:31:02
+ * @version 2015-09-27 18:24:13
  */
-class Model_ContribuyenteDte extends \Model_App
+class Model_IvaNoRecuperable extends \Model_App
 {
 
     // Datos para la conexión a la base de datos
     protected $_database = 'default'; ///< Base de datos del modelo
-    protected $_table = 'contribuyente_dte'; ///< Tabla del modelo
+    protected $_table = 'iva_no_recuperable'; ///< Tabla del modelo
 
     // Atributos de la clase (columnas en la base de datos)
-    public $contribuyente; ///< integer(32) NOT NULL DEFAULT '' PK FK:contribuyente.rut
-    public $dte; ///< smallint(16) NOT NULL DEFAULT '' PK FK:dte_tipo.codigo
+    public $codigo; ///< Código asignado por el SII al tipo de IVA: smallint(16) NOT NULL DEFAULT '' PK
+    public $tipo; ///< Nombre del tipo de IVA: character varying(70) NOT NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
-        'contribuyente' => array(
-            'name'      => 'Contribuyente',
-            'comment'   => '',
-            'type'      => 'integer',
-            'length'    => 32,
-            'null'      => false,
-            'default'   => '',
-            'auto'      => false,
-            'pk'        => true,
-            'fk'        => array('table' => 'contribuyente', 'column' => 'rut')
-        ),
-        'dte' => array(
-            'name'      => 'Dte',
-            'comment'   => '',
+        'codigo' => array(
+            'name'      => 'Codigo',
+            'comment'   => 'Código asignado por el SII al tipo de IVA',
             'type'      => 'smallint',
             'length'    => 16,
             'null'      => false,
             'default'   => '',
             'auto'      => false,
             'pk'        => true,
-            'fk'        => array('table' => 'dte_tipo', 'column' => 'codigo')
+            'fk'        => null
+        ),
+        'tipo' => array(
+            'name'      => 'Tipo',
+            'comment'   => 'Nombre del tipo de IVA',
+            'type'      => 'character varying',
+            'length'    => 70,
+            'null'      => false,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
         ),
 
     );
 
     // Comentario de la tabla en la base de datos
-    public static $tableComment = '';
+    public static $tableComment = 'Tipos de IVA no recuperable';
 
-    public static $fkNamespace = array(
-        'Model_Contribuyente' => 'website\Dte',
-        'Model_DteTipo' => 'website\Dte\Admin'
-    ); ///< Namespaces que utiliza esta clase
+    public static $fkNamespace = array(); ///< Namespaces que utiliza esta clase
 
 }

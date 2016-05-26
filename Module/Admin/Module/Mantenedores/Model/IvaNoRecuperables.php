@@ -22,32 +22,32 @@
  */
 
 // namespace del modelo
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
- * Clase para mapear la tabla impuesto_adicional de la base de datos
- * Comentario de la tabla: Impuestos adicionales (y retenciones)
- * Esta clase permite trabajar sobre un conjunto de registros de la tabla impuesto_adicional
+ * Clase para mapear la tabla iva_no_recuperable de la base de datos
+ * Comentario de la tabla: Tipos de IVA no recuperable
+ * Esta clase permite trabajar sobre un conjunto de registros de la tabla iva_no_recuperable
  * @author SowerPHP Code Generator
  * @version 2015-09-27 18:24:13
  */
-class Model_ImpuestoAdicionales extends \Model_Plural_App
+class Model_IvaNoRecuperables extends \Model_Plural_App
 {
 
     // Datos para la conexión a la base de datos
     protected $_database = 'default'; ///< Base de datos del modelo
-    protected $_table = 'impuesto_adicional'; ///< Tabla del modelo
+    protected $_table = 'iva_no_recuperable'; ///< Tabla del modelo
 
     /**
-     * Método que entrega el listado de impuesto adicionales
+     * Método que entrega el listado de ivas no recuperables
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-27
      */
     public function getList()
     {
         return $this->db->getTable('
-            SELECT codigo, '.$this->db->concat('codigo', ' - ', 'nombre').'
-            FROM impuesto_adicional
+            SELECT codigo, '.$this->db->concat('codigo', ' - ', 'tipo').'
+            FROM iva_no_recuperable
             ORDER BY codigo
         ');
     }

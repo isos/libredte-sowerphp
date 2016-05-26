@@ -22,7 +22,7 @@
  */
 
 // namespace del modelo
-namespace website\Dte\Admin;
+namespace website\Dte\Admin\Mantenedores;
 
 /**
  * Clase para mapear la tabla dte_tipo de la base de datos
