@@ -59,7 +59,7 @@ class Shell_Command_ActualizarContribuyentes extends \Shell_App
      * Método que carga actualiza los datos de los contribuyentes desde el
      * listado de contribuyentes del SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-29
+     * @version 2016-02-12
      */
     private function sii($ambiente)
     {
@@ -82,39 +82,39 @@ class Shell_Command_ActualizarContribuyentes extends \Shell_App
         foreach ($contribuyentes as $c) {
             // contabilizar contribuyente procesado
             $procesados++;
-            if ($this->verbose>=1) {
+            if ($this->verbose) {
                 $this->out('Procesando '.num($procesados).'/'.$registros.': contribuyente '.$c[1]);
             }
             // agregar y/o actualizar datos del contribuyente si no tiene usuario administrador
             list($rut, $dv) = explode('-', $c[0]);
             $Contribuyente = new \website\Dte\Model_Contribuyente($rut);
+            $Contribuyente->dv = $dv;
             if (!$Contribuyente->usuario) {
-                $Contribuyente->dv = $dv;
                 $Contribuyente->razon_social = substr($c[1], 0, 100);
-                if (is_numeric($c[2]) and $c[2]) {
-                    $Contribuyente->config_ambiente_produccion_numero = (int)$c[2];
-                }
-                if (isset($c[3][9])) {
-                    $aux = explode('-', $c[3]);
-                    if (isset($aux[2])) {
-                        list($d, $m, $Y) = $aux;
-                        if ($Contribuyente->config_ambiente_produccion_numero) {
-                            $Contribuyente->config_ambiente_produccion_fecha = $Y.'-'.$m.'-'.$d;
-                        } else {
-                            $Contribuyente->config_ambiente_certificacion_fecha = $Y.'-'.$m.'-'.$d;
-                        }
+            }
+            if (is_numeric($c[2]) and $c[2]) {
+                $Contribuyente->config_ambiente_produccion_numero = (int)$c[2];
+            }
+            if (isset($c[3][9])) {
+                $aux = explode('-', $c[3]);
+                if (isset($aux[2])) {
+                    list($d, $m, $Y) = $aux;
+                    if ($Contribuyente->config_ambiente_produccion_numero) {
+                        $Contribuyente->config_ambiente_produccion_fecha = $Y.'-'.$m.'-'.$d;
+                    } else {
+                        $Contribuyente->config_ambiente_certificacion_fecha = $Y.'-'.$m.'-'.$d;
                     }
                 }
-                if (strpos($c[4], '@')) {
-                    $Contribuyente->config_email_intercambio_user = $c[4];
-                }
-                $Contribuyente->modificado = date('Y-m-d H:i:s');
-                try {
-                    $Contribuyente->save();
-                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-                    if ($this->verbose>=2) {
-                        $this->out('<error>Contribuyente '.$c[1].' no pudo ser guardado en la base de datos</error>');
-                    }
+            }
+            if (strpos($c[4], '@')) {
+                $Contribuyente->config_email_intercambio_user = $c[4];
+            }
+            $Contribuyente->modificado = date('Y-m-d H:i:s');
+            try {
+                $Contribuyente->save();
+            } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                if ($this->verbose) {
+                    $this->out('<error>Contribuyente '.$c[1].' no pudo ser guardado en la base de datos</error>');
                 }
             }
         }
