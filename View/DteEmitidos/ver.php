@@ -38,16 +38,22 @@ new \sowerphp\general\View_Helper_Table([
 ]);
 ?>
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/pdf/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>/<?=$Emisor->config_pdf_dte_cedible?>" role="button">
                         <span class="fa fa-file-pdf-o" style="font-size:24px"></span>
-                        Descargar documento en PDF
+                        Descargar PDF
                     </a>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/xml/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
                         <span class="fa fa-file-code-o" style="font-size:24px"></span>
-                        Descargar documento en XML
+                        Descargar XML
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a class="btn btn-default btn-lg btn-block" href="<?=$_base?>/dte/dte_emitidos/json/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
+                        <span class="fa fa-file-code-o" style="font-size:24px"></span>
+                        Descargar JSON
                     </a>
                 </div>
             </div>
