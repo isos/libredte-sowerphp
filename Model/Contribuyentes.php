@@ -165,4 +165,40 @@ class Model_Contribuyentes extends \Model_Plural_App
         }
     }
 
+    /**
+     * Método que entrega el listado de contribuyentes registrados
+     * @param desde Fecha desde último ingreso que se buscará
+     * @param hasta Fecha hasta el último ingreso que se buscará
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-26
+     */
+    public function getRegistrados($desde = null, $hasta = null)
+    {
+        return $this->db->getTable('
+            SELECT
+                c.rut,
+                c.razon_social,
+                co.comuna,
+                c.email AS email_contribuyente,
+                c.telefono,
+                cc.valor AS en_certificacion,
+                u.usuario,
+                u.ultimo_ingreso_fecha_hora
+            FROM
+                contribuyente AS c,
+                contribuyente_config AS cc,
+                usuario AS u,
+                comuna AS co
+            WHERE
+                cc.contribuyente = c.rut
+                AND cc.configuracion = \'ambiente\'
+                AND cc.variable = \'en_certificacion\'
+                AND c.usuario IS NOT NULL
+                AND c.usuario = u.id
+                AND c.comuna = co.codigo
+                AND u.ultimo_ingreso_fecha_hora BETWEEN :desde AND :hasta
+            ORDER BY u.usuario, c.razon_social
+        ', [':desde'=>$desde, ':hasta'=>$hasta.' 23:59:59']);
+    }
+
 }
