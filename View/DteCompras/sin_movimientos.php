@@ -1,5 +1,10 @@
-<a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC" class="pull-right"><span class="btn btn-default">Volver a IEC</span></a>
-
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC">
+            Volver a IEC
+        </a>
+    </li>
+</ul>
 <h1>Enviar libro de compras (IEC) sin movimientos</h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();

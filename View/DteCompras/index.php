@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_compras/importar" title="Importar libro IEC desde archivo CSV" class="btn btn-default pull-right"><span class="fa fa-upload"></span> Importar CSV</a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_compras/importar" title="Importar libro IEC desde archivo CSV">
+            <span class="fa fa-upload"></span> Importar CSV
+        </a>
+    </li>
+</ul>
 <h1>Libro de compras (IEC)</h1>
 <?php
 foreach ($periodos as &$p) {
@@ -9,7 +15,7 @@ foreach ($periodos as &$p) {
         $acciones .= ' <span class="fa fa-file-excel-o btn btn-default disabled"></span>';
     $p[] = $acciones;
 }
-array_unshift($periodos, ['Período','Recibidos', 'Envíados', 'Track ID', 'Acciones']);
+array_unshift($periodos, ['Período','Recibidos', 'Envíados', 'Track ID', 'Estado', 'Acciones']);
 new \sowerphp\general\View_Helper_Table($periodos);
 ?>
 <a class="btn btn-primary btn-lg btn-block" href="<?=$_base?>/dte/dte_compras/sin_movimientos" role="button">Enviar libro de compras sin movimientos</a>

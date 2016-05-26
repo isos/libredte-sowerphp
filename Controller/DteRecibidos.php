@@ -76,7 +76,7 @@ class Controller_DteRecibidos extends \Controller_App
             'paginas' => $paginas,
             'pagina' => $pagina,
             'search' => $filtros,
-            'tipos_dte' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
+            'tipos_dte' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
             'usuarios' => $Emisor->getListUsuarios(),
             'searchUrl' => $searchUrl,
         ]);
@@ -93,9 +93,9 @@ class Controller_DteRecibidos extends \Controller_App
         // asignar variables para la vista
         $this->set([
             'Emisor' => $Emisor,
-            'tipos_documentos' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
-            'iva_no_recuperables' => (new \website\Dte\Admin\Model_IvaNoRecuperables())->getList(),
-            'impuesto_adicionales' => (new \website\Dte\Admin\Model_ImpuestoAdicionales())->getList(),
+            'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
+            'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
+            'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
@@ -105,7 +105,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite editar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-08
+     * @version 2016-02-01
      */
     public function modificar($emisor, $dte, $folio)
     {
@@ -118,19 +118,13 @@ class Controller_DteRecibidos extends \Controller_App
             );
             $this->redirect('/dte/dte_recibidos/listar');
         }
-        if ($DteRecibido->intercambio) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'DTE recibido no puede ser modificado ya que fue recibido a través de un intercambio', 'error'
-            );
-            $this->redirect('/dte/dte_recibidos/listar');
-        }
         // agregar variables para la vista
         $this->set([
             'Emisor' => $Emisor,
             'DteRecibido' => $DteRecibido,
-            'tipos_documentos' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
-            'iva_no_recuperables' => (new \website\Dte\Admin\Model_IvaNoRecuperables())->getList(),
-            'impuesto_adicionales' => (new \website\Dte\Admin\Model_ImpuestoAdicionales())->getList(),
+            'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
+            'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
+            'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
@@ -140,7 +134,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Método que agrega o modifica un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-05-26
      */
     private function save()
     {
@@ -181,6 +175,7 @@ class Controller_DteRecibidos extends \Controller_App
         $DteRecibido->monto_activo_fijo = !empty($_POST['monto_activo_fijo']) ? $_POST['monto_activo_fijo'] : null;
         $DteRecibido->monto_iva_activo_fijo = !empty($_POST['monto_iva_activo_fijo']) ? $_POST['monto_iva_activo_fijo'] : null;
         $DteRecibido->iva_no_retenido = !empty($_POST['iva_no_retenido']) ? $_POST['iva_no_retenido'] : null;
+        $DteRecibido->periodo = !empty($_POST['periodo']) ? $_POST['periodo'] : null;
         // si el DTE es de producción y es electrónico entonces se consultará su
         // estado antes de poder guardar, esto evitará agregar documentos que no
         // han sido recibidos en el SII o sus datos son incorrectos

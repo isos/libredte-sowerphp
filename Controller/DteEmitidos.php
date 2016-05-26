@@ -96,7 +96,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que permite eliminar un DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-17
+     * @version 2016-03-19
      */
     public function eliminar($dte, $folio)
     {
@@ -110,7 +110,7 @@ class Controller_DteEmitidos extends \Controller_App
             $this->redirect('/dte/dte_emitidos/listar');
         }
         // si el DTE no está rechazado no se puede eliminar
-        if ($DteEmitido->getEstado()!='R') {
+        if ($DteEmitido->track_id and $DteEmitido->getEstado()!='R') {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No es posible eliminar el DTE ya que no está rechazado', 'error'
             );
@@ -339,6 +339,7 @@ class Controller_DteEmitidos extends \Controller_App
         $data = [
             'xml' => $DteEmitido->xml,
             'cedible' => !in_array($DteEmitido->dte, [39,41]) ? $cedible : false,
+            'papelContinuo' => $Emisor->config_pdf_dte_papel,
             'compress' => false,
             'webVerificacion' => in_array($DteEmitido->dte, [39,41]) ? $webVerificacion : false,
         ];
@@ -417,6 +418,38 @@ class Controller_DteEmitidos extends \Controller_App
     }
 
     /**
+     * Acción que descarga el JSON del documento emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-19
+     */
+    public function json($dte, $folio)
+    {
+        $Emisor = $this->getContribuyente();
+        // obtener DTE emitido
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No existe el DTE solicitado', 'error'
+            );
+            $this->redirect('/dte/dte_emitidos/listar');
+        }
+        // entregar JSON
+        $file = 'dte_'.$Emisor->rut.'-'.$Emisor->dv.'_T'.$DteEmitido->dte.'F'.$DteEmitido->folio.'.json';
+        $xml = base64_decode($DteEmitido->xml);
+        $json = '';
+
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        $EnvioDte->loadXML($xml);
+        $DTE = $EnvioDte->getDocumentos()[0]->getDatos();
+        unset($DTE['@attributes'], $DTE['TED'], $DTE['TmstFirma']);
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Content-Length: '.strlen($json));
+        header('Content-Disposition: attachement; filename="'.$file.'"');
+        echo json_encode($DTE, JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    /**
      * Acción que envía por email el PDF y el XML del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-12-12
@@ -449,6 +482,7 @@ class Controller_DteEmitidos extends \Controller_App
         $data = [
             'xml' => $DteEmitido->xml,
             'cedible' => isset($_POST['cedible']),
+            'papelContinuo' => $Emisor->config_pdf_dte_papel,
             'compress' => false,
         ];
         $logo = \sowerphp\core\Configure::read('dte.logos.dir').'/'.$Emisor->rut.'.png';
@@ -515,7 +549,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite obtener la información de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-18
+     * @version 2016-05-12
      */
     public function _api_info_GET($dte, $folio, $contribuyente = null)
     {
@@ -535,7 +569,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User)) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -548,7 +582,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite obtener el XML de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-18
+     * @version 2016-05-12
      */
     public function _api_xml_GET($dte, $folio, $contribuyente = null)
     {
@@ -568,7 +602,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User)) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -580,7 +614,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite actualizar el estado de envio del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-10
+     * @version 2016-05-12
      */
     public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null)
     {
@@ -601,7 +635,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User)) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -664,7 +698,7 @@ class Controller_DteEmitidos extends \Controller_App
      * Acción de la API que permite cargar el XML de un DTE como documento
      * emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-12
+     * @version 2016-05-12
      */
     public function _api_cargar_xml_POST()
     {
@@ -691,7 +725,7 @@ class Controller_DteEmitidos extends \Controller_App
         $certificacion = !(bool)$Caratula['NroResol'];
         if (!$Emisor->exists())
             $this->Api->send('Emisor no existe', 404);
-        if (!$Emisor->usuarioAutorizado($User->id)) {
+        if (!$Emisor->usuarioAutorizado($User)) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         // crear Objeto del DteEmitido y verificar si ya existe

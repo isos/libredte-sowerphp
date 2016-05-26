@@ -1,5 +1,10 @@
-<a href="<?=$_base?>/dte/dte_compras/ver/<?=$periodo?>" title="Volver a la IEC del período <?=$periodo?>" class="pull-right"><span class="btn btn-default">Volver a la IEC <?=$periodo?></span></a>
-
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_compras/ver/<?=$periodo?>" title="Volver a la IEC del período <?=$periodo?>">
+            Volver a la IEC <?=$periodo?>
+        </a>
+    </li>
+</ul>
 <h1>Rectificación IEC para el período <?=$periodo?></h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();

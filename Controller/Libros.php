@@ -58,7 +58,7 @@ abstract class Controller_Libros extends \Controller_App
         $Libro = new $class($Emisor->rut, (int)$periodo, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$detalle and !$Libro->exists()) {
             \sowerphp\core\Model_Datasource_Session::message(
-                'No hay documentos emitidos ni libro del período '.$periodo, 'error'
+                'No hay documentos ni libro del período '.$periodo, 'error'
             );
             $this->redirect('/dte/'.$this->request->params['controller']);
         }

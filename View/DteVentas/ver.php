@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_ventas" title="Volver a IEV" class="pull-right"><span class="btn btn-default">Volver a IEV</span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_ventas" title="Volver a IEV">
+            Volver a IEV
+        </a>
+    </li>
+</ul>
 
 <h1>Libro de ventas período <?=$Libro->periodo?></h1>
 <p>Esta es la página del libro de ventas del período <?=$Libro->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>

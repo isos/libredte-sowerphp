@@ -63,6 +63,7 @@ class Model_DteRecibido extends \Model_App
     public $monto_activo_fijo; ///< integer(32) NULL DEFAULT ''
     public $monto_iva_activo_fijo; ///< integer(32) NULL DEFAULT ''
     public $iva_no_retenido; ///< integer(32) NULL DEFAULT ''
+    public $periodo; ///< integer(32) NULL DEFAULT ''
 
     // Información de las columnas de la tabla en la base de datos
     public static $columnsInfo = array(
@@ -330,6 +331,17 @@ class Model_DteRecibido extends \Model_App
             'pk'        => false,
             'fk'        => null
         ),
+        'periodo' => array(
+            'name'      => 'Período',
+            'comment'   => '',
+            'type'      => 'integer',
+            'length'    => 32,
+            'null'      => true,
+            'default'   => '',
+            'auto'      => false,
+            'pk'        => false,
+            'fk'        => null
+        ),
 
     );
 
@@ -338,10 +350,10 @@ class Model_DteRecibido extends \Model_App
 
     public static $fkNamespace = array(
         'Model_Contribuyente' => 'website\Dte',
-        'Model_DteTipo' => 'website\Dte\Admin',
+        'Model_DteTipo' => 'website\Dte\Admin\Mantenedores',
         'Model_Usuario' => '\sowerphp\app\Sistema\Usuarios',
-        'Model_IvaNoRecuperable' => 'website\Dte\Admin',
-        'Model_ImpuestoAdicional' => 'website\Dte\Admin'
+        'Model_IvaNoRecuperable' => 'website\Dte\Admin\Mantenedores',
+        'Model_ImpuestoAdicional' => 'website\Dte\Admin\Mantenedores'
     ); ///< Namespaces que utiliza esta clase
 
     /**
@@ -358,13 +370,13 @@ class Model_DteRecibido extends \Model_App
 
     /**
      * Método que entrega el objeto del tipo del dte
-     * @return \website\Dte\Admin\Model_DteTipo
+     * @return \website\Dte\Admin\Mantenedores\Model_DteTipo
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-27
      */
     public function getTipo()
     {
-        return (new \website\Dte\Admin\Model_DteTipos())->get($this->dte);
+        return (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->get($this->dte);
     }
 
     /**

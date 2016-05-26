@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a documentos recibidos</span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos">
+            Volver a documentos recibidos
+        </a>
+    </li>
+</ul>
 
 <h1>Agregar documento recibido</h1>
 <?php
@@ -97,4 +103,10 @@ echo $f->input([
     'label' => 'IVA no retenido',
     'check' => 'integer',
 ]);
+/*echo $f->input([
+    'name' => 'periodo',
+    'label' => 'Período',
+    'check' => 'integer',
+    'help' => 'Período en el que registrar el documento (si es diferente al mes de la fecha de emisión). Formato: AAAAMM',
+]);*/
 echo $f->end('Guardar el documento');

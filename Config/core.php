@@ -46,7 +46,7 @@
         'desc' => 'Revisar documentos recibidos',
         'icon' => 'fa fa-sign-in',
     ],
-    '/dte_intercambios' => [
+    '/dte_intercambios/listar' => [
         'name' => 'Bandeja de intercambio',
         'desc' => 'Menú de intercambio de DTE entre contribuyentes',
         'icon' => 'fa fa-exchange',

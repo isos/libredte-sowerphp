@@ -1,6 +1,12 @@
-<a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos" class="pull-right"><span class="btn btn-default">Volver a documentos recibidos</span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_recibidos/listar" title="Volver a los documentos recibidos">
+            Volver a documentos recibidos
+        </a>
+    </li>
+</ul>
 
-<h1>Editar documento <?=$DteRecibido->getTipo()->tipo?> N° <?=$DteRecibido->folio?></h1>
+<h1><?=$DteRecibido->getEmisor()->razon_social?> <small><?=$DteRecibido->getTipo()->tipo?> N° <?=$DteRecibido->folio?></small></h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();
 echo $f->begin(['onsubmit'=>'Form.check()']);
@@ -9,45 +15,61 @@ echo $f->input([
     'label' => 'RUT emisor',
     'value' => \sowerphp\app\Utility_Rut::addDV($DteRecibido->emisor),
     'check' => 'notempty rut',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
-echo $f->input([
-    'type' => 'select',
-    'name' => 'dte',
-    'label' => 'Documento',
-    'options' => [''=>'Seleccionar tipo de documento'] + $tipos_documentos,
-    'value' => $DteRecibido->dte,
-    'check' => 'notempty',
-]);
+if (!$DteRecibido->intercambio) {
+    echo $f->input([
+        'type' => 'select',
+        'name' => 'dte',
+        'label' => 'Documento',
+        'options' => [''=>'Seleccionar tipo de documento'] + $tipos_documentos,
+        'value' => $DteRecibido->dte,
+        'check' => 'notempty',
+    ]);
+} else {
+    echo $f->input([
+        'name' => 'dte',
+        'label' => 'Documento',
+        'value' => $DteRecibido->dte,
+        'check' => 'notempty',
+        'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
+    ]);
+}
 echo $f->input([
     'name' => 'folio',
     'label' => 'Folio',
     'value' => $DteRecibido->folio,
     'check' => 'notempty integer',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
 echo $f->input([
-    'type' => 'date',
+    'type' => $DteRecibido->intercambio ? 'text' : 'date',
     'name' => 'fecha',
     'label' => 'Fecha documento',
     'value' => $DteRecibido->fecha,
     'check' => 'notempty date',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
 echo $f->input([
     'name' => 'tasa',
     'label' => 'Tasa IVA',
     'value' => $DteRecibido->tasa,
     'check' => 'integer',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
 echo $f->input([
     'name' => 'exento',
     'label' => 'Monto exento',
     'value' => $DteRecibido->exento,
     'check' => 'integer',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
 echo $f->input([
     'name' => 'neto',
     'label' => 'Neto',
     'value' => $DteRecibido->neto,
     'check' => 'integer',
+    'attr' => $DteRecibido->intercambio ? 'readonly="readonly"' : '',
 ]);
 echo $f->input([
     'name' => 'iva_uso_comun',
@@ -114,4 +136,11 @@ echo $f->input([
     'value' => $DteRecibido->iva_no_retenido,
     'check' => 'integer',
 ]);
+/*echo $f->input([
+    'name' => 'periodo',
+    'label' => 'Período',
+    'value' => $DteRecibido->periodo,
+    'check' => 'integer',
+    'help' => 'Período en el que registrar el documento (si es diferente al mes de la fecha de emisión). Formato: AAAAMM',
+]);*/
 echo $f->end('Guardar cambios al documento');

@@ -34,7 +34,7 @@ class Controller_DteTmps extends \Controller_App
 
     /**
      * Método que muestra los documentos temporales disponibles
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-22
      */
     public function index()
@@ -50,8 +50,8 @@ class Controller_DteTmps extends \Controller_App
 
     /**
      * Método que genera la previsualización del PDF del DTE
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-24
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-10
      */
     public function pdf($receptor, $dte, $codigo)
     {
@@ -76,6 +76,7 @@ class Controller_DteTmps extends \Controller_App
         $data = [
             'xml' => base64_encode($xml),
             'cedible' => false,
+            'papelContinuo' => $Emisor->config_pdf_dte_papel,
             'compress' => false,
         ];
         // si hay un logo para la empresa se usa
@@ -102,7 +103,7 @@ class Controller_DteTmps extends \Controller_App
 
     /**
      * Método que genera la previsualización del XML del DTE
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-01-30
      */
     public function xml($receptor, $dte, $codigo)
@@ -134,7 +135,7 @@ class Controller_DteTmps extends \Controller_App
 
     /**
      * Método que elimina un DTE temporal
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-23
      */
     public function eliminar($receptor, $dte, $codigo)

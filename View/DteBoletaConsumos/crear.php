@@ -1,3 +1,10 @@
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_boleta_consumos/listar" title="Volver a libro de guías de despacho">
+            Volver a RCOF
+        </a>
+    </li>
+</ul>
 <h1>Enviar reporte de consumo de folios</h1>
 <?php
 $f = new \sowerphp\general\View_Helper_Form();

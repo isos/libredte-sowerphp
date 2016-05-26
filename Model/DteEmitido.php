@@ -253,7 +253,7 @@ class Model_DteEmitido extends \Model_App
     public static $tableComment = '';
 
     public static $fkNamespace = array(
-        'Model_DteTipo' => 'website\Dte\Admin',
+        'Model_DteTipo' => 'website\Dte\Admin\Mantenedores',
         'Model_Contribuyente' => 'website\Dte',
         'Model_Usuario' => '\sowerphp\app\Sistema\Usuarios'
     ); ///< Namespaces que utiliza esta clase
@@ -262,13 +262,13 @@ class Model_DteEmitido extends \Model_App
 
     /**
      * Método que entrega el objeto del tipo del dte
-     * @return \website\Dte\Admin\Model_DteTipo
+     * @return \website\Dte\Admin\Mantenedores\Model_DteTipo
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-23
      */
     public function getTipo()
     {
-        return (new \website\Dte\Admin\Model_DteTipos())->get($this->dte);
+        return (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->get($this->dte);
     }
 
     /**
@@ -382,6 +382,46 @@ class Model_DteEmitido extends \Model_App
     }
 
     /**
+     * Método que entrega los pagos programados del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-28
+     */
+    public function getPagosProgramados()
+    {
+        $MntPagos = [];
+        if (isset($this->getDatos()['Encabezado']['IdDoc']['MntPagos']) and is_array($this->getDatos()['Encabezado']['IdDoc']['MntPagos'])) {
+            $MntPagos = $this->getDatos()['Encabezado']['IdDoc']['MntPagos'];
+            if (!isset($MntPagos[0]))
+                $MntPagos = [$MntPagos];
+            $MntPago = 0;
+            foreach ($MntPagos as $pago)
+                $MntPago += $pago['MntPago'];
+            if ($MntPago!=$this->total)
+                $MntPagos = [];
+        }
+        return $MntPagos;
+    }
+
+    /**
+     * Método que entrega los datos de cobranza de los pagos programados del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-28
+     */
+    public function getCobranza()
+    {
+        return $this->db->getTable('
+            SELECT c.fecha, c.monto, c.glosa, c.pagado, c.observacion, u.usuario, c.modificado
+            FROM cobranza AS c LEFT JOIN usuario AS u ON c.usuario = u.id
+            WHERE
+                c.emisor = :rut
+                AND c.dte = :dte
+                AND c.folio = :folio
+                AND c.certificacion = :certificacion
+            ORDER BY fecha
+        ', [':rut'=>$this->emisor, ':dte'=>$this->dte, ':folio'=>$this->folio, ':certificacion'=>(int)$this->certificacion]);
+    }
+
+    /**
      * Método que entrega el estado del envío del DTE al SII
      * @return R: si es RSC, RCT, RCH, =null otros casos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
@@ -399,12 +439,13 @@ class Model_DteEmitido extends \Model_App
      * restaura el folio para que se volver a utilizar.
      * Sólo se pueden eliminar DTE que estén rechazados
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-17
+     * @version 2016-03-19
      */
     public function delete()
     {
-        if ($this->getEstado()!='R')
+        if ($this->track_id and $this->getEstado()!='R') {
             return false;
+        }
         $this->db->beginTransaction(true);
         $DteFolio = new \website\Dte\Admin\Model_DteFolio($this->emisor, $this->dte, (int)$this->certificacion);
         if ($DteFolio->siguiente == ($this->folio+1)) {
