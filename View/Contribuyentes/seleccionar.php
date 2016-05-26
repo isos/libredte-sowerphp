@@ -22,3 +22,26 @@ $t->setColsWidth([null, null, null, null, null, 150]);
 echo $t->generate($empresas);
 ?>
 <a class="btn btn-primary btn-lg btn-block" href="registrar" role="button">Registrar una nueva empresa y ser el administrador de la misma</a>
+<?php if ($soporte) :
+$f = new \sowerphp\general\View_Helper_Form();
+$f->setColsLabel(4);
+echo $f->begin(['action'=>'soporte', 'onsubmit'=>'return Form.check(\'soporte\')', 'id'=>'soporte']);
+?>
+<div class="row" style="margin-top:2em">
+    <div class="col-md-6">
+        <?=$f->input(['name'=>'rut', 'label'=>'RUT empresa', 'check'=>'notempty rut'])?>
+    </div>
+    <div class="col-md-6">
+<?=$f->input([
+    'type'=>'select',
+    'name'=>'accion',
+    'label'=>'Acción a realizar',
+    'options'=>[''=>'Seleccionar acción', 'modificar'=>'Modificar empresa', 'usuarios'=>'Editar usuarios', 'seleccionar'=>'Seleccionar empresa'],
+    'check'=>'notempty',
+    'attr'=>'onchange="Form.check(\'soporte\') && document.getElementById(\'soporte\').submit()"',
+])?>
+    </div>
+</div>
+<?php
+echo $f->end(false);
+endif;
