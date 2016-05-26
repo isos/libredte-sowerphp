@@ -75,6 +75,8 @@ CREATE TABLE impuesto_adicional (
 		COMMENT 'Código asignado por el SII al impuesto en caso de ser retención total',
 	nombre CHARACTER VARYING (70) NOT NULL
 		COMMENT 'Nombre del impuesto',
+	tipo CHAR(1),
+	tasa REAL,
 	descripcion TEXT NOT NULL
 		COMMENT 'Descripción del impuesto (según ley que aplica al mismo)'
 ) COMMENT 'Impuestos adicionales (y retenciones)';
@@ -343,6 +345,7 @@ CREATE TABLE dte_recibido (
 	monto_activo_fijo INTEGER,
 	monto_iva_activo_fijo INTEGER,
 	iva_no_retenido INTEGER,
+	periodo INTEGER,
 	CONSTRAINT dte_recibido_pk PRIMARY KEY (emisor, dte, folio, certificacion),
 	CONSTRAINT dte_recibido_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL
