@@ -15,5 +15,6 @@ echo $f->input([
     'name' => 'contrasenia',
     'label' => 'Contraseña firma',
     'help' => 'Contraseña que permite abrir el certificado digital de la firma electrónica',
+    'check' => 'notempty',
 ]);
 echo $f->end('Agregar o cambiar mi firma electrónica');
