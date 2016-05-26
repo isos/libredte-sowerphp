@@ -48,6 +48,8 @@ CREATE TABLE impuesto_adicional (
 	codigo SMALLINT PRIMARY KEY,
 	retencion_total SMALLINT,
 	nombre CHARACTER VARYING (70) NOT NULL,
+	tipo CHAR(1),
+	tasa REAL,
 	descripcion TEXT NOT NULL
 );
 COMMENT ON TABLE impuesto_adicional IS 'Impuestos adicionales (y retenciones)';
@@ -333,6 +335,7 @@ CREATE TABLE dte_recibido (
 	monto_activo_fijo INTEGER,
 	monto_iva_activo_fijo INTEGER,
 	iva_no_retenido INTEGER,
+	periodo INTEGER,
 	CONSTRAINT dte_recibido_pk PRIMARY KEY (emisor, dte, folio, certificacion),
 	CONSTRAINT dte_recibido_emisor_fk FOREIGN KEY (emisor)
 		REFERENCES contribuyente (rut) MATCH FULL
