@@ -22,40 +22,53 @@
  */
 
 // namespace del controlador
-namespace website\Dte;
+namespace website\Dte\Admin;
 
 /**
  * Clase para las acciones asociadas a items
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-21
+ * @version 2016-02-24
  */
-class Controller_Items extends \Controller_App
+class Controller_Itemes extends \Controller_App
 {
 
     /**
      * Recurso de la API que permite obtener los datos de un item a partir de su
      * código
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-03-19
      */
-    public function _api_info_GET($codigo, $empresa)
+    public function _api_info_GET($empresa, $codigo, $fecha = null, $tipo = null)
     {
+        // obtener usuario autenticado
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
         // crear contribuyente y verificar que exista y tenga api configurada
-        $Empresa = new Model_Contribuyente($empresa);
+        $Empresa = new \website\Dte\Model_Contribuyente($empresa);
         if (!$Empresa->exists())
             $this->Api->send('Empresa solicitada no existe', 404);
-        if (!$Empresa->config_api_url_items)
-            $this->Api->send('Empresa no tiene configurada API para consultar items', 500);
-        // consultar item
-        $rest = new \sowerphp\core\Network_Http_Rest();
-        if ($Empresa->config_api_auth_user) {
-            if ($Empresa->config_api_auth_pass)
-                $rest->setAuth($Empresa->config_api_auth_user, $Empresa->config_api_auth_pass);
-            else
-                $rest->setAuth($Empresa->config_api_auth_user);
+        // consultar item en servicio web del contribuyente
+        if ($Empresa->config_api_url_items) {
+            $rest = new \sowerphp\core\Network_Http_Rest();
+            if ($Empresa->config_api_auth_user) {
+                if ($Empresa->config_api_auth_pass)
+                    $rest->setAuth($Empresa->config_api_auth_user, $Empresa->config_api_auth_pass);
+                else
+                    $rest->setAuth($Empresa->config_api_auth_user);
+            }
+            $response = $rest->get($Empresa->config_api_url_items.$codigo);
+            $this->Api->send($response['body'], $response['status']['code']);
         }
-        $response = $rest->get($Empresa->config_api_url_items.$codigo);
-        $this->Api->send($response['body'], $response['status']['code']);
+        // consultar item en base de datos local de LibreDTE
+        else {
+            $this->Api->send('Contribuyente no tiene servicio web de items', 500);
+        }
     }
 
 }

@@ -82,15 +82,15 @@ Emisor.setDatos = function (form) {
         url: _url+'/api/dte/contribuyentes/info/'+rut,
         dataType: "json",
         success: function (c) {
-            f.RznSoc.value = c.razon_social;
-            f.GiroEmis.value = c.giro;
-            f.Acteco.value = c.actividad_economica;
-            f.DirOrigen.value = c.direccion;
-            f.CmnaOrigen.value = c.comuna;
-            f.Telefono.value = c.telefono;
-            f.CorreoEmisor.value = c.email;
-            f.FchResol.value = c.config_ambiente_produccion_fecha;
-            f.NroResol.value = c.config_ambiente_produccion_numero;
+            f.RznSoc.value = c.razon_social !== undefined ? c.razon_social : null;
+            f.GiroEmis.value = c.giro !== undefined ? c.giro : null;
+            f.Acteco.value = c.actividad_economica !== undefined ? c.actividad_economica : null;
+            f.DirOrigen.value = c.direccion !== undefined ? c.direccion : null;
+            f.CmnaOrigen.value = c.comuna !== undefined ? c.comuna : null;
+            f.Telefono.value = c.telefono !== undefined ? c.telefono : null;
+            f.CorreoEmisor.value = c.email !== undefined ? c.email : null;
+            f.FchResol.value = c.config_ambiente_produccion_fecha !== undefined ? c.config_ambiente_produccion_fecha : null;
+            f.NroResol.value = c.config_ambiente_produccion_numero !== undefined ? c.config_ambiente_produccion_numero : null;
         },
         error: function (jqXHR) {
             console.log(jqXHR.responseJSON);
@@ -156,17 +156,27 @@ DTE.setTipo = function (tipo) {
     }
 }
 
+DTE.setFormaPago = function (tipo) {
+    // habilitar o ocultar datos para pagos programados
+    if (tipo==2) {
+        $('#datosPagos').show();
+    } else {
+        $('#datosPagos').hide();
+    }
+}
+
 DTE.setItem = function (contribuyente, codigo) {
     var f = document.getElementById("emitir_dte");
-    var cols = codigo.parentNode.parentNode.parentNode.childNodes;
+    var cols = codigo.parentNode.parentNode.parentNode.parentNode.childNodes;
+    var fecha = document.getElementById("FchVencField").value;
     if (codigo.value) {
         $.ajax({
             type: "GET",
-            url: _url+'/api/dte/items/info/'+codigo.value+'/'+contribuyente,
+            url: _url+'/api/dte/admin/itemes/info/'+contribuyente+'/'+codigo.value+'/'+fecha,
             dataType: "json",
             success: function (item) {
                 // asignar valores del item
-                cols[0].childNodes[0].childNodes[0].value = item.VlrCodigo !== undefined ? item.VlrCodigo : '';
+                cols[0].childNodes[0].childNodes[0].childNodes[0].value = item.VlrCodigo !== undefined ? item.VlrCodigo : '';
                 cols[1].childNodes[0].childNodes[0].value = item.NmbItem !== undefined ? item.NmbItem : '';
                 cols[2].childNodes[0].childNodes[0].value = item.DscItem !== undefined ? item.DscItem : '';
                 cols[3].childNodes[0].childNodes[0].value = item.IndExe !== undefined ? item.IndExe : 0;
@@ -174,6 +184,9 @@ DTE.setItem = function (contribuyente, codigo) {
                 cols[6].childNodes[0].childNodes[0].value = item.PrcItem !== undefined ? item.PrcItem : '';
                 cols[7].childNodes[0].childNodes[0].value = item.ValorDR !== undefined ? item.ValorDR : 0;
                 cols[8].childNodes[0].childNodes[0].value = item.TpoValor !== undefined ? item.TpoValor : '%';
+                if (cols.length == 12) {
+                    cols[9].childNodes[0].childNodes[0].value = (item.CodImpAdic !== undefined && item.CodImpAdic>0) ? item.CodImpAdic : '';
+                }
                 // foco en cantidad sólo si se logró obtener el código
                 if (item.VlrCodigo !== undefined) {
                     cols[4].childNodes[0].childNodes[0].focus();
@@ -183,7 +196,7 @@ DTE.setItem = function (contribuyente, codigo) {
                 DTE.calcular();
             },
             error: function (jqXHR) {
-                cols[0].childNodes[0].childNodes[0].value = '';
+                cols[0].childNodes[0].childNodes[0].childNodes[0].value = '';
                 cols[1].childNodes[0].childNodes[0].value = '';
                 cols[2].childNodes[0].childNodes[0].value = '';
                 cols[3].childNodes[0].childNodes[0].value = 0;
@@ -191,6 +204,9 @@ DTE.setItem = function (contribuyente, codigo) {
                 cols[6].childNodes[0].childNodes[0].value = '';
                 cols[7].childNodes[0].childNodes[0].value = 0;
                 cols[8].childNodes[0].childNodes[0].value = '%';
+                if (cols.length == 12) {
+                    cols[9].childNodes[0].childNodes[0].value = '';
+                }
                 console.log(jqXHR.responseJSON);
             }
         });
@@ -218,12 +234,12 @@ DTE.setFechaReferencia = function (contribuyente, field) {
 }
 
 DTE.calcular = function () {
-    var neto = 0, exento = 0, descuento = 0;
+    var neto = 0, exento = 0, descuento = 0, CodImpAdic, CodImpAdic_tasa, adicional = 0, retencion = 0;
     // realizar cálculo de detalles
     $('input[name="QtyItem[]"]').each(function (i, e) {
         if (!__.empty($(e).val()) && !__.empty($('input[name="PrcItem[]"]').get(i).value)) {
             // calcular subtotal sin aplicar descuento
-            $('input[name="subtotal[]"]').get(i).value = parseFloat($('input[name="QtyItem[]"]').get(i).value) * parseInt($('input[name="PrcItem[]"]').get(i).value);
+            $('input[name="subtotal[]"]').get(i).value = Math.round(parseFloat($('input[name="QtyItem[]"]').get(i).value) * parseInt($('input[name="PrcItem[]"]').get(i).value));
             // agregar descuento si aplica
             if (!__.empty($('input[name="ValorDR[]"]').get(i).value) && $('input[name="ValorDR[]"]').get(i).value!=0) {
                 if ($('select[name="TpoValor[]"]').get(i).selectedOptions[0].value=="%")
@@ -236,36 +252,55 @@ DTE.calcular = function () {
                 exento += parseInt($('input[name="subtotal[]"]').get(i).value);
             else
                 neto += parseInt($('input[name="subtotal[]"]').get(i).value);
+            // si existe código de impuesto adicional se contabiliza
+            if ($('select[name="CodImpAdic[]"]').get(i) !== undefined && $('select[name="CodImpAdic[]"]').get(i).value) {
+                CodImpAdic = $('select[name="CodImpAdic[]"]').get(i).value;
+                if (document.getElementById("impuesto_adicional_tipo_" + CodImpAdic + "Field")) {
+                    CodImpAdic_tasa = parseFloat(document.getElementById("impuesto_adicional_tasa_" + CodImpAdic + "Field").value);
+                    // es adicional / anticipo
+                    if (document.getElementById("impuesto_adicional_tipo_" + CodImpAdic + "Field").value == "A") {
+                        adicional += Math.round($('input[name="subtotal[]"]').get(i).value * (CodImpAdic_tasa/100.0));
+                    }
+                    // es retención
+                    else {
+                        retencion += Math.round($('input[name="subtotal[]"]').get(i).value * (CodImpAdic_tasa/100.0));
+                    }
+                }
+            }
         }
     });
-    // calcular descuento global para neto
-    if ($('select[name="TpoValor_global"]').get(0).selectedOptions[0].value=="%")
-        descuento = Math.round(neto * (parseInt($('input[name="ValorDR_global"]').get(0).value)/100.0));
-    else
-        descuento = parseInt($('input[name="ValorDR_global"]').get(0).value);
-    neto -= descuento;
-    if (neto<0)
-        neto = 0;
-    // calcular descuento global para exento
-    if ($('select[name="TpoValor_global"]').get(0).selectedOptions[0].value=="%")
-        descuento = Math.round(exento * (parseInt($('input[name="ValorDR_global"]').get(0).value)/100.0));
-    else
-        descuento = parseInt($('input[name="ValorDR_global"]').get(0).value);
-    exento -= descuento;
-    if (exento<0)
-        exento = 0;
+    // calcular descuento global si existe el input (contribuyentes con impuestos adicionales no tienen descuentos globales)
+    if ($('select[name="TpoValor_global"]').length) {
+        // calcular descuento global para neto
+        if ($('select[name="TpoValor_global"]').get(0).selectedOptions[0].value=="%")
+            descuento = Math.round(neto * (parseInt($('input[name="ValorDR_global"]').get(0).value)/100.0));
+        else
+            descuento = parseInt($('input[name="ValorDR_global"]').get(0).value);
+        neto -= descuento;
+        if (neto<0)
+            neto = 0;
+        // calcular descuento global para exento
+        if ($('select[name="TpoValor_global"]').get(0).selectedOptions[0].value=="%")
+            descuento = Math.round(exento * (parseInt($('input[name="ValorDR_global"]').get(0).value)/100.0));
+        else
+            descuento = parseInt($('input[name="ValorDR_global"]').get(0).value);
+        exento -= descuento;
+        if (exento<0)
+            exento = 0;
+    }
     // asignar neto y exento
     $('input[name="neto"]').val(neto);
     $('input[name="exento"]').val(exento)
     // asignar IVA y monto total
     $('input[name="iva"]').val(Math.round(neto*(parseInt($('input[name="tasa"]').val())/100)));
-    $('input[name="total"]').val(neto + exento + parseInt($('input[name="iva"]').val()));
+    $('input[name="total"]').val(neto + exento + parseInt($('input[name="iva"]').val()) + adicional - retencion);
 }
 
 DTE.check = function () {
     var status = true, TpoDoc = parseInt(document.getElementById("TpoDocField").value);
     var dte_check_detalle = [33, 34, 39, 41];
     var n_itemAfecto = 0, n_itemExento = 0;
+    var monto_pago;
     // revisión general formulario
     if (!Form.check())
         return false;
@@ -348,6 +383,17 @@ DTE.check = function () {
     });
     if (!status)
         return false;
+    // verificar montos programados si es que existen (forma de pago crédito)
+    if (document.getElementById("FmaPagoField").value==2 && $('input[name="MntPago[]"]').length) {
+        monto_pago = 0;
+        $('input[name="MntPago[]"]').each(function (i, m) {
+            monto_pago += parseInt(m.value);
+        });
+        if (monto_pago != $('input[name="total"]').val()) {
+            alert('Monto de pago programado $' + __.num(monto_pago) + '.- no cuadra con el total del documento');
+            return false;
+        }
+    }
     // pedir confirmación de generación de factura
     DTE.calcular();
     return Form.checkSend('Confirmar '+document.getElementById("TpoDocField").selectedOptions[0].textContent+' por $'+__.num($('input[name="total"]').val())+' a '+$('input[name="RUTRecep"]').val());

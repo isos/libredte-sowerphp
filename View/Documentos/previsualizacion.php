@@ -25,7 +25,7 @@ new \sowerphp\general\View_Helper_Table([
         </a>
     </div>
     <div class="col-md-4 center">
-        <a class="btn btn-primary btn-lg btn-block" href="generar/<?=$DteTmp->receptor?>/<?=$DteTmp->dte?>/<?=$DteTmp->codigo?>" role="button">
+        <a class="btn btn-primary btn-lg btn-block" href="generar/<?=$DteTmp->receptor?>/<?=$DteTmp->dte?>/<?=$DteTmp->codigo?>" role="button" onclick="return Form.checkSend('¿Está seguro de querer generar el DTE?')">
             <span class="fa fa-send-o" style="font-size:24px"></span>
             Generar DTE y enviar al SII
         </a>
