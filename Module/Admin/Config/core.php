@@ -25,7 +25,12 @@
 \sowerphp\core\Configure::write('module.title', 'Panel de administración');
 
 // Menú para el módulo
-\sowerphp\core\Configure::write('nav.module', [
+$_nav_module = [
+    '/itemes/listar/1/codigo/A?search=activo:1' => [
+        'name' => 'Productos y/o servicios',
+        'desc' => 'Mantenedor de productos y/o servicios que se comercializan',
+        'icon' => 'fa fa-cubes',
+    ],
     '/dte_folios' => [
         'name' => 'Folios',
         'desc' => 'Mantenedor de códigos de autorización de folios',
@@ -46,22 +51,17 @@
         'desc' => 'Importar datos al sistema para restaurar respaldo o migración',
         'icon' => 'fa fa-upload',
     ],*/
-    '/contribuyente_dtes/listar/1/contribuyente/A' => [
-        'name' => 'DTEs autorizados por contribuyente',
-        'desc' => 'DTEs que los contribuyentes de LibreDTE tienen autorizado emitir en la aplicación',
-        'icon' => 'fa fa-list',
-    ],
-    '/dte_tipos/listar/1/codigo/A' => [
-        'name' => 'Documentos tributarios',
-        'desc' => 'Tipos de documentos tributarios (electrónicos y no electrónicos)',
-        'icon' => 'fa fa-list-alt',
-    ],
-    '/iva_no_recuperables/listar/1/codigo/A' => [
-        'name' => 'IVA no recuperable',
-        'icon' => 'fa fa-dollar',
-    ],
-    '/impuesto_adicionales/listar/1/codigo/A' => [
-        'name' => 'Impuestos adicionales',
-        'icon' => 'fa fa-dollar',
-    ],
-]);
+];
+if (\sowerphp\core\Module::loaded('Dte.Admin.Informes')) {
+    $_nav_module['/informes'] = array(
+        'name' => 'Informes',
+        'desc' => 'Informes de los usuarios y contribuyentes',
+        'icon' => 'fa fa-file',
+    );
+}
+$_nav_module['/mantenedores'] = array(
+    'name' => 'Mantenedores',
+    'desc' => 'Mantenedores de tablas generales',
+    'icon' => 'fa fa-list-alt',
+);
+\sowerphp\core\Configure::write('nav.module', $_nav_module);

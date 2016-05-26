@@ -27,7 +27,7 @@ namespace website\Dte\Admin;
 /**
  * Clase exportar e importar datos de un contribuyente
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-01-29
+ * @version 2016-02-03
  */
 class Controller_Respaldos extends \Controller_App
 {
@@ -35,17 +35,30 @@ class Controller_Respaldos extends \Controller_App
     /**
      * Acción que permite exportar todos los datos de un contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-29
+     * @version 2016-02-03
      */
-    public function exportar()
+    public function exportar($all = false)
     {
         $Emisor = $this->getContribuyente();
+        if ($Emisor->usuario != $this->Auth->User->id) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Sólo el administrador de la empresa puede descargar un respaldo', 'error'
+            );
+            $this->redirect('/dte/admin');
+        }
         $Respaldo = new Model_Respaldo();
+        $tablas = $Respaldo->getTablas();
         $this->set([
             'Emisor' => $Emisor,
-            'tablas' => $Respaldo->getTablas(),
+            'tablas' => $tablas,
         ]);
-        if (isset($_POST['submit'])) {
+        if ($all) {
+            $_POST['tablas'] = [];
+            foreach ($tablas as $t) {
+                $_POST['tablas'][] = $t[0];
+            }
+        }
+        if (isset($_POST['tablas'])) {
             try {
                 $dir = $Respaldo->generar($Emisor->rut, $_POST['tablas']);
                 \sowerphp\general\Utility_File::compress(
