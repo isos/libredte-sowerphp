@@ -23,7 +23,6 @@ $(function() {
         <li role="presentation" class="active"><a href="#datos" aria-controls="datos" role="tab" data-toggle="tab">Datos básicos</a></li>
         <li role="presentation"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Enviar por email</a></li>
         <li role="presentation"><a href="#intercambio" aria-controls="intercambio" role="tab" data-toggle="tab">Resultado intercambio</a></li>
-        <li role="presentation"><a href="#cobranza" aria-controls="cobranza" role="tab" data-toggle="tab">Cobranza</a></li>
         <li role="presentation"><a href="#referencias" aria-controls="referencias" role="tab" data-toggle="tab">Referencias</a></li>
     </ul>
     <div class="tab-content">
@@ -198,32 +197,6 @@ if ($Resultado) {
 ?>
 </div>
 <!-- FIN INTERCAMBIO -->
-
-<!-- INICIO COBRANZA -->
-<div role="tabpanel" class="tab-pane" id="cobranza">
-<?php
-$cobranza = $DteEmitido->getCobranza();
-if ($cobranza) {
-    echo '<p>El documento emitido tiene los siguientes pagos programados asociados.</p>',"\n";
-    foreach ($cobranza as &$c) {
-        $c[] = '<a href="'.$_base.'/dte/cobranzas/ver/'.$DteEmitido->dte.'/'.$DteEmitido->folio.'/'.$c['fecha'].'" title="Ver pago"><span class="fa fa-search btn btn-default"></span></a>';
-        $c['fecha'] = \sowerphp\general\Utility_Date::format($c['fecha']);
-        $c['monto'] = num($c['monto']);
-        if ($c['pagado']!==null) {
-            $c['pagado'] = num($c['pagado']);
-        }
-        if ($c['modificado']) {
-            $c['modificado'] = \sowerphp\general\Utility_Date::format($c['modificado']);
-        }
-    }
-    array_unshift($cobranza, ['Fecha', 'Monto', 'Glosa', 'Pagado', 'Observación', 'Usuario', 'Modificado', 'Acciones']);
-    new \sowerphp\general\View_Helper_Table($cobranza);
-} else {
-    echo '<p>No hay pagos programados para este documento.</p>',"\n";
-}
-?>
-</div>
-<!-- FIN COBRANZA -->
 
 <!-- INICIO REFERENCIAS -->
 <div role="tabpanel" class="tab-pane" id="referencias">
