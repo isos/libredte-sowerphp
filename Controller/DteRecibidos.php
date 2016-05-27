@@ -85,7 +85,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite agregar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-27
+     * @version 2016-05-27
      */
     public function agregar()
     {
@@ -100,12 +100,14 @@ class Controller_DteRecibidos extends \Controller_App
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
             $this->save();
+        $this->autoRender = false;
+        $this->render('DteRecibidos/agregar_modificar');
     }
 
     /**
      * Acción que permite editar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-01
+     * @version 2016-05-27
      */
     public function modificar($emisor, $dte, $folio)
     {
@@ -129,6 +131,8 @@ class Controller_DteRecibidos extends \Controller_App
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
             $this->save();
+        $this->autoRender = false;
+        $this->render('DteRecibidos/agregar_modificar');
     }
 
     /**
