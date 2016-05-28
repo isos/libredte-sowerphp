@@ -1227,7 +1227,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras por períodos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-08
+     * @version 2016-05-27
      */
     public function getResumenComprasPeriodos()
     {
@@ -1258,14 +1258,16 @@ class Model_Contribuyente extends \Model_App
                     c.revision_estado
                 FROM
                     (
-                        SELECT '.$periodo.' AS periodo, COUNT(*) AS recibidos
-                        FROM
-                            dte_tipo AS t,
-                            dte_recibido AS r
-                            LEFT JOIN dte_compra AS c
-                                ON r.receptor = c.receptor AND r.certificacion = c.certificacion AND '.$periodo.' = c.periodo
+                        SELECT
+                            CASE WHEN r.periodo IS NOT NULL THEN
+                                r.periodo
+                            ELSE
+                                '.$periodo.'
+                            END AS periodo,
+                            COUNT(*) AS recibidos
+                        FROM dte_tipo AS t, dte_recibido AS r
                         WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion
-                        GROUP BY '.$periodo.'
+                        GROUP BY '.$periodo.', r.periodo
                     ) AS r
                     FULL JOIN (
                         SELECT '.$periodo.' AS periodo, COUNT(*) AS facturas_compra
@@ -1286,14 +1288,14 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-08
+     * @version 2016-05-28
      */
     public function getCompras($periodo)
     {
-        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%Y%m")';
         if ($this->db->config['type']=='PostgreSQL') {
-            $impuesto_codigo = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TipoImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')::SMALLINT';
-            $impuesto_tasa = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TasaImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')::SMALLINT';
+            $impuesto_codigo = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TipoImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+            $impuesto_tasa = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TasaImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
             $impuesto_monto = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:MontoImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
         } else {
             $impuesto_codigo = '\'\'';
@@ -1318,9 +1320,9 @@ class Model_Contribuyente extends \Model_App
                     NULL AS iva_no_recuperable_monto,
                     NULL AS iva_uso_comun_monto,
                     r.iva_uso_comun,
-                    r.impuesto_adicional,
-                    r.impuesto_adicional_tasa,
-                    NULL AS impuesto_adicional_monto,
+                    r.impuesto_adicional::TEXT,
+                    r.impuesto_adicional_tasa::TEXT,
+                    \'\' AS impuesto_adicional_monto,
                     r.total,
                     r.impuesto_sin_credito,
                     r.monto_activo_fijo,
@@ -1328,7 +1330,13 @@ class Model_Contribuyente extends \Model_App
                     r.iva_no_retenido,
                     r.sucursal_sii
                 FROM dte_tipo AS t, dte_recibido AS r, contribuyente AS e
-                WHERE t.codigo = r.dte AND t.compra = true AND r.emisor = e.rut AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+                WHERE
+                    t.codigo = r.dte
+                    AND t.compra = true
+                    AND r.emisor = e.rut
+                    AND r.receptor = :rut
+                    AND r.certificacion = :certificacion
+                    AND ((r.periodo IS NULL AND '.$periodo_col.' = :periodo) OR (r.periodo IS NOT NULL AND r.periodo = :periodo))
             ) UNION (
                 SELECT
                     r.dte,
