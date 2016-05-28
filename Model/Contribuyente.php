@@ -1227,11 +1227,13 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras por períodos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-27
+     * @version 2016-05-28
      */
     public function getResumenComprasPeriodos()
     {
-        $periodo = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        if ($this->db->config['type']!='PostgreSQL')
+            return $this->getResumenComprasPeriodosMySQL();
+        $periodo = 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER';
         return $this->db->getTable('
             (
                 SELECT
@@ -1286,6 +1288,30 @@ class Model_Contribuyente extends \Model_App
     }
 
     /**
+     * Método que entrega el resumen de las compras por períodos
+     * @warning Versión del método para MySQL, no soporta facturas de compra
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    private function getResumenComprasPeriodosMySQL()
+    {
+        $periodo = 'DATE_FORMAT(r.fecha, "%Y%m")';
+        return $this->db->getTable('
+            (
+                SELECT '.$periodo.' AS periodo, COUNT(*) AS recibidos, c.documentos AS enviados, c.track_id, c.revision_estado
+                FROM dte_tipo AS t, dte_recibido AS r LEFT JOIN dte_compra AS c ON r.receptor = c.receptor AND r.certificacion = c.certificacion AND '.$periodo.' = c.periodo
+                WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion
+                GROUP BY '.$periodo.', enviados, c.track_id, c.revision_estado
+            ) UNION (
+                SELECT periodo, documentos AS emitidos, documentos AS enviados, track_id, revision_estado
+                FROM dte_compra
+                WHERE receptor = :rut AND certificacion = :certificacion
+            )
+            ORDER BY periodo DESC
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
      * Método que entrega el resumen de las compras de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-05-28
@@ -1320,8 +1346,8 @@ class Model_Contribuyente extends \Model_App
                     NULL AS iva_no_recuperable_monto,
                     NULL AS iva_uso_comun_monto,
                     r.iva_uso_comun,
-                    r.impuesto_adicional::TEXT,
-                    r.impuesto_adicional_tasa::TEXT,
+                    r.impuesto_adicional'.($this->db->config['type']=='PostgreSQL'?'::TEXT':'').',
+                    r.impuesto_adicional_tasa'.($this->db->config['type']=='PostgreSQL'?'::TEXT':'').',
                     \'\' AS impuesto_adicional_monto,
                     r.total,
                     r.impuesto_sin_credito,
@@ -1391,12 +1417,14 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-08
+     * @version 2016-05-28
      */
     public function getComprasDiarias($periodo)
     {
-        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
-        $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%e")';
+        if ($this->db->config['type']!='PostgreSQL')
+            return $this->getComprasDiariasMySQL($periodo);
+        $periodo_col = 'TO_CHAR(r.fecha, \'YYYYmm\')';
+        $dia_col = 'TO_CHAR(r.fecha, \'DD\')::INTEGER';
         return $this->db->getAssociativeArray('
             SELECT
                 CASE WHEN r.dia IS NOT NULL THEN
@@ -1432,6 +1460,25 @@ class Model_Contribuyente extends \Model_App
                     GROUP BY r.fecha
                 ) AS f ON r.dia = f.dia
             ORDER BY dia
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+    }
+
+    /**
+     * Método que entrega el resumen de las compras diarias de un período
+     * @warning Versión del método para MySQL, no soporta facturas de compra
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    private function getComprasDiariasMySQL($periodo)
+    {
+        $periodo_col = 'DATE_FORMAT(r.fecha, "%Y%m")';
+        $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%e")';
+        return $this->db->getAssociativeArray('
+            SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
+            FROM dte_tipo AS t, dte_recibido AS r
+            WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+            GROUP BY r.fecha
+            ORDER BY r.fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
 
