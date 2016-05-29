@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Clase para mapear la tabla contribuyente de la base de datos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-02-14
+ * @version 2016-05-28
  */
 class Model_Contribuyente extends \Model_App
 {
@@ -750,7 +750,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-03
+     * @version 2016-05-28
      */
     public function getDocumentosEmitidos($filtros = [])
     {
@@ -758,10 +758,38 @@ class Model_Contribuyente extends \Model_App
         $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
         $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
-            if (isset($filtros[$c])) {
+            if (!empty($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
                 $vars[':'.$c] = $filtros[$c];
             }
+        }
+        // si se debe hacer búsqueda dentro de los XML
+        if (!empty($filtros['xml'])) {
+            $i = 1;
+            foreach ($filtros['xml'] as $nodo => $valor) {
+                $nodo = preg_replace('/[^A-Za-z\/]/', '', $nodo);
+                $nodo = '/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:'.str_replace('/', '/n:', $nodo).'/text()';
+                $where[] = 'BTRIM(XPATH(\''.$nodo.'\', CONVERT_FROM(decode(d.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\') ILIKE :xml'.$i;
+                $vars[':xml'.$i] = '%'.$valor.'%';
+                $i++;
+            }
+        }
+        // otros filtros
+        if (!empty($filtros['fecha_desde'])) {
+            $where[] = 'd.fecha >= :fecha_desde';
+            $vars[':fecha_desde'] = $filtros['fecha_desde'];
+        }
+        if (!empty($filtros['fecha_hasta'])) {
+            $where[] = 'd.fecha <= :fecha_hasta';
+            $vars[':fecha_hasta'] = $filtros['fecha_hasta'];
+        }
+        if (!empty($filtros['total_desde'])) {
+            $where[] = 'd.total >= :total_desde';
+            $vars[':total_desde'] = $filtros['total_desde'];
+        }
+        if (!empty($filtros['total_hasta'])) {
+            $where[] = 'd.total <= :total_hasta';
+            $vars[':total_hasta'] = $filtros['total_hasta'];
         }
         // armar consulta
         $query = '

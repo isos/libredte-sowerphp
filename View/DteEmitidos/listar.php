@@ -1,3 +1,15 @@
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_emitidos/cargar_xml" title="Cargar un XML emitido externamente">
+            Cargar XML
+        </a>
+    </li>
+    <li>
+        <a href="<?=$_base?>/dte/dte_emitidos/buscar" title="Búsqueda avanzada de documentos emitidos">
+            Buscar
+        </a>
+    </li>
+</ul>
 <h1>Documentos emitidos</h1>
 <p>Aquí podrá consultar todos los documentos emitidos por la empresa <?=$Emisor->razon_social?>.</p>
 <?php

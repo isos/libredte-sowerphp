@@ -547,6 +547,54 @@ class Controller_DteEmitidos extends \Controller_App
     }
 
     /**
+     * Acción que permite realizar una búsqueda avanzada dentro de los DTE
+     * emitidos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    public function buscar()
+    {
+        $Emisor = $this->getContribuyente();
+        $this->set([
+            'tipos_dte' => $Emisor->getDocumentosAutorizados(),
+        ]);
+        if (isset($_POST['submit'])) {
+            $xml = [];
+            if (!empty($_POST['xml_nodo'])) {
+                $n_xml = count($_POST['xml_nodo']);
+                for ($i=0; $i<$n_xml; $i++) {
+                    if (!empty($_POST['xml_nodo'][$i]) and !empty($_POST['xml_valor'][$i])) {
+                        $xml[$_POST['xml_nodo'][$i]] = $_POST['xml_valor'][$i];
+                    }
+                }
+            }
+            $rest = new \sowerphp\core\Network_Http_Rest();
+            $rest->setAuth($this->Auth->User->hash);
+            $response = $rest->post($this->request->url.'/api/dte/dte_emitidos/buscar/'.$Emisor->rut, json_encode([
+                'dte' => $_POST['dte'],
+                'receptor' => $_POST['receptor'],
+                'fecha_desde' => $_POST['fecha_desde'],
+                'fecha_hasta' => $_POST['fecha_hasta'],
+                'total_desde' => $_POST['total_desde'],
+                'total_hasta' => $_POST['total_hasta'],
+                'xml' => $xml,
+            ]));
+            if ($response===false) {
+                \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
+            }
+            else if ($response['status']['code']!=200) {
+                \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
+            }
+            else {
+                $this->set([
+                    'Emisor' => $Emisor,
+                    'documentos' => $response['body'],
+                ]);
+            }
+        }
+    }
+
+    /**
      * Acción de la API que permite obtener la información de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-05-12
@@ -748,6 +796,34 @@ class Controller_DteEmitidos extends \Controller_App
         $DteEmitido->save();
         $DteEmitido->xml = null;
         $this->Api->send($DteEmitido, 200, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Acción de la API que permite realizar una búsqueda avanzada dentro de los
+     * DTEs emitidos
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    public function _api_buscar_POST($emisor)
+    {
+        // verificar usuario autenticado
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        // verificar permisos del usuario autenticado sobre el emisor del DTE
+        $Emisor = new Model_Contribuyente($emisor);
+        if (!$Emisor->exists())
+            $this->Api->send('Emisor no existe', 404);
+        if (!$Emisor->usuarioAutorizado($User)) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        // buscar documentos
+        $this->Api->send($Emisor->getDocumentosEmitidos(json_decode($this->Api->data, true)), 200, JSON_PRETTY_PRINT);
     }
 
 }
