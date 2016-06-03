@@ -2,7 +2,7 @@
     <li>
         <a href="<?=$_base?>/dte/dte_intercambios/actualizar">
             <span class="fa fa-refresh"></span>
-            Actualizar bandeja de intercambio: <?=$Emisor->config_email_intercambio_user?>
+            Actualizar bandeja de intercambio
         </a>
     </li>
 </ul>
