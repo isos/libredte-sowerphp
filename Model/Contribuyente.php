@@ -750,7 +750,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-28
+     * @version 2016-06-01
      */
     public function getDocumentosEmitidos($filtros = [])
     {
@@ -801,7 +801,7 @@ class Model_Contribuyente extends \Model_App
                 contribuyente AS r,
                 usuario AS u
             WHERE d.dte = t.codigo AND d.receptor = r.rut AND d.usuario = u.id AND '.implode(' AND ', $where).'
-            ORDER BY d.fecha DESC, t.tipo, r.razon_social
+            ORDER BY d.fecha DESC, t.tipo, d.folio DESC
         ';
         // armar límite consulta
         if (isset($filtros['limit'])) {
