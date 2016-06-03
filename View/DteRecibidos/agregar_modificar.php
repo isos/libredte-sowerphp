@@ -100,12 +100,6 @@ echo $f->input([
     'placeholder' => \sowerphp\general\Utility_Date::nextPeriod(),
     'help' => 'Período en el que registrar el documento, sólo si es diferente al mes de la fecha de emisión. Formato: AAAAMM',
 ]);
-echo $f->input([
-    'type' => 'checkbox',
-    'name' => 'anulado',
-    'checked' => (isset($DteRecibido) and $DteRecibido->anulado == 'A') ? true : false,
-    'label' => '¿Anulado?',
-]);
 echo '</div>',"\n";
 echo '<div class="col-md-6">',"\n";
 echo $f->input([
@@ -159,6 +153,12 @@ echo $f->input([
     'label' => 'IVA no retenido',
     'value' => isset($DteRecibido) ? $DteRecibido->iva_no_retenido : '',
     'check' => 'integer',
+]);
+echo $f->input([
+    'type' => 'checkbox',
+    'name' => 'anulado',
+    'checked' => (isset($DteRecibido) and $DteRecibido->anulado == 'A') ? true : false,
+    'label' => '¿Anulado?',
 ]);
 echo '</div>',"\n";
 echo '</div>',"\n";
