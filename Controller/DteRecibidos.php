@@ -85,7 +85,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite agregar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-27
+     * @version 2016-06-03
      */
     public function agregar()
     {
@@ -96,6 +96,7 @@ class Controller_DteRecibidos extends \Controller_App
             'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
             'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
             'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
+            'iva_tasa' => \sasco\LibreDTE\Sii::getIVA(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
@@ -107,7 +108,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite editar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-27
+     * @version 2016-06-03
      */
     public function modificar($emisor, $dte, $folio)
     {
@@ -127,6 +128,7 @@ class Controller_DteRecibidos extends \Controller_App
             'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
             'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
             'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
+            'iva_tasa' => \sasco\LibreDTE\Sii::getIVA(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
@@ -138,7 +140,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Método que agrega o modifica un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-26
+     * @version 2016-06-03
      */
     private function save()
     {
@@ -156,11 +158,11 @@ class Controller_DteRecibidos extends \Controller_App
         list($emisor, $dv) = explode('-', str_replace('.', '', $_POST['emisor']));
         $DteRecibido = new Model_DteRecibido($emisor, $_POST['dte'], (int)$_POST['folio'], (int)$Emisor->config_ambiente_en_certificacion);
         $DteRecibido->receptor = $Emisor->rut;
-        $DteRecibido->tasa = (int)$_POST['tasa'];
+        $DteRecibido->tasa = !empty($_POST['neto']) ? (int)$_POST['tasa'] : 0;
         $DteRecibido->fecha = $_POST['fecha'];
         $DteRecibido->exento = !empty($_POST['exento']) ? $_POST['exento'] : null;
         $DteRecibido->neto = !empty($_POST['neto']) ? $_POST['neto'] : null;
-        $DteRecibido->iva = round((int)$DteRecibido->neto * ($DteRecibido->tasa/100));
+        $DteRecibido->iva = !empty($_POST['iva']) ? $_POST['iva'] : round((int)$DteRecibido->neto * ($DteRecibido->tasa/100));
         $DteRecibido->total = (int)$DteRecibido->exento + (int)$DteRecibido->neto + $DteRecibido->iva;
         $DteRecibido->usuario = $this->Auth->User->id;
         // iva uso común, no recuperable e impuesto adicional
