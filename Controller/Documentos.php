@@ -842,7 +842,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-22
+     * @version 2016-06-01
      */
     public function _api_generar_pdf_POST()
     {
@@ -877,7 +877,9 @@ class Controller_Documentos extends \Controller_App
         set_time_limit(0);
         // Cargar EnvioDTE y extraer arreglo con datos de carátula y DTEs
         $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($xml);
+        if (!$EnvioDte->loadXML($xml)) {
+            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 400);
+        }
         $Caratula = $EnvioDte->getCaratula();
         $Documentos = $EnvioDte->getDocumentos();
         // directorio temporal para guardar los PDF
