@@ -72,4 +72,83 @@ class Controller_Respaldos extends \Controller_App
         }
     }
 
+    /**
+     * Acción que permite exportar todos los datos de un contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-04
+     */
+    public function dropbox($desconectar = false)
+    {
+        $Emisor = $this->getContribuyente();
+        if ($Emisor->usuario != $this->Auth->User->id) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Sólo el administrador de la empresa puede configurar Dropbox', 'error'
+            );
+            $this->redirect('/dte/admin');
+        }
+        // verificar que exista soporta para usar Dropbox
+        $config = \sowerphp\core\Configure::read('backup.dropbox');
+        if (!$config or !class_exists('\Dropbox\AppInfo')) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Respaldos en Dropbox no están disponibles', 'error'
+            );
+            $this->redirect('/dte/admin');
+        }
+        // conectar a API de dropbox
+        $appInfo = new \Dropbox\AppInfo($config['key'], $config['secret']);
+        $csrfTokenStore = new \Dropbox\ArrayEntryStore($_SESSION, 'dropbox-auth-csrf-token');
+        $webAuth = new \Dropbox\WebAuth($appInfo, 'LibreDTE/1.0', $this->request->url.$this->request->request, $csrfTokenStore);
+        // procesar código si fue pasado
+        if (!empty($_GET['state']) and !empty($_GET['code'])) {
+            try {
+                list($accessToken, $userId, $urlState) = $webAuth->finish($_GET);
+                assert($urlState === null);
+                $dbxClient = new \Dropbox\Client($accessToken, 'LibreDTE/1.0');
+                $accountInfo = $dbxClient->getAccountInfo();
+                $Emisor->set([
+                    'config_respaldos_dropbox' => (object)[
+                        'uid'=> $accountInfo['uid'],
+                        'display_name' => $accountInfo['display_name'],
+                        'email' => $accountInfo['email'],
+                        'token'=>$accessToken,
+                    ]
+                ]);
+                $Emisor->save();
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Dropbox se ha conectado correctamente', 'ok'
+                );
+                $this->redirect('/dte/admin/respaldos/dropbox');
+            } catch (\Exception $e) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    $e->getMessage(), 'error'
+                );
+            }
+        }
+        // tratar de obtener datos del usuario si es que existe token
+        if ($Emisor->config_respaldos_dropbox) {
+            try {
+                $dbxClient = new \Dropbox\Client($Emisor->config_respaldos_dropbox->token, 'LibreDTE/1.0');
+                $accountInfo = $dbxClient->getAccountInfo();
+            } catch (\Dropbox\Exception_InvalidAccessToken $e) {
+                $desconectar = true;
+            }
+        }
+        // desconectar LibreDTE de Dropbox
+        if ($desconectar) {
+            $Emisor->set(['config_respaldos_dropbox' => null]);
+            $Emisor->save();
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Dropbox se ha desconectado correctamente', 'ok'
+            );
+            $this->redirect('/dte/admin/respaldos/dropbox');
+        }
+        // asignar variables para la vista
+        $this->set('Emisor', $Emisor);
+        if (!$Emisor->config_respaldos_dropbox) {
+            $this->set('authorizeUrl', $webAuth->start());
+        } else {
+            $this->set('accountInfo', $accountInfo);
+        }
+    }
+
 }

@@ -41,6 +41,11 @@ $_nav_module = [
         'desc' => 'Mantenedor para poder cargar la firma electrónica del usuario',
         'icon' => 'fa fa-certificate',
     ],
+    '/respaldos/dropbox' => [
+        'name' => 'Respaldos en Dropbox',
+        'desc' => 'Configuración para respaldos automáticos en Dropbox',
+        'icon' => 'fa fa-dropbox',
+    ],
     '/respaldos/exportar' => [
         'name' => 'Exportar datos',
         'desc' => 'Exportar datos del sistema para respaldo o migración',
