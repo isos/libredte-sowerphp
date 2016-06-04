@@ -281,7 +281,7 @@ class Controller_Documentos extends \Controller_App
             'tipos_dte' => $Emisor->getDocumentosAutorizados(),
             'tipos_referencia' => (new \website\Dte\Admin\Mantenedores\Model_DteReferenciaTipos())->getList(),
             'IndTraslado' => $this->IndTraslado,
-            'codigos' => [],
+            'codigos' => (new \website\Dte\Admin\Model_Itemes())->getCodigos($Emisor->rut),
             'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getListContribuyente($Emisor->config_extra_impuestos_adicionales),
             'ImpuestoAdicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getObjectsContribuyente($Emisor->config_extra_impuestos_adicionales),
         ]);
@@ -495,6 +495,10 @@ class Controller_Documentos extends \Controller_App
         if ($ImptoReten) {
             $dte['Encabezado']['Totales']['ImptoReten'] = $ImptoReten;
         }
+        // si la empresa es constructora se marca para obtener el cŕedito del 65%
+        /*if ($Emisor->config_extra_constructora and in_array($dte['Encabezado']['IdDoc']['TipoDTE'], [33, 52, 56, 61])) {
+            $dte['Encabezado']['Totales']['CredEC'] = true;
+        }*/
         // agregar descuento globales
         if (!empty($_POST['ValorDR_global']) and !empty($_POST['TpoValor_global'])) {
             $dte['DscRcgGlobal'] = [];
@@ -566,7 +570,7 @@ class Controller_Documentos extends \Controller_App
      * Función de la API que permite emitir un DTE a partir de un documento
      * temporal, asignando folio, firmando y enviando al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-04
      */
     public function _api_generar_POST()
     {
@@ -662,7 +666,7 @@ class Controller_Documentos extends \Controller_App
         $MntPagos = $DteEmitido->getPagosProgramados();
         if (!empty($MntPagos)) {
             foreach ($MntPagos as $pago) {
-                $Cobranza = new Model_Cobranza();
+                $Cobranza = new \website\Dte\Cobranzas\Model_Cobranza();
                 $Cobranza->emisor = $DteEmitido->emisor;
                 $Cobranza->dte = $DteEmitido->dte;
                 $Cobranza->folio = $DteEmitido->folio;
@@ -868,7 +872,7 @@ class Controller_Documentos extends \Controller_App
             $logo = file_get_contents($_FILES['logo']['tmp_name']);
         }
         // crear flag cedible
-        $cedible = !empty($this->Api->data['cedible']) ? $this->Api->data['cedible'] : false;
+        $cedible = !empty($this->Api->data['cedible']) ? (int)$this->Api->data['cedible'] : 0;
         // crear flag papel continuo
         $papelContinuo = !empty($this->Api->data['papelContinuo']) ? $this->Api->data['papelContinuo'] : false;
         // crear opción para web de verificación
@@ -900,16 +904,32 @@ class Controller_Documentos extends \Controller_App
             $pdf->setResolucion(['FchResol'=>$Caratula['FchResol'], 'NroResol'=>$Caratula['NroResol']]);
             if ($webVerificacion)
                 $pdf->setWebVerificacion($webVerificacion);
-            $pdf->agregar($DTE->getDatos(), $DTE->getTED());
-            if ($cedible and $DTE->esCedible()) {
-                $pdf->setCedible(true);
+            // si no tiene cedible o el cedible va en el mismo archivo
+            if ($cedible!=2) {
                 $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                if ($cedible and $DTE->esCedible()) {
+                    $pdf->setCedible(true);
+                    $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                }
+                $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
+                $pdf->Output($file, 'F');
             }
-            $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
-            $pdf->Output($file, 'F');
+            // si el cedible va en un archivo separado
+            else {
+                $pdf_cedible = clone $pdf;
+                $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
+                $pdf->Output($file, 'F');
+                if ($DTE->esCedible()) {
+                    $pdf_cedible->setCedible(true);
+                    $pdf_cedible->agregar($DTE->getDatos(), $DTE->getTED());
+                    $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'_CEDIBLE.pdf';
+                    $pdf_cedible->Output($file, 'F');
+                }
+            }
         }
         // si solo es un archivo y se pidió no comprimir se entrega directamente
-        if (isset($this->Api->data['compress']) and !$this->Api->data['compress'] and !isset($Documentos[1])) {
+        if (empty($this->Api->data['compress']) and !isset($Documentos[1]) and $cedible!=2) {
             $this->response->sendFile($file, ['disposition'=>'attachement', 'exit'=>false]);
             \sowerphp\general\Utility_File::rmdir($dir);
             exit(0);

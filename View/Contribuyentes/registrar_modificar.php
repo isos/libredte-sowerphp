@@ -289,6 +289,15 @@ echo $f->input([
     'help' => '¿Se deben enviar automáticamente los DTE al SII sin pasar por previsualización?',
     'check' => 'notempty',
 ]);
+/*echo $f->input([
+    'type' => 'select',
+    'name' => 'config_extra_constructora',
+    'label' => 'Empresa constructora',
+    'options' => ['No', 'Si'],
+    'value' => isset($Contribuyente) ? $Contribuyente->config_extra_constructora : 0,
+    'help' => '¿El contribuyente es una empresa constructora (para crédito del 65%)?',
+    'check' => 'notempty',
+]);*/
 echo $f->input([
     'type' => 'select',
     'name' => 'config_extra_agente_retenedor',
