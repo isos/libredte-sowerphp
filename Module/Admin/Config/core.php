@@ -26,11 +26,11 @@
 
 // Menú para el módulo
 $_nav_module = [
-    /*'/itemes/listar/1/codigo/A?search=activo:1' => [
+    '/itemes/listar/1/codigo/A?search=activo:1' => [
         'name' => 'Productos y/o servicios',
         'desc' => 'Mantenedor de productos y/o servicios que se comercializan',
         'icon' => 'fa fa-cubes',
-    ],*/
+    ],
     '/dte_folios' => [
         'name' => 'Folios',
         'desc' => 'Mantenedor de códigos de autorización de folios',

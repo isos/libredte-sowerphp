@@ -76,6 +76,11 @@
         'desc' => 'Reporte de consumo de folios de boletas',
         'icon' => 'fa fa-archive',
     ],
+    '/cobranzas' => [
+        'name' => 'Cobranzas',
+        'desc' => 'Generar o cobrar pagos programados',
+        'icon' => 'fa fa-dollar',
+    ],
     '/admin' => [
         'name' => 'Administración',
         'desc' => 'Administración del módulo DTE',

@@ -518,4 +518,76 @@ CREATE TABLE dte_boleta_consumo (
                 ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- tabla de clasificaciones de items
+DROP TABLE IF EXISTS item_clasificacion CASCADE;
+CREATE TABLE item_clasificacion (
+    contribuyente INTEGER NOT NULL,
+    codigo VARCHAR(35) NOT NULL,
+    clasificacion VARCHAR (50) NOT NULL,
+    superior VARCHAR(10),
+    activa BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT item_clasificacion_pk PRIMARY KEY (contribuyente, codigo),
+    CONSTRAINT item_clasificacion_contribuyente_fk FOREIGN KEY (contribuyente)
+        REFERENCES contribuyente (rut) MATCH FULL
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT item_clasificacion_contribuyente_superior_fk FOREIGN KEY (contribuyente, superior)
+        REFERENCES item_clasificacion (contribuyente, codigo)
+        ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- tabla para items comercializados
+DROP TABLE IF EXISTS item CASCADE;
+CREATE TABLE item (
+    contribuyente INTEGER NOT NULL,
+    codigo_tipo VARCHAR(10) NOT NULL DEFAULT 'INT1',
+    codigo VARCHAR(35) NOT NULL,
+    item VARCHAR(80) NOT NULL,
+    descripcion VARCHAR(1000),
+    clasificacion VARCHAR(10) NOT NULL,
+    unidad VARCHAR(4),
+    precio REAL NOT NULL CHECK (precio > 0),
+    moneda VARCHAR(3) NOT NULL,
+    exento SMALLINT NOT NULL DEFAULT 0 CHECK (exento >= 0 AND exento <= 6),
+    descuento REAL NOT NULL DEFAULT 0 CHECK (descuento >= 0),
+    descuento_tipo CHAR(1) NOT NULL DEFAULT '%' CHECK (descuento_tipo IN ('%', '$')),
+    impuesto_adicional SMALLINT,
+    activo BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT item_pk PRIMARY KEY (contribuyente, codigo_tipo, codigo),
+    CONSTRAINT item_contribuyente_fk FOREIGN KEY (contribuyente)
+        REFERENCES contribuyente (rut) MATCH FULL
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT item_contribuyente_clasificacion_fk FOREIGN KEY (contribuyente, clasificacion)
+        REFERENCES item_clasificacion (contribuyente, codigo) MATCH FULL
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT item_impuesto_adicional_fk FOREIGN KEY (impuesto_adicional)
+        REFERENCES impuesto_adicional (codigo) MATCH FULL
+        ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE INDEX item_contribuyente_codigo_idx ON item (contribuyente, codigo);
+
+-- tabla para cobranza de dte emitidos con crédito (tienen pagos programados)
+DROP TABLE IF EXISTS cobranza CASCADE;
+CREATE TABLE cobranza (
+    emisor INTEGER NOT NULL,
+    dte SMALLINT NOT NULL,
+    folio INTEGER NOT NULL,
+    certificacion BOOLEAN NOT NULL DEFAULT false,
+    fecha DATE NOT NULL,
+    monto INTEGER NOT NULL,
+    glosa VARCHAR(40),
+    pagado INTEGER,
+    observacion TEXT,
+    usuario INTEGER,
+    modificado DATE,
+    CONSTRAINT cobranza_pk PRIMARY KEY (emisor, dte, folio, certificacion, fecha),
+    CONSTRAINT dte_referencia_dte_emitido_fk FOREIGN KEY (emisor, dte, folio, certificacion)
+        REFERENCES dte_emitido (emisor, dte, folio, certificacion) MATCH FULL
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT firma_electronica_usuario_fk FOREIGN KEY (usuario)
+        REFERENCES usuario (id) MATCH FULL
+        ON UPDATE CASCADE ON DELETE CASCADE
+
+);
+CREATE INDEX cobrana_emisor_certificacion_fecha_idx ON cobranza (emisor, certificacion, fecha);
+
 COMMIT;

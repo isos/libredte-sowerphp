@@ -159,7 +159,7 @@ DTE.setTipo = function (tipo) {
 DTE.setFormaPago = function (tipo) {
     // habilitar o ocultar datos para pagos programados
     if (tipo==2) {
-        //$('#datosPagos').show();
+        $('#datosPagos').show();
     } else {
         $('#datosPagos').hide();
     }
