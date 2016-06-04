@@ -106,7 +106,7 @@ class Model_Contribuyentes extends \Model_Plural_App
         $where = ['c.usuario IS NOT NULL', ];
         // definir desde
         if (is_numeric($desde)) {
-            $where[] = 'd.fecha >= '.$this->db->config['type']=='PostgreSQL' ? ('NOW () - INTERVAL \''.(int)$desde.' months\'') : ('DATE_SUB(NOW(), INTERVAL '.(int)$desde.' MONTH)');
+            $where[] = 'd.fecha >= '.($this->db->config['type']=='PostgreSQL' ? ('NOW () - INTERVAL \''.(int)$desde.' months\'') : ('DATE_SUB(NOW(), INTERVAL '.(int)$desde.' MONTH)'));
         } else {
             $where[] = 'd.fecha >= :desde';
             $vars[':desde'] = $desde;
