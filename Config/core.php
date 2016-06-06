@@ -81,6 +81,11 @@
         'desc' => 'Generar o cobrar pagos programados',
         'icon' => 'fa fa-dollar',
     ],
+    '/informes' => [
+        'name' => 'Informes',
+        'desc' => 'Informes y reportes de la operación mensual',
+        'icon' => 'fa fa-file',
+    ],
     '/admin' => [
         'name' => 'Administración',
         'desc' => 'Administración del módulo DTE',
