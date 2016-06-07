@@ -1,5 +1,10 @@
 <ul class="nav nav-pills pull-right">
     <li>
+        <a href="<?=$_base?>/dte/dte_compras/importar" title="Importar libro IEC desde archivo CSV">
+            <span class="fa fa-upload"></span> Importar CSV
+        </a>
+    </li>
+    <li>
         <a href="<?=$_base?>/dte/dte_recibidos/agregar">
             <span class="fa fa-plus"></span>
             Agregar documento recibido
