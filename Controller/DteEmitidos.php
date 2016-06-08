@@ -597,7 +597,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite obtener la información de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-07
      */
     public function _api_info_GET($dte, $folio, $contribuyente = null)
     {
@@ -617,7 +617,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User)) {
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -630,7 +630,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite obtener el XML de un DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-07
      */
     public function _api_xml_GET($dte, $folio, $contribuyente = null)
     {
@@ -650,7 +650,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User)) {
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/xml')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -662,7 +662,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite actualizar el estado de envio del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-06
+     * @version 2016-06-07
      */
     public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null)
     {
@@ -683,7 +683,7 @@ class Controller_DteEmitidos extends \Controller_App
             if (!$Emisor->exists())
                 $this->Api->send('Emisor no existe', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User)) {
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/actualizar_estado')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, (int)$dte, (int)$folio, (int)$Emisor->config_ambiente_en_certificacion);
@@ -746,7 +746,7 @@ class Controller_DteEmitidos extends \Controller_App
      * Acción de la API que permite cargar el XML de un DTE como documento
      * emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-07
      */
     public function _api_cargar_xml_POST()
     {
@@ -773,7 +773,7 @@ class Controller_DteEmitidos extends \Controller_App
         $certificacion = !(bool)$Caratula['NroResol'];
         if (!$Emisor->exists())
             $this->Api->send('Emisor no existe', 404);
-        if (!$Emisor->usuarioAutorizado($User)) {
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/cargar_xml')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         // crear Objeto del DteEmitido y verificar si ya existe
@@ -802,7 +802,7 @@ class Controller_DteEmitidos extends \Controller_App
      * Acción de la API que permite realizar una búsqueda avanzada dentro de los
      * DTEs emitidos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-28
+     * @version 2016-06-07
      */
     public function _api_buscar_POST($emisor)
     {
@@ -819,7 +819,7 @@ class Controller_DteEmitidos extends \Controller_App
         $Emisor = new Model_Contribuyente($emisor);
         if (!$Emisor->exists())
             $this->Api->send('Emisor no existe', 404);
-        if (!$Emisor->usuarioAutorizado($User)) {
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/buscar')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
         }
         // buscar documentos
