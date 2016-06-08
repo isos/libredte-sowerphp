@@ -52,7 +52,7 @@ echo $f->input([
     'name' => 'precio',
     'label' => 'Precio neto',
     'value' => isset($Obj)?$Obj->precio:'',
-    'check' => 'notempty',
+    'check' => 'notempty real',
 ]);
 echo $f->input([
     'type' => 'select',
@@ -74,7 +74,7 @@ echo $f->input([
     'name' => 'descuento',
     'label' => 'Descuento',
     'value' => isset($Obj)?$Obj->descuento:0,
-    'check' => 'notempty',
+    'check' => 'notempty real',
 ]);
 echo $f->input([
     'type' => 'select',
