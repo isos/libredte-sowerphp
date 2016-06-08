@@ -580,10 +580,10 @@ CREATE TABLE cobranza (
     usuario INTEGER,
     modificado DATE,
     CONSTRAINT cobranza_pk PRIMARY KEY (emisor, dte, folio, certificacion, fecha),
-    CONSTRAINT dte_referencia_dte_emitido_fk FOREIGN KEY (emisor, dte, folio, certificacion)
+    CONSTRAINT cobranza_dte_emitido_fk FOREIGN KEY (emisor, dte, folio, certificacion)
         REFERENCES dte_emitido (emisor, dte, folio, certificacion) MATCH FULL
         ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT firma_electronica_usuario_fk FOREIGN KEY (usuario)
+    CONSTRAINT cobranza_usuario_fk FOREIGN KEY (usuario)
         REFERENCES usuario (id) MATCH FULL
         ON UPDATE CASCADE ON DELETE CASCADE
 
