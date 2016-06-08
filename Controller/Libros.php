@@ -94,7 +94,7 @@ abstract class Controller_Libros extends \Controller_App
     /**
      * Acción que descarga el archivo PDF del libro
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-09
+     * @version 2016-06-08
      */
     public function pdf($periodo)
     {
@@ -116,7 +116,7 @@ abstract class Controller_Libros extends \Controller_App
             $LibroCompraVenta = new \sasco\LibreDTE\Sii\LibroCompraVenta();
             $LibroCompraVenta->loadXML($xml);
             $pdf = new \sasco\LibreDTE\Sii\PDF\LibroCompraVenta();
-            $pdf->setFooterText();
+            $pdf->setFooterText(\sowerphp\core\Configure::read('dte.pdf.footer'));
             $pdf->agregar($LibroCompraVenta->toArray());
             $pdf->Output($file, 'D');
         }
