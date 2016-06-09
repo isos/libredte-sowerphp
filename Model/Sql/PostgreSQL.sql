@@ -588,6 +588,6 @@ CREATE TABLE cobranza (
         ON UPDATE CASCADE ON DELETE CASCADE
 
 );
-CREATE INDEX cobrana_emisor_certificacion_fecha_idx ON cobranza (emisor, certificacion, fecha);
+CREATE INDEX cobranza_emisor_certificacion_fecha_idx ON cobranza (emisor, certificacion, fecha);
 
 COMMIT;
