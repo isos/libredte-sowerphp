@@ -32,8 +32,8 @@ $(function() {
 
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Email recibido</a></li>
-        <li role="presentation"><a href="#documentos" aria-controls="documentos" role="tab" data-toggle="tab">Documentos</a></li>
+        <li role="presentation" class="active"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Email recibido y PDF</a></li>
+        <li role="presentation"><a href="#documentos" aria-controls="documentos" role="tab" data-toggle="tab">Recepción y acuse de recibo</a></li>
     </ul>
     <div class="tab-content">
 
