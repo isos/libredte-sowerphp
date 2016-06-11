@@ -251,7 +251,7 @@ class Controller_DteEmitidos extends \Controller_App
         if ($response===false) {
             \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
         }
-        else if ($response['status']['code']!=200 or empty($response['body']['revision_estado'])) {
+        else if ($response['status']['code']!=200) {
             \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
         }
         else {
