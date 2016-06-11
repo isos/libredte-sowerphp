@@ -370,6 +370,23 @@ echo $f->input([
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">
+            <i class="fa fa-dollar"></i>
+            Configuración contable
+        </div>
+        <div class="panel-body">
+<?php
+echo $f->input([
+    'name' => 'config_contabilidad_ppm',
+    'label' => 'Porcentaje PPM',
+    'value' => isset($Contribuyente) ? $Contribuyente->config_contabilidad_ppm : 0,
+    'help' => 'Porcentaje que se pagará mensualmente como PPM obligatorio',
+    'check' => 'notempty real',
+]);
+?>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
             <i class="fa fa-cogs"></i>
             Configuración general
         </div>

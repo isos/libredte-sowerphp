@@ -37,7 +37,7 @@ class Model_F29
     /**
      * Constructor del modelo F29
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-02
+     * @version 2016-06-10
      */
     public function __construct(\website\Dte\Model_Contribuyente $Emisor, $periodo)
     {
@@ -51,6 +51,7 @@ class Model_F29
             '09' => $this->Emisor->telefono,
             '15' => substr($periodo, 4).'/'.substr($periodo, 0, 4),
             '55' => $this->Emisor->email,
+            '115' => $this->Emisor->config_contabilidad_ppm / 100,
             '313' => $this->Emisor->config_extra_contador_rut,
             '314' => $this->Emisor->config_extra_representante_rut,
         ];

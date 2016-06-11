@@ -26,7 +26,7 @@ namespace website\Dte\Informes;
 /**
  * Helper para generar la propuesta del formulario 29
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-02-02
+ * @version 2016-06-10
  */
 class View_Helper_PropuestaF29 extends \sowerphp\general\View_Helper_Spreadsheet
 {
@@ -124,6 +124,7 @@ class View_Helper_PropuestaF29 extends \sowerphp\general\View_Helper_Spreadsheet
         91 => ' 595 ',
         795 => ' ROUND( 93 * 0.7, 0)',
         94 => ' 91 + 92 + 93 - 795 ',
+        62 => ' 563 * 115 - 68 ',
     ]; ///< Fórmulas del formulario 29
 
     private $datos = []; ///< Datos del F29, arreglo con código y valor
@@ -169,7 +170,7 @@ class View_Helper_PropuestaF29 extends \sowerphp\general\View_Helper_Spreadsheet
     /**
      * Método que crea la hoja con las compras del período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-06
+     * @version 2016-06-10
      */
     public function setCompras($compras)
     {
@@ -379,6 +380,7 @@ class View_Helper_PropuestaF29 extends \sowerphp\general\View_Helper_Spreadsheet
                 $this->getActiveSheet()->setCellValue($col.$this->y, '='.implode('+', array_slice($suma, 0, count($suma)-1)).'-'.$suma[count($suma)-1]);
             }
         }
+        $this->datos[563] = '=\'Ventas\'!'.'F'.$this->y.'+\'Ventas\'!'.'G'.$this->y;
         // ancho automático columnas
         $this->setAutoSize($this->getCol(count($titles)-1));
     }
@@ -729,6 +731,7 @@ class View_Helper_PropuestaF29 extends \sowerphp\general\View_Helper_Spreadsheet
         $this->setDato('J'.$this->y, 563);
         $this->getActiveSheet()->setCellValue('K'.$this->y, 115);
         $this->setDato('L'.$this->y, 115);
+        $this->getActiveSheet()->getStyle('L'.$this->y)->getNumberFormat()->setFormatCode('0.00%');
         $this->getActiveSheet()->setCellValue('M'.$this->y, 68);
         $this->setDato('N'.$this->y, 68);
         $this->getActiveSheet()->setCellValue('O'.$this->y, 62);
