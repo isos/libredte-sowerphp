@@ -159,7 +159,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que envía el DTE al SII si este no ha sido envíado (no tiene track_id)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-14
+     * @version 2016-06-11
      */
     public function enviar_sii($dte, $folio)
     {
@@ -180,45 +180,26 @@ class Controller_DteEmitidos extends \Controller_App
             $this->redirect('/dte/dte_emitidos/listar');
         }
         // si el dte ya fue enviado error
-        if ($DteEmitido->track_id) {
+        if ($DteEmitido->track_id and $DteEmitido->getEstado()!='R') {
             \sowerphp\core\Model_Datasource_Session::message(
                 'DTE ya se encuentra envíado, tiene el Track ID: '.$DteEmitido->track_id, 'warning'
             );
             $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
         }
-        // obtener firma
-        $Firma = $Emisor->getFirma($this->Auth->User->id);
-        if (!$Firma) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
-            );
-            $this->redirect('/dte/admin/firma_electronicas');
+        // enviar DTE
+        try {
+            $DteEmitido->enviar();
+            \sowerphp\core\Model_Datasource_Session::message('DTE enviado al SII', 'ok');
+        } catch (\Exception $e) {
+            \sowerphp\core\Model_Datasource_Session::message($e->getMessage(), 'error');
         }
-        // obtener token
-        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
-        if (!$token) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
-        }
-        // enviar XML
-        $result = \sasco\LibreDTE\Sii::enviar($Firma->getID(), $Emisor->rut.'-'.$Emisor->dv, base64_decode($DteEmitido->xml), $token);
-        if ($result===false or $result->STATUS!='0') {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible enviar el DTE al SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
-        }
-        $DteEmitido->track_id = (int)$result->TRACKID;
-        $DteEmitido->save();
         $this->redirect(str_replace('enviar_sii', 'ver', $this->request->request));
     }
 
     /**
      * Acción que solicita se envíe una nueva revisión del DTE al email
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-06-11
      */
     public function solicitar_revision($dte, $folio)
     {
@@ -231,43 +212,24 @@ class Controller_DteEmitidos extends \Controller_App
             );
             $this->redirect('/dte/dte_emitidos/listar');
         }
-        // si no tiene track id error
-        if (!$DteEmitido->track_id) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'DTE no tiene Track ID, primero debe enviarlo al SII', 'error'
-            );
-            $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
-        }
-        // obtener firma
-        $Firma = $Emisor->getFirma($this->Auth->User->id);
-        if (!$Firma) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
-            );
-            $this->redirect('/dte/admin/firma_electronicas');
-        }
-        // obtener token
-        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
-        if (!$token) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
-        }
-        // solicitar envío de nueva revisión
-        $estado = \sasco\LibreDTE\Sii::request('wsDTECorreo', 'reenvioCorreo', [$token, $Emisor->rut, $Emisor->dv, $DteEmitido->track_id]);
-        if ($estado===false) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible solicitar una nueva revisión del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-        } else if ((int)$estado->xpath('/SII:RESPUESTA/SII:RESP_HDR/SII:ESTADO')[0]) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible solicitar una nueva revisión del DTE: '.$estado->xpath('/SII:RESPUESTA/SII:RESP_HDR/SII:GLOSA')[0], 'error'
-            );
-        } else {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'Se solicitó nueva revisión del DTE, verificar estado en unos segundos', 'ok'
-            );
+        // solicitar revision
+        try {
+            $estado = $DteEmitido->solicitarRevision($this->Auth->User->id);
+            if ($estado===false) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'No fue posible solicitar una nueva revisión del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
+                );
+            } else if ((int)$estado->xpath('/SII:RESPUESTA/SII:RESP_HDR/SII:ESTADO')[0]) {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'No fue posible solicitar una nueva revisión del DTE: '.$estado->xpath('/SII:RESPUESTA/SII:RESP_HDR/SII:GLOSA')[0], 'error'
+                );
+            } else {
+                \sowerphp\core\Model_Datasource_Session::message(
+                    'Se solicitó nueva revisión del DTE, verificar estado en unos segundos', 'ok'
+                );
+            }
+        } catch (\Exception $e) {
+            \sowerphp\core\Model_Datasource_Session::message($e->getMessage(), 'error');
         }
         // redireccionar
         $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
@@ -662,7 +624,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite actualizar el estado de envio del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-07
+     * @version 2016-06-11
      */
     public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null)
     {
@@ -689,56 +651,11 @@ class Controller_DteEmitidos extends \Controller_App
         $DteEmitido = new Model_DteEmitido($Emisor->rut, (int)$dte, (int)$folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
             $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
-        // si no tiene track id error
-        if (!$DteEmitido->track_id) {
-            $this->Api->send('DTE no tiene Track ID, primero debe enviarlo al SII', 500);
-        }
-        // buscar correo con respuesta
-        $Imap = $Emisor->getEmailImap('sii');
-        if (!$Imap) {
-            $this->Api->send('No fue posible conectar mediante IMAP a '.$Emisor->config_email_sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()), 500);
-        }
-        $asunto = 'Resultado de Revision Envio '.$DteEmitido->track_id.' - '.$Emisor->rut.'-'.$Emisor->dv;
-        $uids = $Imap->search('FROM @sii.cl SUBJECT "'.$asunto.'" UNSEEN');
-        if (!$uids) {
-            $this->Api->send('No se encontró respuesta de envío del DTE, espere unos segundos o solicite nueva revisión.', 404);
-        }
-        // procesar emails recibidos
-        foreach ($uids as $uid) {
-            $estado = $detalle = null;
-            $m = $Imap->getMessage($uid);
-            if (!$m)
-                continue;
-            foreach ($m['attachments'] as $file) {
-                if ($file['type']!='application/xml')
-                    continue;
-                $xml = new \SimpleXMLElement($file['data'], LIBXML_COMPACT);
-                // obtener estado y detalle
-                if (isset($xml->REVISIONENVIO)) {
-                    if ($xml->REVISIONENVIO->REVISIONDTE->TIPODTE==$DteEmitido->dte and $xml->REVISIONENVIO->REVISIONDTE->FOLIO==$DteEmitido->folio) {
-                        $estado = (string)$xml->REVISIONENVIO->REVISIONDTE->ESTADO;
-                        $detalle = (string)$xml->REVISIONENVIO->REVISIONDTE->DETALLE;
-                    }
-                } else {
-                    $estado = (string)$xml->IDENTIFICACION->ESTADO;
-                    $detalle = (int)$xml->ESTADISTICA->SUBTOTAL->ACEPTA ? 'DTE aceptado' : 'DTE no aceptado';
-                }
-            }
-            if (isset($estado)) {
-                $DteEmitido->revision_estado = $estado;
-                $DteEmitido->revision_detalle = $detalle;
-                try {
-                    $DteEmitido->save();
-                    $Imap->setSeen($uid);
-                    $this->Api->send([
-                        'track_id' => $DteEmitido->track_id,
-                        'revision_estado' => $estado,
-                        'revision_detalle' => $detalle
-                    ], 200, JSON_PRETTY_PRINT);
-                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-                    $this->Api->send('El estado se obtuvo pero no fue posible guardarlo en la base de datos<br/>'.$e->getMessage(), 500);
-                }
-            }
+        // actualizar estado
+        try {
+            $this->Api->send($DteEmitido->actualizarEstado(), 200, JSON_PRETTY_PRINT);
+        } catch (\Exception $e) {
+            $this->Api->send($e->getMessage(), 500);
         }
     }
 

@@ -272,6 +272,17 @@ class Model_DteEmitido extends \Model_App
     }
 
     /**
+     * Método que entrega el objeto del emisor del dte
+     * @return \website\Dte\Model_Contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function getEmisor()
+    {
+        return (new \website\Dte\Model_Contribuyentes())->get($this->emisor);
+    }
+
+    /**
      * Método que entrega el objeto del receptor del dte
      * @return \website\Dte\Model_Contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
@@ -468,6 +479,150 @@ class Model_DteEmitido extends \Model_App
         }
         $this->db->commit();
         return true;
+    }
+
+    /**
+     * Método que envía el DTE emitido al SII, básicamente lo saca del sobre y
+     * lo pone en uno nuevo con el RUT del SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function enviar($user = null)
+    {
+        $Emisor = $this->getEmisor();
+        // boletas no se envían
+        if (in_array($this->dte, [39, 41])) {
+            return false;
+        }
+        // obtener firma
+        $Firma = $Emisor->getFirma($user);
+        if (!$Firma) {
+            throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
+        }
+        // crear XML EnvioDte
+        $datos = $this->getDatos();
+        unset($datos['TmstFirma']);
+        $Dte = new \sasco\LibreDTE\Sii\Dte($datos, false);
+        if (!$Dte->firmar($Firma)) {
+            throw new \Exception('No fue posible firmar el DTE que se quiere enviar al SII');
+        }
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        $EnvioDte->agregar($Dte);
+        $EnvioDte->setFirma($Firma);
+        $EnvioDte->setCaratula([
+            'RutEnvia' => $Firma ? $Firma->getID() : false,
+            'RutReceptor' => '60803000-K',
+            'FchResol' => $this->certificacion ? $Emisor->config_ambiente_certificacion_fecha : $Emisor->config_ambiente_produccion_fecha,
+            'NroResol' => $this->certificacion ? 0 : $Emisor->config_ambiente_produccion_numero,
+        ]);
+        $xml = $EnvioDte->generar();
+        // obtener token
+        \sasco\LibreDTE\Sii::setAmbiente((int)$this->certificacion);
+        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
+        if (!$token) {
+            throw new \Exception('No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()));
+        }
+        // enviar XML
+        $result = \sasco\LibreDTE\Sii::enviar($Firma->getID(), $Emisor->rut.'-'.$Emisor->dv, $xml, $token);
+        if ($result===false or $result->STATUS!='0') {
+            throw new \Exception('No fue posible enviar el DTE al SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()));
+        }
+        $this->track_id = (int)$result->TRACKID;
+        $this->revision_estado = null;
+        $this->revision_detalle = null;
+        $this->save();
+        return $this->track_id;
+    }
+
+    /**
+     * Método que solicita una nueva revisión por email del DTE enviado al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function solicitarRevision($user = null)
+    {
+        // si no tiene track id error
+        if (!$this->track_id) {
+            throw new \Exception('DTE no tiene Track ID, primero debe enviarlo al SII');
+        }
+        // obtener firma
+        $Firma = $this->getEmisor()->getFirma($user);
+        if (!$Firma) {
+            throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
+        }
+        // obtener token
+        \sasco\LibreDTE\Sii::setAmbiente((int)$this->getEmisor()->config_ambiente_en_certificacion);
+        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
+        if (!$token) {
+            throw new \Exception('No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()));
+        }
+        // solicitar envío de nueva revisión
+        return \sasco\LibreDTE\Sii::request('wsDTECorreo', 'reenvioCorreo', [$token, $this->getEmisor()->rut, $this->getEmisor()->dv, $this->track_id]);
+    }
+
+    /**
+     * Método que entrega actualiza el estado de un DTE enviado al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function actualizarEstado()
+    {
+        // si no tiene track id error
+        if (!$this->track_id) {
+            throw new \Exception('DTE no tiene Track ID, primero debe enviarlo al SII');
+        }
+        // buscar correo con respuesta
+        $Imap = $this->getEmisor()->getEmailImap('sii');
+        if (!$Imap) {
+            throw new \Exception('No fue posible conectar mediante IMAP a '.$this->getEmisor()->config_email_sii_imap.', verificar mailbox, usuario y/o contraseña de contacto SII:<br/>'.implode('<br/>', imap_errors()));
+        }
+        $asunto = 'Resultado de Revision Envio '.$this->track_id.' - '.$this->getEmisor()->rut.'-'.$this->getEmisor()->dv;
+        $uids = $Imap->search('FROM @sii.cl SUBJECT "'.$asunto.'" UNSEEN');
+        if (!$uids) {
+            if (str_replace('-', '', $this->fecha)<date('Ymd')) {
+                $this->solicitarRevision();
+                throw new \Exception('No se encontró respuesta de envío del DTE, se solicitó nueva revisión.');
+            } else {
+                throw new \Exception('No se encontró respuesta de envío del DTE, espere unos segundos o solicite nueva revisión.');
+            }
+        }
+        // procesar emails recibidos
+        foreach ($uids as $uid) {
+            $estado = $detalle = null;
+            $m = $Imap->getMessage($uid);
+            if (!$m)
+                continue;
+            foreach ($m['attachments'] as $file) {
+                if ($file['type']!='application/xml')
+                    continue;
+                $xml = new \SimpleXMLElement($file['data'], LIBXML_COMPACT);
+                // obtener estado y detalle
+                if (isset($xml->REVISIONENVIO)) {
+                    if ($xml->REVISIONENVIO->REVISIONDTE->TIPODTE==$this->dte and $xml->REVISIONENVIO->REVISIONDTE->FOLIO==$this->folio) {
+                        $estado = (string)$xml->REVISIONENVIO->REVISIONDTE->ESTADO;
+                        $detalle = (string)$xml->REVISIONENVIO->REVISIONDTE->DETALLE;
+                    }
+                } else {
+                    $estado = (string)$xml->IDENTIFICACION->ESTADO;
+                    $detalle = (int)$xml->ESTADISTICA->SUBTOTAL->ACEPTA ? 'DTE aceptado' : 'DTE no aceptado';
+                }
+            }
+            if (isset($estado)) {
+                $this->revision_estado = $estado;
+                $this->revision_detalle = $detalle;
+                try {
+                    $this->save();
+                    $Imap->setSeen($uid);
+                    return [
+                        'track_id' => $this->track_id,
+                        'revision_estado' => $estado,
+                        'revision_detalle' => $detalle
+                    ];
+                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+                    throw new \Exception('El estado se obtuvo pero no fue posible guardarlo en la base de datos<br/>'.$e->getMessage());
+                }
+            }
+        }
     }
 
 }

@@ -391,13 +391,13 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que envía un correo electrónico al contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-05
+     * @version 2016-06-11
      */
     public function notificar($asunto, $mensaje)
     {
         $email = new \sowerphp\core\Network_Email();
         $email->to($this->getUsuario()->email);
-        $email->subject($asunto);
+        $email->subject($this->getRUT().' '.$asunto);
         $msg = $mensaje."\n\n".'-- '."\n".\sowerphp\core\Configure::read('page.body.title');
         return $email->send($msg) === true ? true : false;
     }
@@ -1688,6 +1688,45 @@ class Model_Contribuyente extends \Model_App
     private function actualizarBandejaIntercambio_procesar_ResultadoDTE($Emisor, array $datos_email, array $file)
     {
         return (new Model_DteIntercambioResultado())->saveXML($Emisor, $file['data']);
+    }
+
+    /**
+     * Método que entrega el listado de documentos electrónicos que han sido
+     * generados pero no se han enviado al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function getDteEmitidosSinEnviar()
+    {
+        return $this->db->getTable('
+            SELECT dte, folio
+            FROM dte_emitido
+            WHERE
+                emisor = :rut
+                AND certificacion = :certificacion
+                AND dte NOT IN (39, 41)
+                AND track_id IS NULL
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
+     * Método que entrega el listado de documentos electrónicos que han sido
+     * generados y enviados al SII pero aun no se ha actualizado su estado
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function getDteEmitidosSinEstado()
+    {
+        return $this->db->getTable('
+            SELECT dte, folio
+            FROM dte_emitido
+            WHERE
+                emisor = :rut
+                AND certificacion = :certificacion
+                AND dte NOT IN (39, 41)
+                AND track_id IS NOT NULL
+                AND revision_estado IS NULL
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
 }
