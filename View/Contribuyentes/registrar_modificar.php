@@ -387,6 +387,25 @@ echo $f->input([
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">
+            <i class="fa fa-eye"></i>
+            Configuración SII
+        </div>
+        <div class="panel-body">
+<?php
+echo $f->input([
+    'type' => 'select',
+    'name' => 'config_sii_estado_dte_webservice',
+    'label' => 'Estado DTE',
+    'options' => ['Correo electrónico (más lento pero con detalles)', 'Servicio web (más rápido pero sin detalles)'],
+    'value' => isset($Contribuyente) ? $Contribuyente->config_sii_estado_dte_webservice : 0,
+    'help' => 'Permite definir cómo se consultará el estado de los DTE emitidos por defecto en la aplicación web',
+    'check' => 'notempty',
+]);
+?>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
             <i class="fa fa-cogs"></i>
             Configuración general
         </div>

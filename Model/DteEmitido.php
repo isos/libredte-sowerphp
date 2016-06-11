@@ -551,7 +551,7 @@ class Model_DteEmitido extends \Model_App
             throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
         }
         // obtener token
-        \sasco\LibreDTE\Sii::setAmbiente((int)$this->getEmisor()->config_ambiente_en_certificacion);
+        \sasco\LibreDTE\Sii::setAmbiente((int)$this->certificacion);
         $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
         if (!$token) {
             throw new \Exception('No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()));
@@ -561,16 +561,91 @@ class Model_DteEmitido extends \Model_App
     }
 
     /**
-     * Método que entrega actualiza el estado de un DTE enviado al SII
+     * Método que actualiza el estado de un DTE enviado al SII, en realidad
+     * es un wrapper para las verdaderas llamadas
+     * @param usarWebservice =true se consultará vía servicio web = false vía email
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-06-11
      */
-    public function actualizarEstado()
+    public function actualizarEstado($user = null, $usarWebservice = true)
     {
-        // si no tiene track id error
         if (!$this->track_id) {
             throw new \Exception('DTE no tiene Track ID, primero debe enviarlo al SII');
         }
+        return $usarWebservice ? $this->actualizarEstadoWebservice($user) : $this->actualizarEstadoEmail();
+    }
+
+    /**
+     * Método que actualiza el estado de un DTE enviado al SII a través del
+     * servicio web que dispone el SII para esta consulta
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    private function actualizarEstadoWebservice($user = null)
+    {
+        // crear DTE (se debe crear de esta forma y no usar getDatos() ya que se
+        // requiere la firma)
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        $EnvioDte->loadXML(base64_decode($this->xml));
+        $Dte = $EnvioDte->getDocumentos()[0];
+        // obtener firma
+        $Firma = $this->getEmisor()->getFirma($user);
+        if (!$Firma) {
+            throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
+        }
+        \sasco\LibreDTE\Sii::setAmbiente((int)$this->certificacion);
+        // solicitar token
+        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
+        if (!$token) {
+            throw new \Exception('No fue posible obtener el token');
+        }
+        // consultar estado enviado
+        $estado_up = \sasco\LibreDTE\Sii::request('QueryEstUp', 'getEstUp', [$this->getEmisor()->rut, $this->getEmisor()->dv, $this->track_id, $token]);
+        // si el estado no se pudo recuperar error
+        if ($estado_up===false) {
+            throw new \Exception('No fue posible obtener el estado del DTE');
+        }
+        // armar estado del dte
+        $estado = (string)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/ESTADO')[0];
+        $glosa = (string)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/GLOSA')[0];
+        $this->revision_estado = $estado.' - '.$glosa;
+        $this->revision_detalle = null;
+        if ($estado=='EPR') {
+            $resultado = (array)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_BODY')[0];
+            // DTE aceptado
+            if ($resultado['ACEPTADOS']) {
+                $this->revision_detalle = 'DTE aceptado';
+            }
+            // DTE rechazado
+            else if ($resultado['RECHAZADOS']) {
+                $this->revision_estado = 'RCH - DTE Rechazado';
+            }
+            // DTE con reparos
+            else  {
+                $this->revision_estado = 'RLV - DTE Aceptado con Reparos Leves';
+            }
+        }
+        // guardar estado del dte
+        try {
+            $this->save();
+            return [
+                'track_id' => $this->track_id,
+                'revision_estado' => $this->revision_estado,
+                'revision_detalle' => $this->revision_detalle,
+            ];
+        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            throw new \Exception('El estado se obtuvo pero no fue posible guardarlo en la base de datos<br/>'.$e->getMessage());
+        }
+    }
+
+    /**
+     * Método que actualiza el estado de un DTE enviado al SII a través del
+     * email que es recibido desde el SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    private function actualizarEstadoEmail()
+    {
         // buscar correo con respuesta
         $Imap = $this->getEmisor()->getEmailImap('sii');
         if (!$Imap) {

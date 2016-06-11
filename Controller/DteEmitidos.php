@@ -238,18 +238,20 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que actualiza el estado del envío del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-10
+     * @version 2016-06-11
      */
-    public function actualizar_estado($dte, $folio)
+    public function actualizar_estado($dte, $folio, $usarWebservice = null)
     {
         $Emisor = $this->getContribuyente();
+        if ($usarWebservice===null)
+            $usarWebservice = $Emisor->config_sii_estado_dte_webservice;
         $rest = new \sowerphp\core\Network_Http_Rest();
         $rest->setAuth($this->Auth->User->hash);
-        $response = $rest->get($this->request->url.'/api/dte/dte_emitidos/actualizar_estado/'.$dte.'/'.$folio.'/'.$Emisor->rut);
+        $response = $rest->get($this->request->url.'/api/dte/dte_emitidos/actualizar_estado/'.$dte.'/'.$folio.'/'.$Emisor->rut.'/'.(int)$usarWebservice);
         if ($response===false) {
             \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
         }
-        else if ($response['status']['code']!=200) {
+        else if ($response['status']['code']!=200 or empty($response['body']['revision_estado'])) {
             \sowerphp\core\Model_Datasource_Session::message($response['body'], 'error');
         }
         else {
@@ -626,7 +628,7 @@ class Controller_DteEmitidos extends \Controller_App
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-06-11
      */
-    public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null)
+    public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null, $usarWebservice = true)
     {
         // verificar permisos y crear DteEmitido
         if ($this->Auth->User) {
@@ -653,7 +655,7 @@ class Controller_DteEmitidos extends \Controller_App
             $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
         // actualizar estado
         try {
-            $this->Api->send($DteEmitido->actualizarEstado(), 200, JSON_PRETTY_PRINT);
+            $this->Api->send($DteEmitido->actualizarEstado($User->id, $usarWebservice), 200, JSON_PRETTY_PRINT);
         } catch (\Exception $e) {
             $this->Api->send($e->getMessage(), 500);
         }

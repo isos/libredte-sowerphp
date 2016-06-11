@@ -68,9 +68,13 @@ new \sowerphp\general\View_Helper_Table([
             <p>
                 <a class="btn btn-info" href="<?=$_base?>/dte/dte_emitidos/actualizar_estado/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">Actualizar estado</a><br/>
                 <span style="font-size:0.8em">
+<?php if (!$Emisor->config_sii_estado_dte_webservice) : ?>
                     <a href="<?=$_base?>/dte/dte_emitidos/solicitar_revision/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Solicitar nueva revisión del documento al SII">solicitar nueva revisión</a>
+<?php endif; ?>
 <?php if ($DteEmitido->getEstado()=='R') : ?>
+<?php if (!$Emisor->config_sii_estado_dte_webservice) : ?>
                     <br/>
+<?php endif; ?>
                     <a href="<?=$_base?>/dte/dte_emitidos/eliminar/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" title="Eliminar documento" onclick="return Form.checkSend('¿Confirmar la eliminación del DTE?')">eliminar documento</a>
 <?php endif; ?>
                 </span>
