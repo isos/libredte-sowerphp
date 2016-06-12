@@ -484,25 +484,50 @@ class Model_DteEmitido extends \Model_App
     /**
      * Método que envía el DTE emitido al SII, básicamente lo saca del sobre y
      * lo pone en uno nuevo con el RUT del SII
+     * @param user ID del usuari oque hace el envío
+     * @param timbrar Si se desea volver a timbrar antes de enviar (sólo aplica si se puede reenviar)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-06-11
      */
-    public function enviar($user = null)
+    public function enviar($user = null, $timbrar = false)
     {
         $Emisor = $this->getEmisor();
         // boletas no se envían
         if (in_array($this->dte, [39, 41])) {
-            return false;
+            return false; // no hay excepción para hacerlo "silenciosamente"
+        }
+        // si hay track_id y el DTE no está rechazado entonces no se permite
+        // volver a enviar al SII (ya que estaría aceptado, aceptado con reparos
+        // o aun no se sabe su estado)
+        if ($this->track_id and $this->getEstado()!='R') {
+            $msg = 'DTE no puede ser reenviado ya que ';
+            if (!$this->revision_estado)
+                $msg .= 'aun no se ha verificado su estado';
+            else if ($this->getEstado()!='R')
+                $msg .= 'no está rechazado';
+            throw new \Exception($msg);
         }
         // obtener firma
         $Firma = $Emisor->getFirma($user);
         if (!$Firma) {
             throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
         }
-        // crear XML EnvioDte
+        // preparar datos que se usarán
         $datos = $this->getDatos();
         unset($datos['TmstFirma']);
+        if ($timbrar) {
+            unset($datos['TED']);
+            // corregir datos
+            $datos['Encabezado']['Receptor']['RUTRecep'] = strtoupper($datos['Encabezado']['Receptor']['RUTRecep']);
+        }
+        // crear XML EnvioDte
         $Dte = new \sasco\LibreDTE\Sii\Dte($datos, false);
+        if ($timbrar) {
+            $Caf = $Emisor->getCaf($Dte->getTipo(), $Dte->getFolio());
+            if (!$Caf or !$Dte->timbrar($Caf)) {
+                throw new \Exception('No fue posible timbrar el DTE que se quiere enviar al SII');
+            }
+        }
         if (!$Dte->firmar($Firma)) {
             throw new \Exception('No fue posible firmar el DTE que se quiere enviar al SII');
         }
