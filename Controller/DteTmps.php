@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de dte temporales
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-26
+ * @version 2016-06-12
  */
 class Controller_DteTmps extends \Controller_App
 {
@@ -46,6 +46,39 @@ class Controller_DteTmps extends \Controller_App
             'Emisor' => $Emisor,
             'dtes' => $DteTmps->getObjects(),
         ]);
+    }
+
+    /**
+     * Método que genera la cotización en PDF del DTE
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-12
+     */
+    public function cotizacion($receptor, $dte, $codigo)
+    {
+        $Emisor = $this->getContribuyente();
+        // obtener datos JSON del DTE
+        $DteTmp = new Model_DteTmp($Emisor->rut, $receptor, $dte, $codigo);
+        if (!$DteTmp->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No existe el DTE temporal solicitado', 'error'
+            );
+            $this->redirect('/dte/dte_tmps');
+        }
+        $datos = json_decode($DteTmp->datos, true);
+        $folio = $dte.'-'.substr($codigo, 0, 7);
+        $datos['Encabezado']['IdDoc']['TipoDTE'] = 0;
+        $datos['Encabezado']['IdDoc']['Folio'] = $folio;
+        // generar PDF
+        $pdf = new \sasco\LibreDTE\Sii\PDF\Dte();
+        $pdf->setFooterText(\sowerphp\core\Configure::read('dte.pdf.footer'));
+        $logo = \sowerphp\core\Configure::read('dte.logos.dir').'/'.$Emisor->rut.'.png';
+        if (is_readable($logo)) {
+            $pdf->setLogo($logo);
+        }
+        $pdf->agregar($datos);
+        $file = 'cotizacion_'.$Emisor->rut.'-'.$Emisor->dv.'_'.$folio.'.pdf';
+        $pdf->Output($file, 'D');
+        exit;
     }
 
     /**
