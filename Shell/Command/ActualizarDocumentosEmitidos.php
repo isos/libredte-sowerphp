@@ -31,10 +31,10 @@ namespace website\Dte;
 class Shell_Command_ActualizarDocumentosEmitidos extends \Shell_App
 {
 
-    public function main($ambiente = 0, $grupo = null)
+    public function main($grupo = null, $certificacion = 0)
     {
         $this->db = \sowerphp\core\Model_Datasource_Database::get();
-        $contribuyentes = $this->getContribuyentes($ambiente, $grupo);
+        $contribuyentes = $this->getContribuyentes($grupo, $certificacion);
         foreach ($contribuyentes as $rut) {
             $this->actualizarDocumentosEmitidos($rut);
         }
@@ -90,7 +90,7 @@ class Shell_Command_ActualizarDocumentosEmitidos extends \Shell_App
         }
     }
 
-    private function getContribuyentes($ambiente, $grupo = null)
+    private function getContribuyentes($grupo = null, $certificacion = 0)
     {
         if (is_numeric($grupo))
             return [$grupo];
@@ -108,7 +108,7 @@ class Shell_Command_ActualizarDocumentosEmitidos extends \Shell_App
                     AND e.dte NOT IN (39, 41)
                     AND e.certificacion = :certificacion
                     AND (e.track_id IS NULL OR e.revision_estado IS NULL)
-            ', [':certificacion'=>(int)$ambiente, ':grupo' => $grupo]);
+            ', [':certificacion'=>(int)$certificacion, ':grupo' => $grupo]);
         } else {
             return $this->db->getCol('
                 SELECT DISTINCT c.rut
@@ -120,7 +120,7 @@ class Shell_Command_ActualizarDocumentosEmitidos extends \Shell_App
                     AND e.dte NOT IN (39, 41)
                     AND e.certificacion = :certificacion
                     AND (e.track_id IS NULL OR e.revision_estado IS NULL)
-            ', [':certificacion'=>(int)$ambiente]);
+            ', [':certificacion'=>(int)$certificacion]);
         }
     }
 
