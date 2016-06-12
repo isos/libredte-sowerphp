@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de dte recibidos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-27
+ * @version 2016-06-12
  */
 class Controller_DteRecibidos extends \Controller_App
 {
@@ -220,6 +220,28 @@ class Controller_DteRecibidos extends \Controller_App
                 'No fue posible guardar el DTE: '.$e->getMessage(), 'error'
             );
         }
+    }
+
+    /**
+     * Acción que permite eliminar un DTE recibido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function eliminar($emisor, $dte, $folio)
+    {
+        $Emisor = $this->getContribuyente();
+        $DteRecibido = new Model_DteRecibido($emisor, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteRecibido->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible eliminar, el DTE recibido solicitado no existe', 'warning'
+            );
+        } else {
+            $DteRecibido->delete();
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Se eliminó el DTE T'.$DteRecibido->dte.'F'.$DteRecibido->folio.' recibido de '.\sowerphp\app\Utility_Rut::addDV($DteRecibido->emisor), 'ok'
+            );
+        }
+        $this->redirect('/dte/dte_recibidos/listar');
     }
 
 }

@@ -162,4 +162,21 @@ echo $f->input([
 ]);
 echo '</div>',"\n";
 echo '</div>',"\n";
-echo $f->end('Guardar el documento recibido');
+// fin formulario
+$f->setStyle(false);
+echo '<div class="row">',"\n";
+echo '<div class="col-md-4 col-md-offset-',(!isset($DteRecibido)?4:2),'">',"\n";
+echo $f->input([
+    'type' => 'submit',
+    'name' => 'submit',
+    'value' => 'Guardar documento',
+    'attr' => 'style="width:100%"',
+]);
+echo '</div>',"\n";
+if (isset($DteRecibido)) : ?>
+<div class="col-md-4">
+    <a class="btn btn-danger btn-block" href="<?=$_base?>/dte/dte_recibidos/eliminar/<?=$DteRecibido->emisor?>/<?=$DteRecibido->dte?>/<?=$DteRecibido->folio?>" role="button" onclick="return Form.checkSend('¿Confirmar la eliminación del documento?')">Eliminar documento</a>
+</div>
+<?php endif;
+echo '</div>',"\n";
+echo $f->end(false);
