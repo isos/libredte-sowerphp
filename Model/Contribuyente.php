@@ -659,7 +659,7 @@ class Model_Contribuyente extends \Model_App
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-22
      */
-    private function getCaf($dte, $folio)
+    public function getCaf($dte, $folio)
     {
         $caf = $this->db->getValue('
             SELECT xml
