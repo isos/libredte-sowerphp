@@ -378,7 +378,7 @@ echo $f->input([
 echo $f->input([
     'name' => 'config_contabilidad_ppm',
     'label' => 'Porcentaje PPM',
-    'value' => isset($Contribuyente) ? $Contribuyente->config_contabilidad_ppm : 0,
+    'value' => isset($Contribuyente) ? (float)$Contribuyente->config_contabilidad_ppm : 0,
     'help' => 'Porcentaje que se pagará mensualmente como PPM obligatorio',
     'check' => 'notempty real',
 ]);
