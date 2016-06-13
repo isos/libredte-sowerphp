@@ -332,7 +332,7 @@ class Model_Contribuyente extends \Model_App
      * configuración y parámetros adicionales
      * @param registrado Se usa para indicar que el contribuyente que se esta guardando es uno registrado por un usuario (se validan otros datos)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
+     * @version 2016-06-13
      */
     public function save($registrado = false)
     {
@@ -363,6 +363,11 @@ class Model_Contribuyente extends \Model_App
         }
         // corregir datos
         $this->dv = strtoupper($this->dv);
+        $this->razon_social = substr($this->razon_social, 0, 100);
+        $this->giro = substr($this->giro, 0, 80);
+        $this->telefono = substr($this->telefono, 0, 20);
+        $this->email = substr($this->email, 0, 80);
+        $this->direccion = substr($this->direccion, 0, 70);
         // guardar contribuyente
         if (!parent::save())
             return false;

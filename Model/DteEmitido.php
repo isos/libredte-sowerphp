@@ -487,7 +487,7 @@ class Model_DteEmitido extends \Model_App
      * @param user ID del usuari oque hace el envío
      * @param timbrar Si se desea volver a timbrar antes de enviar (sólo aplica si se puede reenviar)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
+     * @version 2016-06-13
      */
     public function enviar($user = null, $timbrar = false)
     {
@@ -519,6 +519,7 @@ class Model_DteEmitido extends \Model_App
             unset($datos['TED']);
             // corregir datos
             $datos['Encabezado']['Receptor']['RUTRecep'] = strtoupper($datos['Encabezado']['Receptor']['RUTRecep']);
+            $datos['Encabezado']['Receptor']['DirRecep'] = substr($datos['Encabezado']['Receptor']['DirRecep'], 0, 70);
         }
         // crear XML EnvioDte
         $Dte = new \sasco\LibreDTE\Sii\Dte($datos, false);
