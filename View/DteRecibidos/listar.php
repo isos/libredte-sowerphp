@@ -6,8 +6,7 @@
     </li>
     <li>
         <a href="<?=$_base?>/dte/dte_recibidos/agregar">
-            <span class="fa fa-plus"></span>
-            Agregar documento recibido
+            <span class="fa fa-plus"></span> Agregar documento recibido
         </a>
     </li>
 </ul>
