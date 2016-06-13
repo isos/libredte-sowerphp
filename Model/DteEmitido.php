@@ -258,6 +258,7 @@ class Model_DteEmitido extends \Model_App
         'Model_Usuario' => '\sowerphp\app\Sistema\Usuarios'
     ); ///< Namespaces que utiliza esta clase
 
+    private $Dte; ///< Objeto con el DTE
     private $datos; ///< Arreglo con los datos del XML del DTE
 
     /**
@@ -294,19 +295,33 @@ class Model_DteEmitido extends \Model_App
     }
 
     /**
+     * Método que entrega el objeto del Dte
+     * @return \sasco\LibreDTE\Sii\Dte
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-13
+     */
+    public function getDte()
+    {
+        if (!$this->Dte) {
+            $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+            $EnvioDte->loadXML(base64_decode($this->xml));
+            $this->Dte = $EnvioDte->getDocumentos()[0];
+        }
+        return $this->Dte;
+    }
+
+    /**
      * Método que entrega el arreglo con los datos que se usaron para generar el
      * XML del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-24
+     * @version 2016-06-13
      */
     public function getDatos()
     {
         if (!$this->datos) {
-            $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-            $EnvioDte->loadXML(base64_decode($this->xml));
-            $datos = $EnvioDte->getDocumentos()[0]->getDatos();
+            $this->datos = $this->getDte()->getDatos();
         }
-        return $datos;
+        return $this->datos;
     }
 
     /**
