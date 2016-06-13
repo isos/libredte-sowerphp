@@ -198,4 +198,14 @@ class Model_DteTmp extends \Model_App
         return (new \website\Dte\Model_Contribuyentes())->get($this->emisor);
     }
 
+    /**
+     * Método que entrega el folio del documento temporal
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-13
+     */
+    public function getFolio()
+    {
+        return $this->dte.'-'.strtoupper(substr($this->codigo, 0, 7));
+    }
+
 }
