@@ -92,7 +92,7 @@ new \sowerphp\general\View_Helper_Table([
 <?php endif; ?>
     </div>
 </div>
-<!-- INICIO DATOS BÁSICOS -->
+<!-- FIN DATOS BÁSICOS -->
 
 <!-- INICIO ENVIAR POR EMAIL -->
 <div role="tabpanel" class="tab-pane" id="email">
