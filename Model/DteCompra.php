@@ -31,7 +31,7 @@ namespace website\Dte;
  * @author SowerPHP Code Generator
  * @version 2015-09-28 01:07:23
  */
-class Model_DteCompra extends Model_Libro
+class Model_DteCompra extends Model_Base_Libro
 {
 
     // Datos para la conexión a la base de datos

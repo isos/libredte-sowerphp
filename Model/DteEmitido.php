@@ -31,7 +31,7 @@ namespace website\Dte;
  * @author SowerPHP Code Generator
  * @version 2015-09-23 11:44:17
  */
-class Model_DteEmitido extends \Model_App
+class Model_DteEmitido extends Model_Base_Envio
 {
 
     // Datos para la conexión a la base de datos
@@ -270,28 +270,6 @@ class Model_DteEmitido extends \Model_App
     public function getTipo()
     {
         return (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->get($this->dte);
-    }
-
-    /**
-     * Método que entrega el objeto del emisor del dte
-     * @return \website\Dte\Model_Contribuyente
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
-     */
-    public function getEmisor()
-    {
-        return (new \website\Dte\Model_Contribuyentes())->get($this->emisor);
-    }
-
-    /**
-     * Método que entrega el objeto del receptor del dte
-     * @return \website\Dte\Model_Contribuyente
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-23
-     */
-    public function getReceptor()
-    {
-        return (new \website\Dte\Model_Contribuyentes())->get($this->receptor);
     }
 
     /**
@@ -573,32 +551,6 @@ class Model_DteEmitido extends \Model_App
         $this->revision_detalle = null;
         $this->save();
         return $this->track_id;
-    }
-
-    /**
-     * Método que solicita una nueva revisión por email del DTE enviado al SII
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
-     */
-    public function solicitarRevision($user = null)
-    {
-        // si no tiene track id error
-        if (!$this->track_id) {
-            throw new \Exception('DTE no tiene Track ID, primero debe enviarlo al SII');
-        }
-        // obtener firma
-        $Firma = $this->getEmisor()->getFirma($user);
-        if (!$Firma) {
-            throw new \Exception('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar)');
-        }
-        // obtener token
-        \sasco\LibreDTE\Sii::setAmbiente((int)$this->certificacion);
-        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
-        if (!$token) {
-            throw new \Exception('No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()));
-        }
-        // solicitar envío de nueva revisión
-        return \sasco\LibreDTE\Sii::request('wsDTECorreo', 'reenvioCorreo', [$token, $this->getEmisor()->rut, $this->getEmisor()->dv, $this->track_id]);
     }
 
     /**

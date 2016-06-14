@@ -27,9 +27,9 @@ namespace website\Dte;
 /**
  * Clase base para para el modelo singular de Libros
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-27
+ * @version 2016-06-13
  */
-abstract class Model_Libro extends \Model_App
+abstract class Model_Base_Libro extends Model_Base_Envio
 {
 
     /**

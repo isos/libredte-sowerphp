@@ -27,9 +27,9 @@ namespace website\Dte;
 /**
  * Controlador base para libros
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-25
+ * @version 2016-06-14
  */
-abstract class Controller_Libros extends \Controller_App
+abstract class Controller_Base_Libros extends \Controller_App
 {
 
     /**
@@ -215,7 +215,7 @@ abstract class Controller_Libros extends \Controller_App
     /**
      * Acción que solicita se envíe una nueva revisión del libro al email
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-25
+     * @version 2016-06-14
      */
     public function solicitar_revision($periodo)
     {
@@ -229,31 +229,8 @@ abstract class Controller_Libros extends \Controller_App
             );
             $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
         }
-        // si no tiene track id error
-        if (!$Libro->track_id) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'Libro del período '.$periodo.' no tiene Track ID, primero debe enviarlo al SII', 'error'
-            );
-            $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
-        }
-        // obtener firma
-        $Firma = $Emisor->getFirma($this->Auth->User->id);
-        if (!$Firma) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 'error'
-            );
-            $this->redirect('/dte/admin/firma_electronicas');
-        }
-        // obtener token
-        $token = \sasco\LibreDTE\Sii\Autenticacion::getToken($Firma);
-        if (!$token) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'No fue posible obtener el token para el SII<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
-            );
-            $this->redirect(str_replace('solicitar_revision', 'ver', $this->request->request));
-        }
         // solicitar envío de nueva revisión
-        $estado = \sasco\LibreDTE\Sii::request('wsDTECorreo', 'reenvioCorreo', [$token, $Emisor->rut, $Emisor->dv, $Libro->track_id]);
+        $estado = $Libro->solicitarRevision($this->Auth->User->id);
         if ($estado===false) {
             \sowerphp\core\Model_Datasource_Session::message(
                 'No fue posible solicitar una nueva revisión del libro.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
