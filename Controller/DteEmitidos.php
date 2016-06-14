@@ -398,17 +398,13 @@ class Controller_DteEmitidos extends \Controller_App
         }
         // entregar JSON
         $file = 'dte_'.$Emisor->rut.'-'.$Emisor->dv.'_T'.$DteEmitido->dte.'F'.$DteEmitido->folio.'.json';
-        $xml = base64_decode($DteEmitido->xml);
-        $json = '';
-
-        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($xml);
-        $DTE = $EnvioDte->getDocumentos()[0]->getDatos();
-        unset($DTE['@attributes'], $DTE['TED'], $DTE['TmstFirma']);
+        $datos = $DteEmitido->getDatos();
+        unset($datos['@attributes'], $datos['TED'], $datos['TmstFirma']);
+        $json = json_encode($datos, JSON_PRETTY_PRINT);
         header('Content-Type: application/json; charset=UTF-8');
         header('Content-Length: '.strlen($json));
         header('Content-Disposition: attachement; filename="'.$file.'"');
-        echo json_encode($DTE, JSON_PRETTY_PRINT);
+        echo $json;
         exit;
     }
 
@@ -620,6 +616,44 @@ class Controller_DteEmitidos extends \Controller_App
         if (!$DteEmitido->exists())
             $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
         return $DteEmitido->xml;
+    }
+
+    /**
+     * Acción de la API que permite consultar el estado del envío del DTE al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-13
+     */
+    public function _api_estado_GET($dte, $folio, $avanzado = false, $contribuyente = null)
+    {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Emisor = $this->getContribuyente();
+        if (!$Emisor) {
+            if (!$contribuyente)
+                $this->Api->send('Debe indicar el emisor', 500);
+            $Emisor = new Model_Contribuyente($contribuyente);
+            if (!$Emisor->exists())
+                $this->Api->send('Emisor no existe', 404);
+        }
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/xml')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        $Firma = $Emisor->getFirma($User->id);
+        if (!$Firma) {
+            $this->Api->send('No existe firma asociada', 404);
+        }
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists()) {
+            $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
+        }
+        \sasco\LibreDTE\Sii::setAmbiente($Emisor->config_ambiente_en_certificacion);
+        return $avanzado ? $DteEmitido->getDte()->getEstadoAvanzado($Firma) : $DteEmitido->getDte()->getEstado($Firma);
     }
 
     /**
