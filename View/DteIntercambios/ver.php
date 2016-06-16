@@ -123,20 +123,20 @@ echo $f->input([
     'value' => $DteIntercambio->de,
     'check' => 'notempty email',
 ]);
-$estado = $EnvioDte->getEstadoValidacion(['RutReceptor'=>$Emisor->rut.'-'.$Emisor->dv]);
+$estado_enviodte = $EnvioDte->getEstadoValidacion(['RutReceptor'=>$Emisor->rut.'-'.$Emisor->dv]);
 echo $f->input([
     'type' => 'select',
     'name' => 'EstadoRecepEnv',
     'label' => 'Estado',
     'options' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'],
-    'value' => $estado,
+    'value' => $estado_enviodte,
     'check' => 'notempty',
     'attr' => 'onchange="document.getElementById(\'RecepEnvGlosaField\').value=this.selectedOptions[0].textContent"'
 ]);
 echo $f->input([
     'name' => 'RecepEnvGlosa',
     'label' => 'Glosa',
-    'value' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'][$estado],
+    'value' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'][$estado_enviodte],
     'check' => 'notempty',
     'attr' => 'maxlength="256"',
     'help' => 'Detalles del estado del envío (sobre todo si se está rechazando)',
@@ -147,11 +147,25 @@ echo '</div>',"\n";
 // Recepción de envío
 $RecepcionDTE = [];
 foreach ($Documentos as $Dte) {
-    $estado_sii = !isset($DteIntercambio->estado) ? $Dte->getEstado($Firma) : ['GLOSA'=>''];
-    $estado = $Dte->getEstadoValidacion([
-        'RUTEmisor' => $DteIntercambio->getEmisor()->rut.'-'.$DteIntercambio->getEmisor()->dv,
-        'RUTRecep'=>$Emisor->rut.'-'.$Emisor->dv
-    ]);
+    $DteRecibido = new \website\Dte\Model_DteRecibido(substr($Dte->getEmisor(), 0, -2), $Dte->getTipo(), $Dte->getFolio(), (int)$Dte->getCertificacion());
+    // si el enviodte no está recibido no se reciben los documentos
+    if ($estado_enviodte) {
+        $estado_sii = '';
+        $estado = 99;
+    }
+    // si ya está recibido el documento se marca con estado repetido
+    else if ($DteRecibido->exists()) {
+        $estado_sii = '';
+        $estado = 4;
+    }
+    // si no está recibido se trata de determinar su estado
+    else {
+        $estado_sii = !isset($DteIntercambio->estado) ? $Dte->getEstado($Firma) : ['GLOSA'=>''];
+        $estado = $Dte->getEstadoValidacion([
+            'RUTEmisor' => $DteIntercambio->getEmisor()->rut.'-'.$DteIntercambio->getEmisor()->dv,
+            'RUTRecep'=>$Emisor->rut.'-'.$Emisor->dv
+        ]);
+    }
     $RecepcionDTE[] = [
         'TipoDTE' => $Dte->getTipo(),
         'Folio' => $Dte->getFolio(),
