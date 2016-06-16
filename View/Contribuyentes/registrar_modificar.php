@@ -276,7 +276,7 @@ $f->setColsLabel();
     <div class="panel panel-default">
         <div class="panel-heading">
             <i class="fa fa-send-o"></i>
-            Configuración emisión DTE
+            Configuración emisión y recepción DTE
         </div>
         <div class="panel-body">
 <?php
@@ -337,6 +337,47 @@ echo $f->input([
     'values' => $config_extra_impuestos_adicionales,
     'help' => 'Indique los impuestos adicionales o retenciones que desea utilizar en la emisión de documentos',
 ]);
+if (!empty($tipos_dte)) {
+    echo $f->input([
+        'type' => 'select',
+        'name' => 'config_emision_dte_defecto',
+        'label' => 'DTE defecto',
+        'options' => $tipos_dte,
+        'value' => isset($Contribuyente) ? $Contribuyente->config_emision_dte_defecto : 33,
+        'help' => '¿Qué documento debe estar seleccionado por defecto al emitir?',
+        'check' => 'notempty',
+    ]);
+    $config_emision_observaciones = [];
+    if (isset($Contribuyente) and $Contribuyente->config_emision_observaciones) {
+        foreach ($Contribuyente->config_emision_observaciones as $dte => $glosa) {
+            $config_emision_observaciones[] = [
+                'config_emision_observaciones_dte' => $dte,
+                'config_emision_observaciones_glosa' => $glosa,
+            ];
+        }
+    }
+    echo $f->input([
+        'type' => 'js',
+        'id' => 'config_emision_observaciones',
+        'label' => 'Observación emisión',
+        'titles' => ['Documento', 'Observación'],
+        'inputs' => [
+            [
+                'type' => 'select',
+                'name' => 'config_emision_observaciones_dte',
+                'options' => [''=>'Seleccionar un tipo de documento'] + $tipos_dte,
+                'check' => 'notempty',
+            ],
+            [
+                'name' => 'config_emision_observaciones_glosa',
+                'check' => 'notempty',
+                'attr' => 'maxlength="100"',
+            ]
+        ],
+        'values' => $config_emision_observaciones,
+        'help' => 'Observación por defecto según tipo de DTE emitido',
+    ]);
+}
 ?>
         </div>
     </div>

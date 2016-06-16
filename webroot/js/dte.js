@@ -148,12 +148,14 @@ function DTE() {
 }
 
 DTE.setTipo = function (tipo) {
-    // habilitar o ocultar datos para guía de despacho
+    // habilitar u ocultar datos para guía de despacho
     if (tipo==52) {
         $('#datosTransporte').show();
     } else {
         $('#datosTransporte').hide();
     }
+    // agregar observación si existe
+    document.getElementById("TermPagoGlosaField").value = emision_observaciones[tipo] !== undefined ? emision_observaciones[tipo] : '';
 }
 
 DTE.setFormaPago = function (tipo) {

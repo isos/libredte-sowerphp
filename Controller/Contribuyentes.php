@@ -196,7 +196,7 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método que permite modificar contribuyente previamente registrado
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-12
+     * @version 2016-06-15
      */
     public function modificar($rut)
     {
@@ -227,6 +227,7 @@ class Controller_Contribuyentes extends \Controller_App
             'descripcion' => 'Aquí podrá modificar los datos de la empresa '.$Contribuyente->razon_social.' RUT '.num($Contribuyente->rut).'-'.$Contribuyente->dv.', para la cual usted es el usuario administrador.',
             'form_id' => 'modificarContribuyente',
             'boton' => 'Modificar empresa',
+            'tipos_dte' => $Contribuyente->getDocumentosAutorizados(),
         ]);
         // editar contribuyente
         if (isset($_POST['submit'])) {
@@ -250,7 +251,7 @@ class Controller_Contribuyentes extends \Controller_App
      * Método que prepara los datos de configuraciones del contribuyente para
      * ser guardados
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-09
+     * @version 2016-06-15
      */
     private function prepararDatosContribuyente(&$Contribuyente)
     {
@@ -259,16 +260,33 @@ class Controller_Contribuyentes extends \Controller_App
             $_POST['config_extra_impuestos_adicionales'] = [];
             $n_codigos = count($_POST['config_extra_impuestos_adicionales_codigo']);
             for ($i=0; $i<$n_codigos; $i++) {
-                if (!empty($_POST['config_extra_impuestos_adicionales_codigo'][$i]) and !empty($_POST['config_extra_impuestos_adicionales_tasa'][$i]))
-                $_POST['config_extra_impuestos_adicionales'][] = [
-                    'codigo' => (int)$_POST['config_extra_impuestos_adicionales_codigo'][$i],
-                    'tasa' => $_POST['config_extra_impuestos_adicionales_tasa'][$i],
-                ];
+                if (!empty($_POST['config_extra_impuestos_adicionales_codigo'][$i]) and !empty($_POST['config_extra_impuestos_adicionales_tasa'][$i])) {
+                    $_POST['config_extra_impuestos_adicionales'][] = [
+                        'codigo' => (int)$_POST['config_extra_impuestos_adicionales_codigo'][$i],
+                        'tasa' => $_POST['config_extra_impuestos_adicionales_tasa'][$i],
+                    ];
+                }
             }
             unset($_POST['config_extra_impuestos_adicionales_codigo']);
             unset($_POST['config_extra_impuestos_adicionales_tasa']);
         } else {
             $_POST['config_extra_impuestos_adicionales'] = null;
+        }
+        // crear arreglo con observaciones
+        if (!empty($_POST['config_emision_observaciones_dte'])) {
+            $_POST['config_emision_observaciones'] = [];
+            $n_codigos = count($_POST['config_emision_observaciones_dte']);
+            for ($i=0; $i<$n_codigos; $i++) {
+                if (!empty($_POST['config_emision_observaciones_dte'][$i]) and !empty($_POST['config_emision_observaciones_glosa'][$i])) {
+                    $dte = (int)$_POST['config_emision_observaciones_dte'][$i];
+                    $glosa = $_POST['config_emision_observaciones_glosa'][$i];
+                    $_POST['config_emision_observaciones'][$dte] = $glosa;
+                }
+            }
+            unset($_POST['config_emision_observaciones_dte']);
+            unset($_POST['config_emision_observaciones_glosa']);
+        } else {
+            $_POST['config_emision_observaciones'] = null;
         }
         // poner valores por defecto
         foreach (Model_Contribuyente::$defaultConfig as $key => $value) {
