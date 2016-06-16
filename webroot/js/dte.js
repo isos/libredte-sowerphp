@@ -400,3 +400,41 @@ DTE.check = function () {
     DTE.calcular();
     return Form.checkSend('Confirmar '+document.getElementById("TpoDocField").selectedOptions[0].textContent+' por $'+__.num($('input[name="total"]').val())+' a '+$('input[name="RUTRecep"]').val());
 }
+
+function dte_recibido_check() {
+    var emisor = document.getElementById("emisorField");
+    var dte = document.getElementById("dteField");
+    var folio = document.getElementById("folioField");
+    if (emisor.value && dte.value && folio.value) {
+        estado = Form.check_rut(emisor);
+        if (estado !== true) {
+            alert(estado);
+            return;
+        }
+        $.ajax({
+            type: "GET",
+            url: _url+'/api/dte/dte_recibidos/info/'+emisor.value+'/'+dte.value+'/'+folio.value,
+            dataType: "json",
+            success: function (documento) {
+                document.getElementById("fechaField").value = documento.fecha;
+                document.getElementById("exentoField").value = documento.exento;
+                document.getElementById("netoField").value = documento.neto;
+                document.getElementById("impuesto_tipoField").value = documento.impuesto_tipo;
+                document.getElementById("tasaField").value = documento.tasa;
+                document.getElementById("ivaField").value = documento.iva;
+                document.getElementById("periodoField").value = documento.periodo;
+                document.getElementById("iva_uso_comunField").value = documento.iva_uso_comun;
+                document.getElementById("iva_no_recuperableField").value = documento.iva_no_recuperable ? documento.iva_no_recuperable : '';
+                document.getElementById("impuesto_adicionalField").value = documento.impuesto_adicional ? documento.impuesto_adicional  : '';
+                document.getElementById("impuesto_sin_creditoField").value = documento.impuesto_sin_credito;
+                document.getElementById("monto_activo_fijoField").value = documento.monto_activo_fijo;
+                document.getElementById("monto_iva_activo_fijoField").value = documento.monto_iva_activo_fijo;
+                document.getElementById("iva_no_retenidoField").value = documento.iva_no_retenido;
+                document.getElementById("anuladoField").checked = documento.anulado == 'A' ? true : false;
+            },
+            error: function (jqXHR) {
+                console.log(jqXHR.responseJSON);
+            }
+        });
+    }
+}

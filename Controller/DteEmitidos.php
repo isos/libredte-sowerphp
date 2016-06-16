@@ -581,7 +581,7 @@ class Controller_DteEmitidos extends \Controller_App
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
-            $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
+            $this->Api->send('No existe el documento solicitado T'.$dte.'F'.$folio, 404);
         $DteEmitido->xml = false;
         $this->Api->send($DteEmitido, 200, JSON_PRETTY_PRINT);
     }

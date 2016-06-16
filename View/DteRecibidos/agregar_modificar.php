@@ -13,17 +13,25 @@
 <?php
 endif;
 $f = new \sowerphp\general\View_Helper_Form();
-echo $f->begin(['onsubmit'=>'Form.check()']);
+echo $f->begin(['onsubmit'=>'Form.check()', 'focus'=>(!isset($DteRecibido)?'emisorField':false)]);
 $f->setColsLabel(5);
 echo '<div class="row">',"\n";
 echo '<div class="col-md-6">',"\n";
+echo $f->input([
+    'type' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'text' : 'date',
+    'name' => 'fecha',
+    'label' => 'Fecha documento',
+    'value' => isset($DteRecibido) ? $DteRecibido->fecha : date('Y-m-d'),
+    'check' => 'notempty date',
+    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : '',
+]);
 echo $f->input([
     'name' => 'emisor',
     'label' => 'RUT emisor',
     'value' => isset($DteRecibido) ? \sowerphp\app\Utility_Rut::addDV($DteRecibido->emisor) : '',
     'placeholder' => '55.666.777-8',
     'check' => 'notempty rut',
-    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : '',
+    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : 'onblur="dte_recibido_check()"',
 ]);
 if (!isset($DteRecibido) or !$DteRecibido->intercambio) {
     echo $f->input([
@@ -33,6 +41,7 @@ if (!isset($DteRecibido) or !$DteRecibido->intercambio) {
         'options' => [''=>'Seleccionar tipo de documento'] + $tipos_documentos,
         'value' => isset($DteRecibido) ? $DteRecibido->dte : '',
         'check' => 'notempty',
+        'attr' => 'onblur="dte_recibido_check()"',
     ]);
 } else {
     echo $f->input([
@@ -48,15 +57,7 @@ echo $f->input([
     'label' => 'Folio',
     'value' => isset($DteRecibido) ? $DteRecibido->folio : '',
     'check' => 'notempty integer',
-    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : '',
-]);
-echo $f->input([
-    'type' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'text' : 'date',
-    'name' => 'fecha',
-    'label' => 'Fecha documento',
-    'value' => isset($DteRecibido) ? $DteRecibido->fecha : '',
-    'check' => 'notempty date',
-    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : '',
+    'attr' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'readonly="readonly"' : 'onblur="dte_recibido_check()"',
 ]);
 echo $f->input([
     'name' => 'exento',

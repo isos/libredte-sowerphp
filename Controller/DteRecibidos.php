@@ -85,13 +85,14 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite agregar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-03
+     * @version 2016-06-15
      */
     public function agregar()
     {
         $Emisor = $this->getContribuyente();
         // asignar variables para la vista
         $this->set([
+            '_header_extra' => ['js'=>['/dte/js/dte.js']],
             'Emisor' => $Emisor,
             'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
             'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
@@ -123,6 +124,7 @@ class Controller_DteRecibidos extends \Controller_App
         }
         // agregar variables para la vista
         $this->set([
+            '_header_extra' => ['js'=>['/dte/js/dte.js']],
             'Emisor' => $Emisor,
             'DteRecibido' => $DteRecibido,
             'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
@@ -246,6 +248,41 @@ class Controller_DteRecibidos extends \Controller_App
             );
         }
         $this->redirect('/dte/dte_recibidos/listar');
+    }
+
+    /**
+     * Acción de la API que permite obtener la información de un documento recibido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-15
+     */
+    public function _api_info_GET($emisor, $dte, $folio, $contribuyente = null)
+    {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Receptor = $this->getContribuyente();
+        if (!$Receptor) {
+            if (!$contribuyente)
+                $this->Api->send('Debe indicar el emisor', 500);
+            $Receptor = new Model_Contribuyente($contribuyente);
+            if (!$Receptor->exists())
+                $this->Api->send('Emisor no existe', 404);
+        }
+        if (!$Receptor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        if (strpos($emisor, '-')) {
+            $emisor = \sowerphp\app\Utility_Rut::normalizar($emisor);
+        }
+        $DteRecibido = new Model_DteRecibido((int)$emisor, (int)$dte, (int)$folio, (int)$Receptor->config_ambiente_en_certificacion);
+        if (!$DteRecibido->exists())
+            $this->Api->send('No existe el documento recibido solicitado T'.$dte.'F'.$folio, 404);
+        $this->Api->send($DteRecibido, 200, JSON_PRETTY_PRINT);
     }
 
 }
