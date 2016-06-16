@@ -1188,14 +1188,15 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega la tabla con los casos de intercambio del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-06-15
      */
-    public function getIntercambios()
+    public function getIntercambios($soloPendientes = true)
     {
+        $where = $soloPendientes ? ' AND i.estado IS NULL' : '';
         $intercambios = $this->db->getTable('
             SELECT i.codigo, i.emisor, e.razon_social, i.fecha_hora_firma, i.fecha_hora_email, i.documentos, i.estado, u.usuario
             FROM dte_intercambio AS i LEFT JOIN contribuyente AS e ON i.emisor = e.rut LEFT JOIN usuario AS u ON i.usuario = u.id
-            WHERE i.receptor = :receptor AND i.certificacion = :certificacion
+            WHERE i.receptor = :receptor AND i.certificacion = :certificacion '.$where.'
             ORDER BY i.fecha_hora_firma DESC
         ', [':receptor'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
         foreach ($intercambios as &$i) {

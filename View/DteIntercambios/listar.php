@@ -1,8 +1,14 @@
 <ul class="nav nav-pills pull-right">
     <li>
-        <a href="<?=$_base?>/dte/dte_intercambios/actualizar">
+        <a href="<?=$_base?>/dte/dte_intercambios/pendientes" title="Descargar los documentos pendientes de procesar">
+            <span class="fa fa-download"></span>
+            Descargar pendientes
+        </a>
+    </li>
+    <li>
+        <a href="<?=$_base?>/dte/dte_intercambios/actualizar" title="Actualizar bandeja de intercambio <?=$Emisor->config_email_intercambio_user?>">
             <span class="fa fa-refresh"></span>
-            Actualizar bandeja de intercambio
+            Actualizar bandeja
         </a>
     </li>
 </ul>

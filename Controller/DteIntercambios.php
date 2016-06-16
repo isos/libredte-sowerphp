@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador para intercambio entre contribuyentes
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-10-08
+ * @version 2016-06-15
  */
 class Controller_DteIntercambios extends \Controller_App
 {
@@ -35,15 +35,35 @@ class Controller_DteIntercambios extends \Controller_App
     /**
      * Acción para mostrar la bandeja de intercambio de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-22
+     * @version 2016-06-15
      */
     public function listar()
     {
         $Emisor = $this->getContribuyente();
         $this->set([
             'Emisor' => $Emisor,
-            'intercambios' => $Emisor->getIntercambios(),
+            'intercambios' => $Emisor->getIntercambios(false),
         ]);
+    }
+
+    /**
+     * Acción para descargar los intercambios pendientes de procesar
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-15
+     */
+    public function pendientes()
+    {
+        $Emisor = $this->getContribuyente();
+        $pendientes = $Emisor->getIntercambios();
+        if (!$pendientes) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No hay intercambios pendientes', 'warning'
+            );
+            $this->redirect('/dte/dte_intercambios/listar');
+        }
+        array_unshift($pendientes, array_keys($pendientes[0]));
+        \sowerphp\general\Utility_Spreadsheet_CSV::generate($pendientes, $Emisor->rut.'_intercambios_pendientes_'.date('Ymd'));
+        exit;
     }
 
     /**
