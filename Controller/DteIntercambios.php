@@ -202,7 +202,7 @@ class Controller_DteIntercambios extends \Controller_App
     /**
      * Acción que procesa y responde al intercambio recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-19
+     * @version 2016-06-15
      */
     public function responder($codigo)
     {
@@ -417,6 +417,9 @@ class Controller_DteIntercambios extends \Controller_App
                         $DteRecibido->total = (int)$resumen['MntTotal'];
                         $DteRecibido->usuario = $this->Auth->User->id;
                         $DteRecibido->intercambio = $DteIntercambio->codigo;
+                        if ($DteRecibido->iva and $Emisor->config_extra_exenta) {
+                            $DteRecibido->iva_no_recuperable = 1;
+                        }
                         $DteRecibido->save();
                     }
                 }

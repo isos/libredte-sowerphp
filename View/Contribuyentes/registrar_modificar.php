@@ -289,6 +289,15 @@ echo $f->input([
     'help' => '¿Se deben enviar automáticamente los DTE al SII sin pasar por previsualización?',
     'check' => 'notempty',
 ]);
+echo $f->input([
+    'type' => 'select',
+    'name' => 'config_extra_exenta',
+    'label' => 'Empresa exenta',
+    'options' => ['No', 'Si'],
+    'value' => isset($Contribuyente) ? $Contribuyente->config_extra_exenta : 0,
+    'help' => '¿El contribuyente es exento de IVA en todas sus actividades económicas?',
+    'check' => 'notempty',
+]);
 /*echo $f->input([
     'type' => 'select',
     'name' => 'config_extra_constructora',

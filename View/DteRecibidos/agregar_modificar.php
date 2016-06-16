@@ -114,7 +114,7 @@ echo $f->input([
     'name' => 'iva_no_recuperable',
     'label' => 'IVA no recuperable',
     'options' => [''=>'El IVA es recuperable'] + $iva_no_recuperables,
-    'value' => isset($DteRecibido) ? $DteRecibido->iva_no_recuperable : '',
+    'value' => isset($DteRecibido) ? $DteRecibido->iva_no_recuperable : ($Emisor->config_extra_exenta?1:''),
 ]);
 echo $f->input([
     'type' => 'select',

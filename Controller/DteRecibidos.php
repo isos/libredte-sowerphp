@@ -140,7 +140,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Método que agrega o modifica un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-03
+     * @version 2016-06-15
      */
     private function save()
     {
@@ -167,7 +167,11 @@ class Controller_DteRecibidos extends \Controller_App
         $DteRecibido->usuario = $this->Auth->User->id;
         // iva uso común, no recuperable e impuesto adicional
         $DteRecibido->iva_uso_comun = !empty($_POST['iva_uso_comun']) ? $_POST['iva_uso_comun'] : null;
-        $DteRecibido->iva_no_recuperable = !empty($_POST['iva_no_recuperable']) ? $_POST['iva_no_recuperable'] : null;
+        if ($DteRecibido->iva) {
+            $DteRecibido->iva_no_recuperable = !empty($_POST['iva_no_recuperable']) ? $_POST['iva_no_recuperable'] : null;
+        } else {
+            $DteRecibido->iva_no_recuperable = null;
+        }
         if (!empty($_POST['impuesto_adicional']) and !empty($_POST['impuesto_adicional_tasa'])) {
             $DteRecibido->impuesto_adicional = $_POST['impuesto_adicional'];
             $DteRecibido->impuesto_adicional_tasa = $_POST['impuesto_adicional_tasa'];
