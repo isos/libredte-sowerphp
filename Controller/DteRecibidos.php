@@ -142,7 +142,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Método que agrega o modifica un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-15
+     * @version 2016-06-17
      */
     private function save()
     {
@@ -207,7 +207,7 @@ class Controller_DteRecibidos extends \Controller_App
                     'No se pudo obtener el estado del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
                 );
                 return;
-            } else if (is_string($estado)) {
+            } else if (in_array($estado['ESTADO'], ['DNK', 'FAU', 'FNA', 'EMP'])) {
                 \sowerphp\core\Model_Datasource_Session::message(
                     'Estado DTE: '.$estado, 'error'
                 );

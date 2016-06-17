@@ -410,7 +410,7 @@ class Model_DteRecibido extends \Model_App
     /**
      * Método que consulta al estado al SII del dte recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-06-17
      */
     public function getEstado(\sasco\LibreDTE\FirmaElectronica $Firma)
     {
@@ -437,8 +437,7 @@ class Model_DteRecibido extends \Model_App
         // si hubo error con el estado se muestra que no se pudo obtener
         if ($xml===false)
             return false;
-        $estado = (array)$xml->xpath('/SII:RESPUESTA/SII:RESP_HDR')[0];
-        return $estado['ESTADO']=='DOK' ? true : $estado['GLOSA_ERR'];
+        return (array)$xml->xpath('/SII:RESPUESTA/SII:RESP_HDR')[0];
     }
 
 }
