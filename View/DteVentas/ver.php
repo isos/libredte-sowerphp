@@ -121,7 +121,7 @@ echo $f->input([
     'id' => 'resumenes',
     'titles' => $titulos,
     'inputs' => [
-        ['type'=>'select', 'name'=>'TpoDoc', 'options'=>[35=>'Boleta', 38=>'Boleta exenta'], 'attr'=>'style="width:10em"'],
+        ['type'=>'select', 'name'=>'TpoDoc', 'options'=>[35=>'Boleta', 38=>'Boleta exenta', 48=>'Pago electrónico'], 'attr'=>'style="width:10em"'],
         ['name'=>'TotDoc', 'check'=>'notempty integer'],
         ['name'=>'TotAnulado', 'check'=>'integer'],
         ['name'=>'TotOpExe', 'check'=>'integer'],
