@@ -35,7 +35,7 @@ class Controller_Dashboard extends \Controller_App
     /**
      * Acción principal que muestra el dashboard
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-24
+     * @version 2016-06-17
      */
     public function index()
     {
@@ -46,8 +46,8 @@ class Controller_Dashboard extends \Controller_App
         $desde = date('Y-m-01');
         $hasta = date('Y-m-d');
         $n_temporales = (new Model_DteTmps())->setWhereStatement(['emisor = :emisor'], [':emisor'=>$Emisor->rut])->count();
-        $n_emitidos = (new Model_DteEmitidos())->setWhereStatement(['emisor = :emisor', 'certificacion = :certificacion', 'fecha BETWEEN :desde AND :hasta', 'dte != 46'], [':emisor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion, ':desde'=>$desde, ':hasta'=>$hasta])->count();
-        $n_recibidos = (new Model_DteRecibidos())->setWhereStatement(['receptor = :receptor', 'certificacion = :certificacion', 'fecha BETWEEN :desde AND :hasta'], [':receptor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion, ':desde'=>$desde, ':hasta'=>$hasta])->count();
+        $n_emitidos = (new Model_DteEmitidos())->setWhereStatement(['emisor = :emisor', 'certificacion = :certificacion', 'fecha BETWEEN :desde AND :hasta', 'dte NOT IN (46, 52)'], [':emisor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion, ':desde'=>$desde, ':hasta'=>$hasta])->count();
+        $n_recibidos = (new Model_DteRecibidos())->setWhereStatement(['receptor = :receptor', 'certificacion = :certificacion', 'fecha BETWEEN :desde AND :hasta', 'dte != 52'], [':receptor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion, ':desde'=>$desde, ':hasta'=>$hasta])->count();
         $n_recibidos += (new Model_DteEmitidos())->setWhereStatement(['emisor = :emisor', 'certificacion = :certificacion', 'fecha BETWEEN :desde AND :hasta', 'dte = 46'], [':emisor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion, ':desde'=>$desde, ':hasta'=>$hasta])->count();
         $n_intercambios = (new Model_DteIntercambios())->setWhereStatement(['receptor = :receptor', 'certificacion = :certificacion', 'usuario IS NULL'], [':receptor'=>$Emisor->rut, ':certificacion'=>$Emisor->config_ambiente_en_certificacion])->count();
         // libros pendientes de enviar del período anterior
