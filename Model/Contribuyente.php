@@ -1741,7 +1741,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de clientes del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-17
+     * @version 2016-06-18
      */
     public function getClientes()
     {
@@ -1751,6 +1751,7 @@ class Model_Contribuyente extends \Model_App
                 contribuyente AS c
                 LEFT JOIN comuna AS co ON co.codigo = c.comuna
             WHERE c.rut IN (SELECT receptor FROM dte_emitido WHERE emisor = :emisor)
+            ORDER BY c.razon_social
         ', [':emisor'=>$this->rut]);
     }
 
