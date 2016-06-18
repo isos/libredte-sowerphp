@@ -20,9 +20,12 @@ array_unshift($empresas, ['RUT', 'Razón social', 'Giro', 'Ambiente', 'Administr
 $t = new \sowerphp\general\View_Helper_Table();
 $t->setColsWidth([null, null, null, null, null, 150]);
 echo $t->generate($empresas);
+if ($registrar_empresa) :
 ?>
 <a class="btn btn-primary btn-lg btn-block" href="registrar" role="button">Registrar una nueva empresa y ser el administrador de la misma</a>
-<?php if ($soporte) :
+<?php
+endif;
+if ($soporte) :
 $f = new \sowerphp\general\View_Helper_Form();
 $f->setColsLabel(4);
 echo $f->begin(['action'=>'soporte', 'onsubmit'=>'return Form.check(\'soporte\')', 'id'=>'soporte']);

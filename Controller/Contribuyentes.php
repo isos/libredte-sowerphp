@@ -70,7 +70,7 @@ class Controller_Contribuyentes extends \Controller_App
      * @param rut Si se pasa un RUT se tratará de seleccionar
      * @param url URL a la que redirigir después de seleccionar el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-17
      */
     public function seleccionar($rut = null, $url = null)
     {
@@ -117,6 +117,7 @@ class Controller_Contribuyentes extends \Controller_App
         // asignar variables para la vista
         $this->set([
             'empresas' => (new Model_Contribuyentes())->getByUsuario($this->Auth->User->id),
+            'registrar_empresa' => $this->Auth->check('/dte/contribuyentes/registrar'),
             'soporte' => $this->Auth->User->inGroup(['soporte']),
         ]);
     }
