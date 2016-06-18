@@ -25,7 +25,12 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     <p>(*) modificar los datos del emisor (giro, actividad económica y/o dirección) sólo afectará a la emisión de este documento, no se guardarán estos cambios.</p>
     <!-- DATOS DEL RECEPTOR -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" '.(isset($DteReceptor)?'readonly="readonly"':'onblur="Receptor.setDatos(\'emitir_dte\')"'), 'value'=>(isset($DteReceptor)?$DteReceptor['RUTRecep']:'')])?></div>
+        <div class="form-group col-md-3">
+            <div class="input-group">
+                <div class="input-group-addon"><a href="#" title="Buscar RUT del receptor [B]" data-toggle="modal" data-target=".modal-buscar-receptor" accesskey="B">buscar</a></div>
+                <input type="text" name="RUTRecep" value="" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" onblur="Receptor.setDatos('emitir_dte')" />
+            </div>
+        </div>
         <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"', 'value'=>(isset($DteReceptor['RznSocRecep'])?$DteReceptor['RznSocRecep']:'')])?></div>
         <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
     </div>
@@ -249,3 +254,45 @@ $(function() {
     DTE.setTipo(document.getElementById("TpoDocField").value);
 });
 </script>
+
+<div class="modal fade modal-buscar-receptor" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Buscar receptor</h4>
+            </div>
+        <div class="modal-body">
+<?php
+$clientes = $Emisor->getClientes();
+foreach($clientes as &$c) {
+    $c['rut'] = '<a href="#" onclick="$(\'.modal-buscar-receptor\').modal(\'hide\'); document.getElementById(\'RUTRecepField\').value=this.innerText; Receptor.setDatos(\'emitir_dte\')">'.num($c['rut']).'-'.$c['dv'].'</a>';
+    if (!empty($c['comuna']))
+        $c['direccion'] .= ', '.$c['comuna'];
+    if (!empty($c['telefono']) or !empty($c['email'])) {
+        if (!empty($c['direccion']))
+            $c['direccion'] .= '<br/>';
+        $contacto = [];
+        if (!empty($c['telefono']))
+            $contacto[] = $c['telefono'];
+        if (!empty($c['email']))
+            $contacto[] = '<a href="mailto:'.$c['email'].'">'.$c['email'].'</a>';
+        $c['direccion'] .= '<span>'.implode(' / ', $contacto).'</span>';
+    }
+    unset($c['dv'], $c['telefono'], $c['email'], $c['comuna']);
+}
+array_unshift($clientes, ['RUT', 'Razón social', 'Contacto']);
+$t = new \sowerphp\general\View_Helper_Table();
+$t->setID('clientes');
+echo $t->generate($clientes);
+?>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+        </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" type="text/css" href="<?=$_base?>/css/jquery.dataTables.css" />
+<script type="text/javascript" src="<?=$_base?>/js/jquery.dataTables.js"></script>
+<script type="text/javascript"> $(document).ready(function(){ dataTable("#clientes", [{"sWidth":120}, null, null]); }); </script>

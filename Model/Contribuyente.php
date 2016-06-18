@@ -1738,4 +1738,20 @@ class Model_Contribuyente extends \Model_App
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
     }
 
+    /**
+     * Método que entrega el listado de clientes del contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-17
+     */
+    public function getClientes()
+    {
+        return $this->db->getTable('
+            SELECT c.rut, c.dv, c.razon_social, c.telefono, c.email, c.direccion, co.comuna
+            FROM
+                contribuyente AS c
+                LEFT JOIN comuna AS co ON co.codigo = c.comuna
+            WHERE c.rut IN (SELECT receptor FROM dte_emitido WHERE emisor = :emisor)
+        ', [':emisor'=>$this->rut]);
+    }
+
 }
