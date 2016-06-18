@@ -248,9 +248,9 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para mostrar página de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-27
+     * @version 2016-06-17
      */
-    public function emitir($referencia_dte = null, $referencia_folio = null)
+    public function emitir($referencia_dte = null, $referencia_folio = null, $dte_defecto = null, $referencia_codigo = '', $referencia_razon = '')
     {
         $Emisor = $this->getContribuyente();
         if ($referencia_dte and $referencia_folio) {
@@ -284,6 +284,9 @@ class Controller_Documentos extends \Controller_App
             'codigos' => (new \website\Dte\Admin\Model_Itemes())->getCodigos($Emisor->rut),
             'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getListContribuyente($Emisor->config_extra_impuestos_adicionales),
             'ImpuestoAdicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getObjectsContribuyente($Emisor->config_extra_impuestos_adicionales),
+            'dte_defecto' => $dte_defecto ? $dte_defecto : $Emisor->config_emision_dte_defecto,
+            'referencia_codigo' => (int)$referencia_codigo,
+            'referencia_razon' => substr(urldecode($referencia_razon), 0, 90),
         ]);
     }
 

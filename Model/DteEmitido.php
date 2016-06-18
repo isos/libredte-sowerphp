@@ -693,4 +693,43 @@ class Model_DteEmitido extends Model_Base_Envio
         }
     }
 
+    /**
+     * Método que propone una referencia para el documento emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-17
+     */
+    public function getPropuestaReferencia()
+    {
+        // si es factura o boleta se anula con nota crédito
+        if (in_array($this->dte, [33, 34, 39, 41])) {
+            return [
+                'titulo' => 'Anular documento',
+                'color' => 'danger',
+                'dte' => 61,
+                'codigo' => 1,
+                'razon' => 'Anula documento',
+            ];
+        }
+        // si es nota de crédito se anula con nota de débito
+        else if ($this->dte==61) {
+            return [
+                'titulo' => 'Anular documento',
+                'color' => 'danger',
+                'dte' => 56,
+                'codigo' => 1,
+                'razon' => 'Anula documento',
+            ];
+        }
+        // si es guía de despacho se factura
+        else if ($this->dte==52) {
+            return [
+                'titulo' => 'Facturar guía',
+                'color' => 'success',
+                'dte' => 33,
+                'codigo' => 0,
+                'razon' => 'Se factura',
+            ];
+        }
+    }
+
 }

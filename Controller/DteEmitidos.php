@@ -132,7 +132,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que muestra la página de un DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-14
+     * @version 2016-06-17
      */
     public function ver($dte, $folio)
     {
@@ -152,6 +152,7 @@ class Controller_DteEmitidos extends \Controller_App
             'Receptor' => $DteEmitido->getReceptor(),
             'emails' => $DteEmitido->getEmails(),
             'referencias' => $DteEmitido->getReferencias(),
+            'referencia' => $DteEmitido->getPropuestaReferencia(),
             'enviar_sii' => !(in_array($DteEmitido->dte, [39, 41]) or $DteEmitido->track_id == -1),
         ]);
     }

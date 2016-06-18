@@ -10,7 +10,7 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
 ?>
     <!-- DATOS DEL DOCUMENTO -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte, 'value'=>$Emisor->config_emision_dte_defecto, 'attr'=>'onblur="DTE.setTipo(this.value)"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte, 'value'=>$dte_defecto, 'attr'=>'onblur="DTE.setTipo(this.value)"'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['type' => 'date', 'name' => 'FchEmis', 'placeholder'=>'Fecha emisión DTE', 'popover'=>'Día en que se emite el documento', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['name'=>'FmaPago', 'type'=>'select', 'options'=>[''=>'Sin forma de pago', 1=>'Contado', 2=>'Crédito', 3=>'Sin costo (entrega gratuita)'], 'value'=>1, 'attr'=>'onblur="DTE.setFormaPago(this.value)"'])?></div>
         <div class="form-group col-md-3"><?=$f->input(['type' => 'date', 'name' => 'FchVenc', 'placeholder'=>'Fecha de vencimiento', 'popover'=>'Día máximo a pagar o día en que se pagó el documento (si es pago anticipado)', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
@@ -144,7 +144,7 @@ new \sowerphp\general\View_Helper_Table($impuestos);
         ['name'=>'FchRef', 'type'=>'date', 'check'=>'notempty date'],
         ['name'=>'TpoDocRef', 'type'=>'select', 'options'=>[''=>'Tipo de documento referenciado'] + $tipos_dte, 'attr'=>'onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"', 'check'=>'notempty'],
         ['name'=>'FolioRef', 'check'=>'notempty integer', 'attr'=>'maxlength="18" onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
-        ['name'=>'CodRef', 'type'=>'select', 'options'=>[''=>''] + $tipos_referencia, 'check'=>'notempty'],
+        ['name'=>'CodRef', 'type'=>'select', 'options'=>[''=>''] + $tipos_referencia],
         ['name'=>'RazonRef', 'attr'=>'maxlength="90"'],
     ],
     'accesskey' => 'R',
@@ -152,6 +152,8 @@ new \sowerphp\general\View_Helper_Table($impuestos);
         'FchRef' => $DteEmitido->fecha,
         'TpoDocRef' => $DteEmitido->dte,
         'FolioRef' => $DteEmitido->folio,
+        'CodRef' => $referencia_codigo,
+        'RazonRef' => $referencia_razon,
     ]] : [],
 ])?>
         </div>

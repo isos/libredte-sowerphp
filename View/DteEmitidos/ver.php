@@ -252,9 +252,20 @@ if ($referencias) {
     echo '<p>No hay documentos que referencien a este.</p>',"\n";
 }
 ?>
-<a class="btn btn-primary btn-lg btn-block" href="<?=$_base?>/dte/documentos/emitir/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
-    Crear referencia a este documento
-</a>
+<div class="row">
+<?php if (!empty($referencia)) : ?>
+    <div class="col-md-<?=(!empty($referencia)?6:12)?>">
+        <a class="btn btn-<?=$referencia['color']?> btn-lg btn-block" href="<?=$_base?>/dte/documentos/emitir/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>/<?=$referencia['dte']?>/<?=$referencia['codigo']?>/<?=urlencode($referencia['razon'])?>" role="button">
+            <?=$referencia['titulo']?>
+        </a>
+    </div>
+<?php endif; ?>
+    <div class="col-md-<?=(!empty($referencia)?6:12)?>">
+        <a class="btn btn-primary btn-lg btn-block" href="<?=$_base?>/dte/documentos/emitir/<?=$DteEmitido->dte?>/<?=$DteEmitido->folio?>" role="button">
+            Crear referencia
+        </a>
+    </div>
+</div>
 </div>
 <!-- FIN REFERENCIAS -->
 
