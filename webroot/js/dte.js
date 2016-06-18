@@ -155,7 +155,7 @@ DTE.setTipo = function (tipo) {
         $('#datosTransporte').hide();
     }
     // agregar observación si existe
-    document.getElementById("TermPagoGlosaField").value = emision_observaciones[tipo] !== undefined ? emision_observaciones[tipo] : '';
+    document.getElementById("TermPagoGlosaField").value = (emision_observaciones !== null && emision_observaciones[tipo] !== undefined) ? emision_observaciones[tipo] : '';
 }
 
 DTE.setFormaPago = function (tipo) {

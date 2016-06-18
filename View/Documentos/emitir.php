@@ -26,13 +26,17 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     <!-- DATOS DEL RECEPTOR -->
     <div class="row">
         <div class="form-group col-md-3">
+<?php if (!isset($DteReceptor)) : ?>
             <div class="input-group">
                 <div class="input-group-addon"><a href="#" title="Buscar RUT del receptor [B]" data-toggle="modal" data-target=".modal-buscar-receptor" accesskey="B">buscar</a></div>
-                <input type="text" name="RUTRecep" value="" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" onblur="Receptor.setDatos('emitir_dte')" />
+                <input type="text" name="RUTRecep" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" onblur="Receptor.setDatos('emitir_dte')" />
             </div>
+<?php else: ?>
+            <input type="text" name="RUTRecep" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" readonly="readonly" value="<?=$DteReceptor['RUTRecep']?>" />
+<?php endif; ?>
         </div>
         <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"', 'value'=>(isset($DteReceptor['RznSocRecep'])?$DteReceptor['RznSocRecep']:'')])?></div>
-        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
+        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?substr($DteReceptor['GiroRecep'],0,40):'')])?></div>
     </div>
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input([ 'name' => 'DirRecep', 'placeholder' => 'Dirección del receptor', 'check' => 'notempty', 'attr' => 'maxlength="70"', 'value'=>(isset($DteReceptor['DirRecep'])?$DteReceptor['DirRecep']:'')])?></div>
