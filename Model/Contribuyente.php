@@ -1193,13 +1193,14 @@ class Model_Contribuyente extends \Model_App
     public function getIntercambios($soloPendientes = true)
     {
         if ($this->db->config['type']=='PostgreSQL') {
-            $documentos = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:TipoDTE/text()|/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:Folio/text()\', CONVERT_FROM(decode(i.archivo_xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\') AS documentos';
+            $documentos = 'BTRIM(XPATH(\'/n:*/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:TipoDTE/text()|/n:*/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:Folio/text()\', CONVERT_FROM(decode(i.archivo_xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\') AS documentos';
         } else {
             $documentos = 'i.documentos';
         }
+        $select = $soloPendientes ? '' : ', i.estado, u.usuario';
         $where = $soloPendientes ? ' AND i.estado IS NULL' : '';
         $intercambios = $this->db->getTable('
-            SELECT i.codigo, i.emisor, e.razon_social, i.fecha_hora_firma, i.fecha_hora_email, '.$documentos.', i.estado, u.usuario
+            SELECT i.codigo, i.emisor, e.razon_social, i.fecha_hora_firma, i.fecha_hora_email, '.$documentos.$select.'
             FROM dte_intercambio AS i LEFT JOIN contribuyente AS e ON i.emisor = e.rut LEFT JOIN usuario AS u ON i.usuario = u.id
             WHERE i.receptor = :receptor AND i.certificacion = :certificacion '.$where.'
             ORDER BY i.fecha_hora_firma DESC
