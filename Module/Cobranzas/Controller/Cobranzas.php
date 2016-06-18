@@ -39,7 +39,7 @@ class Controller_Cobranzas extends \Controller_App
     /**
      * Acción que permite buscar los pagos pendientes
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-28
+     * @version 2016-06-17
      */
     public function buscar()
     {
@@ -50,7 +50,8 @@ class Controller_Cobranzas extends \Controller_App
                     $Emisor->rut,
                     $Emisor->config_ambiente_en_certificacion,
                     $_POST['desde'],
-                    $_POST['hasta']
+                    $_POST['hasta'],
+                    $_POST['receptor']
                 ),
             ]);
         }

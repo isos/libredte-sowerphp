@@ -7,15 +7,21 @@ echo $f->input([
     'name' => 'desde',
     'label' => 'Desde',
     'value' => isset($_POST['desde']) ? $_POST['desde'] : date('Y-m-d'),
-    'check' => 'notempty date',
-    'attr' => 'onchange="document.getElementById(\'hastaField\').value = this.value"'
+    'check' => 'date',
+    'attr' => 'onchange="document.getElementById(\'hastaField\').value = this.value"',
 ]);
 echo $f->input([
     'type' => 'date',
     'name' => 'hasta',
     'label' => 'Hasta',
     'value' => isset($_POST['hasta']) ? $_POST['hasta'] : date('Y-m-d'),
-    'check'=>'notempty date'
+    'check'=>'date',
+]);
+echo $f->input([
+    'name' => 'receptor',
+    'label' => 'Receptor',
+    'placeholder' => '55.666.777-8',
+    'check'=>'rut',
 ]);
 echo $f->end('Buscar');
 

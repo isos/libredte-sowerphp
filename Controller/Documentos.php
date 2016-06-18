@@ -573,7 +573,7 @@ class Controller_Documentos extends \Controller_App
      * Función de la API que permite emitir un DTE a partir de un documento
      * temporal, asignando folio, firmando y enviando al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-16
+     * @version 2016-06-17
      */
     public function _api_generar_POST()
     {
@@ -676,7 +676,7 @@ class Controller_Documentos extends \Controller_App
                 $Cobranza->certificacion = $DteEmitido->certificacion;
                 $Cobranza->fecha = $pago['FchPago'];
                 $Cobranza->monto = $pago['MntPago'];
-                $Cobranza->glosa = $pago['GlosaPagos'] ? $pago['GlosaPagos'] : null;
+                $Cobranza->glosa = !empty($pago['GlosaPagos']) ? $pago['GlosaPagos'] : null;
                 $Cobranza->save();
             }
         }

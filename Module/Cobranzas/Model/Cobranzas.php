@@ -42,10 +42,24 @@ class Model_Cobranzas extends \Model_Plural_App
      * Método que entrega los pagos programados pendientes de pago (pagos por
      * cobrar)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-28
+     * @version 2016-06-17
      */
-    public function getPendientes($emisor, $certificacion, $desde, $hasta)
+    public function getPendientes($emisor, $certificacion, $desde = null, $hasta = null, $receptor = null)
     {
+        $where = [];
+        $vars = [':emisor'=>$emisor, ':certificacion'=>$certificacion];
+        if (!empty($desde)) {
+            $where[] = 'c.fecha >= :desde';
+            $vars[':desde'] = $desde;
+        }
+        if (!empty($hasta)) {
+            $where[] = 'c.fecha <= :hasta';
+            $vars[':hasta'] = $hasta;
+        }
+        if (!empty($receptor)) {
+            $where[] = 'd.receptor = :receptor';
+            $vars[':receptor'] = strpos($receptor,'-') ? \sowerphp\app\Utility_Rut::normalizar($receptor) : $receptor;
+        }
         return $this->db->getTable('
             SELECT
                 r.razon_social,
@@ -75,10 +89,10 @@ class Model_Cobranzas extends \Model_Plural_App
             WHERE
                 c.emisor = :emisor
                 AND c.certificacion = :certificacion
-                AND c.fecha BETWEEN :desde AND :hasta
+                '.(!empty($where)?('AND '.implode(' AND ', $where)):'').'
                 AND (c.pagado IS NULL OR c.monto != c.pagado)
-            ORDER BY c.fecha
-        ', [':emisor'=>$emisor, ':certificacion'=>$certificacion, ':desde'=>$desde, ':hasta'=>$hasta]);
+            ORDER BY c.fecha, r.razon_social
+        ', $vars);
     }
 
 }
