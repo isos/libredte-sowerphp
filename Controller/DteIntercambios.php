@@ -49,7 +49,7 @@ class Controller_DteIntercambios extends \Controller_App
     /**
      * Acción para descargar los intercambios pendientes de procesar
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-15
+     * @version 2016-06-18
      */
     public function pendientes()
     {
@@ -60,6 +60,14 @@ class Controller_DteIntercambios extends \Controller_App
                 'No hay intercambios pendientes', 'warning'
             );
             $this->redirect('/dte/dte_intercambios/listar');
+        }
+        foreach ($pendientes as &$i) {
+            $documentos = explode('|', $i['documentos']);
+            foreach ($documentos as &$d) {
+                list($tipo, $folio) = explode(',', $d);
+                $d = 'T'.$tipo.'F'.$folio;
+            }
+            $i['documentos'] = implode("\n", $documentos);
         }
         array_unshift($pendientes, array_keys($pendientes[0]));
         \sowerphp\general\Utility_Spreadsheet_CSV::generate($pendientes, $Emisor->rut.'_intercambios_pendientes_'.date('Ymd'));
