@@ -23,6 +23,11 @@
 
 // Menú para el módulo
 Configure::write('nav.module', array(
+    '/contribuyentes/importar' => [
+        'name' => 'Importar contribuyentes',
+        'desc' => 'Importar datos de constribuyntes',
+        'icon' => 'fa fa-upload',
+    ],
     '/contribuyente_dtes/listar/1/contribuyente/A' => [
         'name' => 'DTEs autorizados por contribuyente',
         'desc' => 'DTEs que los contribuyentes de LibreDTE tienen autorizado emitir en la aplicación',
