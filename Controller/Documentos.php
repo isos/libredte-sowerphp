@@ -845,7 +845,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-08
+     * @version 2016-06-21
      */
     public function _api_generar_pdf_POST()
     {
@@ -864,12 +864,6 @@ class Controller_Documentos extends \Controller_App
         } else {
             $xml = file_get_contents($_FILES['xml']['tmp_name']);
         }
-        // recuperar contenido del logo (si existe)
-        if (isset($this->Api->data['logo'])) {
-            $logo = base64_decode($this->Api->data['logo']);
-        } else if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
-            $logo = file_get_contents($_FILES['logo']['tmp_name']);
-        }
         // crear flag cedible
         $cedible = !empty($this->Api->data['cedible']) ? (int)$this->Api->data['cedible'] : 0;
         // crear flag papel continuo
@@ -885,6 +879,17 @@ class Controller_Documentos extends \Controller_App
         }
         $Caratula = $EnvioDte->getCaratula();
         $Documentos = $EnvioDte->getDocumentos();
+        // recuperar contenido del logo (si existe)
+        if (isset($this->Api->data['logo'])) {
+            $logo = base64_decode($this->Api->data['logo']);
+        } else if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
+            $logo = file_get_contents($_FILES['logo']['tmp_name']);
+        } else {
+            $logo_file = \sowerphp\core\Configure::read('dte.logos.dir').'/'.substr($Caratula['RutEmisor'], 0, -2).'.png';
+            if (is_readable($logo_file)) {
+                $logo = file_get_contents($logo_file);
+            }
+        }
         // directorio temporal para guardar los PDF
         $dir = sys_get_temp_dir().'/dte_'.$Caratula['RutEmisor'].'_'.$Caratula['RutReceptor'].'_'.str_replace(['-', ':', 'T'], '', $Caratula['TmstFirmaEnv']);
         if (is_dir($dir))
