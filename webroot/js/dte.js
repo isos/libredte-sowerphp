@@ -241,7 +241,7 @@ DTE.calcular = function () {
     $('input[name="QtyItem[]"]').each(function (i, e) {
         if (!__.empty($(e).val()) && !__.empty($('input[name="PrcItem[]"]').get(i).value)) {
             // calcular subtotal sin aplicar descuento
-            $('input[name="subtotal[]"]').get(i).value = Math.round(parseFloat($('input[name="QtyItem[]"]').get(i).value) * parseInt($('input[name="PrcItem[]"]').get(i).value));
+            $('input[name="subtotal[]"]').get(i).value = Math.round(parseFloat($('input[name="QtyItem[]"]').get(i).value) * parseFloat($('input[name="PrcItem[]"]').get(i).value));
             // agregar descuento si aplica
             if (!__.empty($('input[name="ValorDR[]"]').get(i).value) && $('input[name="ValorDR[]"]').get(i).value!=0) {
                 if ($('select[name="TpoValor[]"]').get(i).selectedOptions[0].value=="%")
