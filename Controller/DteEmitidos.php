@@ -615,6 +615,47 @@ class Controller_DteEmitidos extends \Controller_App
     }
 
     /**
+     * Acción de la API que permite obtener el timbre de un DTE emitido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-22
+     */
+    public function _api_ted_GET($dte, $folio, $contribuyente = null, $formato = 'xml', $ecl = 5)
+    {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Emisor = $this->getContribuyente();
+        if (!$Emisor) {
+            if (!$contribuyente)
+                $this->Api->send('Debe indicar el emisor', 500);
+            $Emisor = new Model_Contribuyente($contribuyente);
+            if (!$Emisor->exists())
+                $this->Api->send('Emisor no existe', 404);
+        }
+        if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteEmitido->exists())
+            $this->Api->send('No existe el documento solicitado T'.$dte.'F'.$folio, 404);
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        $EnvioDte->loadXML(base64_decode($DteEmitido->xml));
+        $ted = $EnvioDte->getDocumentos()[0]->getTED();
+        if ($formato == 'xml') {
+            return base64_encode($ted);
+        }
+        else if ($formato == 'png') {
+            $pdf417 = new \TCPDF2DBarcode($ted, 'PDF417,,'.$ecl);
+            $pdf417->getBarcodePNG(4, 4, [0,0,0]);
+        }
+    }
+
+    /**
      * Acción de la API que permite consultar el estado del envío del DTE al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-06-13
