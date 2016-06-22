@@ -947,7 +947,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que permite validar el TED (timbre electrónico)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-06
+     * @version 2016-06-22
      */
     public function _api_verificar_ted_POST()
     {
@@ -993,6 +993,9 @@ class Controller_Documentos extends \Controller_App
         // verificar firma del ted
         $DD = $xml->getFlattened('/TED/DD');
         $FRMT = $datos['TED']['FRMT'];
+        if (is_array($FRMT) and isset($FRMT['@value'])) {
+            $FRMT = $FRMT['@value'];
+        }
         $pub_key = \sasco\LibreDTE\FirmaElectronica::getFromModulusExponent(
             $datos['TED']['DD']['CAF']['DA']['RSAPK']['M'],
             $datos['TED']['DD']['CAF']['DA']['RSAPK']['E']
