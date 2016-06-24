@@ -321,8 +321,20 @@ DTE.check = function () {
                 status = false;
                 return false;
             }
+            if (Form.check_real($('input[name="QtyItem[]"]').get(i))!==true) {
+                alert ('En la línea '+(i+1)+', cantidad debe ser un número (entero o decimal)');
+                $(e).focus();
+                status = false;
+                return false;
+            }
             if (__.empty($('input[name="PrcItem[]"]').get(i).value)) {
                 alert ('En la línea '+(i+1)+', precio no puede estar en blanco');
+                $('input[name="PrcItem[]"]').get(i).focus();
+                status = false;
+                return false;
+            }
+            if (Form.check_real($('input[name="PrcItem[]"]').get(i))!==true) {
+                alert ('En la línea '+(i+1)+', cantidad debe ser un número (entero o decimal)');
                 $('input[name="PrcItem[]"]').get(i).focus();
                 status = false;
                 return false;
