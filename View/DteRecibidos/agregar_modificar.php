@@ -98,8 +98,7 @@ echo $f->input([
     'name' => 'periodo',
     'label' => 'Período',
     'value' => isset($DteRecibido) ? $DteRecibido->periodo : '',
-    'placeholder' => \sowerphp\general\Utility_Date::nextPeriod(),
-    'help' => 'Período en el que registrar el documento, sólo si es diferente al mes de la fecha de emisión. Formato: AAAAMM',
+    'help' => 'Período en el que registrar el documento, sólo si es diferente al mes de la fecha de emisión. Formato: AAAAMM Ejemplo: '.\sowerphp\general\Utility_Date::nextPeriod(),
 ]);
 echo '</div>',"\n";
 echo '<div class="col-md-6">',"\n";
