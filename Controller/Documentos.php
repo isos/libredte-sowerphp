@@ -299,7 +299,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-30
+     * @version 2016-06-24
      */
     public function previsualizacion()
     {
@@ -321,7 +321,7 @@ class Controller_Documentos extends \Controller_App
         // revisar datos mínimos
         $datos_minimos = ['TpoDoc', 'FchEmis', 'GiroEmis', 'Acteco', 'DirOrigen', 'CmnaOrigen', 'RUTRecep', 'RznSocRecep', 'GiroRecep', 'DirRecep', 'CmnaRecep', 'NmbItem'];
         foreach ($datos_minimos as $attr) {
-            if (empty($_POST[$attr])) {
+            if (empty(trim($_POST[$attr]))) {
                 \sowerphp\core\Model_Datasource_Session::message(
                     'Error al recibir campos mínimos, falta: '.$attr
                 );
@@ -450,8 +450,9 @@ class Controller_Documentos extends \Controller_App
             // otros datos
             $datos = ['IndExe', 'NmbItem', 'DscItem', 'QtyItem', 'UnmdItem', 'PrcItem', 'CodImpAdic'];
             foreach ($datos as $d) {
-                if (!empty($_POST[$d][$i])) {
-                    $detalle[$d] = $_POST[$d][$i];
+                $valor = trim($_POST[$d][$i]);
+                if (!empty($valor)) {
+                    $detalle[$d] = $valor;
                 }
             }
             // si es boleta se y el item no es exento se le agrega el IVA al precio y el impuesto adicional si existe
