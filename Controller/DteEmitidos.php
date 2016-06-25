@@ -696,7 +696,7 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite actualizar el estado de envio del DTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
+     * @version 2016-06-25
      */
     public function _api_actualizar_estado_GET($dte, $folio, $contribuyente = null, $usarWebservice = true)
     {
@@ -722,7 +722,7 @@ class Controller_DteEmitidos extends \Controller_App
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, (int)$dte, (int)$folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
-            $this->Api->send('No existe el documento solicitado T.'.$dte.'F'.$folio, 404);
+            $this->Api->send('No existe el documento solicitado T'.$dte.'F'.$folio, 404);
         // actualizar estado
         try {
             $this->Api->send($DteEmitido->actualizarEstado($User->id, $usarWebservice), 200, JSON_PRETTY_PRINT);
