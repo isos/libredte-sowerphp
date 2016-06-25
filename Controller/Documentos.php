@@ -160,7 +160,7 @@ class Controller_Documentos extends \Controller_App
      * enviado al SII. Luego se debe usar la función generar de la API para
      * generar el DTE final y enviarlo al SII.
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-05-12
+     * @version 2016-06-25
      */
     public function _api_emitir_POST()
     {
@@ -168,6 +168,26 @@ class Controller_Documentos extends \Controller_App
         $User = $this->Api->getAuthUser();
         if (is_string($User)) {
             $this->Api->send($User, 401);
+        }
+        // definir formato de los datos que se están usando como entrada
+        $formato = !empty($_GET['formato'])?$_GET['formato']:'json';
+        if ($formato=='xml') {
+            $xml = base64_decode($this->Api->data);
+            $XML = new \sasco\LibreDTE\XML();
+            if (!$XML->loadXML($xml)) {
+                $this->Api->send('Ocurrió un problema al cargar el XML', 400);
+            }
+            $datos = $XML->toArray();
+            if (!isset($datos['DTE'])) {
+                $this->Api->send('El nodo raíz del string XML debe ser el tag DTE', 400);
+            }
+            if (isset($datos['DTE']['Documento']))
+                $this->Api->data = $datos['DTE']['Documento'];
+            else if (isset($datos['DTE']['Exportaciones']))
+                $this->Api->data = $datos['DTE']['Exportaciones'];
+            else if (isset($datos['DTE']['Liquidacion']))
+                $this->Api->data = $datos['DTE']['Liquidacion'];
+            unset($this->Api->data['@attributes']);
         }
         // verificar datos del DTE pasados
         if (!is_array($this->Api->data)) {
