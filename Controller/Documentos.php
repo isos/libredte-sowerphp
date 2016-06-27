@@ -160,7 +160,7 @@ class Controller_Documentos extends \Controller_App
      * enviado al SII. Luego se debe usar la función generar de la API para
      * generar el DTE final y enviarlo al SII.
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-25
+     * @version 2016-06-27
      */
     public function _api_emitir_POST()
     {
@@ -170,24 +170,20 @@ class Controller_Documentos extends \Controller_App
             $this->Api->send($User, 401);
         }
         // definir formato de los datos que se están usando como entrada
+        // y si es diferente a JSON se busca un parser para poder cargar los
+        // datos a un arreglo de PHP (formato JSON)
         $formato = !empty($_GET['formato'])?$_GET['formato']:'json';
-        if ($formato=='xml') {
-            $xml = base64_decode($this->Api->data);
-            $XML = new \sasco\LibreDTE\XML();
-            if (!$XML->loadXML($xml)) {
-                $this->Api->send('Ocurrió un problema al cargar el XML', 400);
+        if ($formato!='json') {
+            $parser = \sowerphp\core\Utility_Inflector::camelize($formato);
+            $class = '\sasco\LibreDTE\Sii\Dte\Formatos\\'.$parser;
+            if (!class_exists($class)) {
+                $this->Api->send('Formato '.$formato.' no es válido como entrada para datos del DTE', 500);
             }
-            $datos = $XML->toArray();
-            if (!isset($datos['DTE'])) {
-                $this->Api->send('El nodo raíz del string XML debe ser el tag DTE', 400);
+            try {
+                $this->Api->data = (new $class())->toArray(base64_decode($this->Api->data));
+            } catch (\Exception $e) {
+                $this->Api->send($e->getMessage(), 500);
             }
-            if (isset($datos['DTE']['Documento']))
-                $this->Api->data = $datos['DTE']['Documento'];
-            else if (isset($datos['DTE']['Exportaciones']))
-                $this->Api->data = $datos['DTE']['Exportaciones'];
-            else if (isset($datos['DTE']['Liquidacion']))
-                $this->Api->data = $datos['DTE']['Liquidacion'];
-            unset($this->Api->data['@attributes']);
         }
         // verificar datos del DTE pasados
         if (!is_array($this->Api->data)) {
