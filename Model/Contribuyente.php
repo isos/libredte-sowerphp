@@ -1641,14 +1641,13 @@ class Model_Contribuyente extends \Model_App
      * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
      * @param file Arreglo con los índices: name, data, size y type
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-05
+     * @version 2016-06-29
      */
     private function actualizarBandejaIntercambio_procesar_EnvioDTE($receptor, array $datos_email, array $file)
     {
         // preparar datos
         $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($file['data']);
-        if (!$EnvioDte->getID())
+        if (!$EnvioDte->loadXML($file['data']) or !$EnvioDte->getID())
             return null;
         $caratula = $EnvioDte->getCaratula();
         if (((int)(bool)!$caratula['NroResol'])!=$this->config_ambiente_en_certificacion)
