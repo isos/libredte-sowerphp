@@ -27,9 +27,9 @@ namespace website\Dte;
  * Comando para enviar el reporte de consumo de folios de las boletas
  * electrónicas
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-02-14
+ * @version 2016-07-01
  */
-class Shell_Command_EnviarRCOF extends \Shell_App
+class Shell_Command_Boletas_EnviarRCOF extends \Shell_App
 {
 
     public function main($grupo = null, $certificacion = 0)

@@ -26,9 +26,9 @@ namespace website\Dte;
 /**
  * Comando para actualizar la bandeja de intercambio de los contribuyentes
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-06-11
+ * @version 2016-07-01
  */
-class Shell_Command_ActualizarDocumentosEmitidos extends \Shell_App
+class Shell_Command_DteEmitidos_Actualizar extends \Shell_App
 {
 
     public function main($grupo = null, $certificacion = 0)

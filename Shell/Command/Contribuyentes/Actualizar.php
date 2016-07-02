@@ -26,9 +26,9 @@ namespace website\Dte;
 /**
  * Comando para actualizar los contribuyentes desde el SII
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-01-16
+ * @version 2016-07-01
  */
-class Shell_Command_ActualizarContribuyentes extends \Shell_App
+class Shell_Command_Contribuyentes_Actualizar extends \Shell_App
 {
 
     /**
