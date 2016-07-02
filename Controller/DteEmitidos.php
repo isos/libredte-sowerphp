@@ -480,14 +480,17 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción que permite cargar un archivo XML como DTE emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-04-12
+     * @version 2016-07-01
      */
     public function cargar_xml()
     {
         if (isset($_POST['submit']) and !$_FILES['xml']['error']) {
             $rest = new \sowerphp\core\Network_Http_Rest();
             $rest->setAuth($this->Auth->User->hash);
-            $response = $rest->post($this->request->url.'/api/dte/dte_emitidos/cargar_xml', json_encode(base64_encode(file_get_contents($_FILES['xml']['tmp_name']))));
+            $response = $rest->post(
+                $this->request->url.'/api/dte/dte_emitidos/cargar_xml?track_id='.(int)$_POST['track_id'],
+                json_encode(base64_encode(file_get_contents($_FILES['xml']['tmp_name'])))
+            );
             if ($response===false) {
                 \sowerphp\core\Model_Datasource_Session::message(implode('<br/>', $rest->getErrors()), 'error');
             }
@@ -735,7 +738,7 @@ class Controller_DteEmitidos extends \Controller_App
      * Acción de la API que permite cargar el XML de un DTE como documento
      * emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-07
+     * @version 2016-07-01
      */
     public function _api_cargar_xml_POST()
     {
@@ -749,6 +752,9 @@ class Controller_DteEmitidos extends \Controller_App
             }
         }
         // cargar XML
+        if (empty($this->Api->data)) {
+            $this->Api->send('Debe enviar el XML del DTE emitido', 500);
+        }
         $xml = base64_decode(json_decode($this->Api->data));
         $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
         $EnvioDte->loadXML($xml);
@@ -764,6 +770,11 @@ class Controller_DteEmitidos extends \Controller_App
             $this->Api->send('Emisor no existe', 404);
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/cargar_xml')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        }
+        // verificar que receptor exista
+        $Receptor = new Model_Contribuyente($Caratula['RutReceptor']);
+        if (!$Receptor->exists()) {
+            $this->Api->send('Receptor no existe', 404);
         }
         // crear Objeto del DteEmitido y verificar si ya existe
         $Dte = $Documentos[0];
@@ -781,8 +792,11 @@ class Controller_DteEmitidos extends \Controller_App
         $DteEmitido->receptor = substr($DteEmitido->receptor, 0, -2);
         $DteEmitido->xml = base64_encode($xml);
         $DteEmitido->usuario = $User->id;
-        $DteEmitido->track_id = -1;
+        $DteEmitido->track_id = !empty($_GET['track_id']) ? (int)$_GET['track_id'] : -1;
         $DteEmitido->save();
+        if ($DteEmitido->track_id!=-1) {
+            $DteEmitido->actualizarEstado();
+        }
         $DteEmitido->xml = null;
         $this->Api->send($DteEmitido, 200, JSON_PRETTY_PRINT);
     }
