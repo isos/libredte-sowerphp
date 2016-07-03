@@ -572,7 +572,7 @@ class Controller_DteEmitidos extends \Controller_App
             $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, (int)$dte, (int)$folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists()) {
@@ -602,7 +602,7 @@ class Controller_DteEmitidos extends \Controller_App
                 $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/xml')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists()) {
@@ -632,7 +632,7 @@ class Controller_DteEmitidos extends \Controller_App
                 $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
@@ -670,11 +670,11 @@ class Controller_DteEmitidos extends \Controller_App
                 $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/xml')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         $Firma = $Emisor->getFirma($User->id);
         if (!$Firma) {
-            $this->Api->send('No existe firma asociada', 404);
+            $this->Api->send('No existe firma asociada', 506);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists()) {
@@ -705,7 +705,7 @@ class Controller_DteEmitidos extends \Controller_App
                 $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/actualizar_estado')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         $DteEmitido = new Model_DteEmitido($Emisor->rut, (int)$dte, (int)$folio, (int)$Emisor->config_ambiente_en_certificacion);
         if (!$DteEmitido->exists())
@@ -722,7 +722,7 @@ class Controller_DteEmitidos extends \Controller_App
      * Acción de la API que permite cargar el XML de un DTE como documento
      * emitido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-07-01
+     * @version 2016-07-03
      */
     public function _api_cargar_xml_POST()
     {
@@ -737,14 +737,14 @@ class Controller_DteEmitidos extends \Controller_App
         }
         // cargar XML
         if (empty($this->Api->data)) {
-            $this->Api->send('Debe enviar el XML del DTE emitido', 500);
+            $this->Api->send('Debe enviar el XML del DTE emitido', 400);
         }
         $xml = base64_decode(json_decode($this->Api->data));
         $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
         $EnvioDte->loadXML($xml);
         $Documentos = $EnvioDte->getDocumentos();
         if (count($Documentos)!=1) {
-            $this->Api->send('Sólo puede cargar XML que contengan un DTE', 500);
+            $this->Api->send('Sólo puede cargar XML que contengan un DTE', 400);
         }
         $Caratula = $EnvioDte->getCaratula();
         // verificar permisos del usuario autenticado sobre el emisor del DTE
@@ -753,7 +753,7 @@ class Controller_DteEmitidos extends \Controller_App
         if (!$Emisor->exists())
             $this->Api->send('Emisor no existe', 404);
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/cargar_xml')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         // verificar que receptor exista
         $Receptor = new Model_Contribuyente($Caratula['RutReceptor']);
@@ -764,7 +764,7 @@ class Controller_DteEmitidos extends \Controller_App
         $Dte = $Documentos[0];
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $Dte->getTipo(), $Dte->getFolio(), (int)$certificacion);
         if ($DteEmitido->exists()) {
-            $this->Api->send('XML enviado ya está registrado', 500);
+            $this->Api->send('XML enviado ya está registrado', 409);
         }
         // guardar DteEmitido
         $r = $Dte->getResumen();
@@ -807,7 +807,7 @@ class Controller_DteEmitidos extends \Controller_App
         if (!$Emisor->exists())
             $this->Api->send('Emisor no existe', 404);
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/buscar')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         // buscar documentos
         $this->Api->send($Emisor->getDocumentosEmitidos(json_decode($this->Api->data, true)), 200, JSON_PRETTY_PRINT);

@@ -253,7 +253,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción de la API que permite obtener la información de un documento recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-07-02
+     * @version 2016-07-03
      */
     public function _api_info_GET($emisor, $dte, $folio, $receptor)
     {
@@ -267,10 +267,10 @@ class Controller_DteRecibidos extends \Controller_App
         }
         $Receptor = new Model_Contribuyente($receptor);
         if (!$Receptor->exists()) {
-            $this->Api->send('Recedptor no existe', 404);
+            $this->Api->send('Receptor no existe', 404);
         }
         if (!$Receptor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         if (strpos($emisor, '-')) {
             $emisor = \sowerphp\app\Utility_Rut::normalizar($emisor);
@@ -280,7 +280,7 @@ class Controller_DteRecibidos extends \Controller_App
             $this->Api->send('No existe el documento recibido solicitado T'.$dte.'F'.$folio, 404);
         }
         if ($DteRecibido->receptor!=$Receptor->rut) {
-            $this->Api->send('RUT del receptor no corresponde al DTE T'.$dte.'F'.$folio, 404);
+            $this->Api->send('RUT del receptor no corresponde al DTE T'.$dte.'F'.$folio, 400);
         }
         $this->Api->send($DteRecibido, 200, JSON_PRETTY_PRINT);
     }
