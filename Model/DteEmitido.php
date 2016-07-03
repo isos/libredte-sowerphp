@@ -573,7 +573,7 @@ class Model_DteEmitido extends Model_Base_Envio
      * Método que actualiza el estado de un DTE enviado al SII a través del
      * servicio web que dispone el SII para esta consulta
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-11
+     * @version 2016-07-03
      */
     private function actualizarEstadoWebservice($user = null)
     {
@@ -601,8 +601,11 @@ class Model_DteEmitido extends Model_Base_Envio
         }
         // armar estado del dte
         $estado = (string)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/ESTADO')[0];
-        $glosa = (string)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/GLOSA')[0];
-        $this->revision_estado = $estado.' - '.$glosa;
+        if (isset($estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/GLOSA')[0]))
+            $glosa = (string)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_HDR/GLOSA')[0];
+        else
+            $glosa = null;
+        $this->revision_estado = $glosa ? ($estado.' - '.$glosa) : $estado;
         $this->revision_detalle = null;
         if ($estado=='EPR') {
             $resultado = (array)$estado_up->xpath('/SII:RESPUESTA/SII:RESP_BODY')[0];
