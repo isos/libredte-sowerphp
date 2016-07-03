@@ -253,9 +253,9 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción de la API que permite obtener la información de un documento recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-15
+     * @version 2016-07-02
      */
-    public function _api_info_GET($emisor, $dte, $folio, $contribuyente = null)
+    public function _api_info_GET($emisor, $dte, $folio, $receptor)
     {
         if ($this->Auth->User) {
             $User = $this->Auth->User;
@@ -265,13 +265,9 @@ class Controller_DteRecibidos extends \Controller_App
                 $this->Api->send($User, 401);
             }
         }
-        $Receptor = $this->getContribuyente();
-        if (!$Receptor) {
-            if (!$contribuyente)
-                $this->Api->send('Debe indicar el emisor', 500);
-            $Receptor = new Model_Contribuyente($contribuyente);
-            if (!$Receptor->exists())
-                $this->Api->send('Emisor no existe', 404);
+        $Receptor = new Model_Contribuyente($receptor);
+        if (!$Receptor->exists()) {
+            $this->Api->send('Recedptor no existe', 404);
         }
         if (!$Receptor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
             $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
@@ -280,8 +276,12 @@ class Controller_DteRecibidos extends \Controller_App
             $emisor = \sowerphp\app\Utility_Rut::normalizar($emisor);
         }
         $DteRecibido = new Model_DteRecibido((int)$emisor, (int)$dte, (int)$folio, (int)$Receptor->config_ambiente_en_certificacion);
-        if (!$DteRecibido->exists())
+        if (!$DteRecibido->exists()) {
             $this->Api->send('No existe el documento recibido solicitado T'.$dte.'F'.$folio, 404);
+        }
+        if ($DteRecibido->receptor!=$Receptor->rut) {
+            $this->Api->send('RUT del receptor no corresponde al DTE T'.$dte.'F'.$folio, 404);
+        }
         $this->Api->send($DteRecibido, 200, JSON_PRETTY_PRINT);
     }
 

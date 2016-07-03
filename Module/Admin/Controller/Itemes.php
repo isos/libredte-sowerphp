@@ -98,10 +98,11 @@ class Controller_Itemes extends \Controller_Maintainer
      * Recurso de la API que permite obtener los datos de un item a partir de su
      * código
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-19
+     * @version 2016-07-02
      */
-    public function _api_info_GET($empresa, $codigo, $fecha = null, $tipo = null)
+    public function _api_info_GET($empresa, $codigo)
     {
+        extract($this->Api->getQuery(['fecha', 'tipo']));
         // obtener usuario autenticado
         if ($this->Auth->User) {
             $User = $this->Auth->User;

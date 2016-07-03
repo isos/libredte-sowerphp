@@ -18,6 +18,11 @@ $f->setColsLabel(5);
 echo '<div class="row">',"\n";
 echo '<div class="col-md-6">',"\n";
 echo $f->input([
+    'type' => 'hidden',
+    'name' => 'receptor',
+    'value' => $Emisor->rut,
+]);
+echo $f->input([
     'type' => (isset($DteRecibido) and $DteRecibido->intercambio) ? 'text' : 'date',
     'name' => 'fecha',
     'label' => 'Fecha documento',

@@ -174,7 +174,7 @@ DTE.setItem = function (contribuyente, codigo) {
     if (codigo.value) {
         $.ajax({
             type: "GET",
-            url: _url+'/api/dte/admin/itemes/info/'+contribuyente+'/'+codigo.value+'/'+fecha,
+            url: _url+'/api/dte/admin/itemes/info/'+contribuyente+'/'+codigo.value+'?fecha='+fecha,
             dataType: "json",
             success: function (item) {
                 // asignar valores del item
@@ -417,6 +417,7 @@ function dte_recibido_check() {
     var emisor = document.getElementById("emisorField");
     var dte = document.getElementById("dteField");
     var folio = document.getElementById("folioField");
+    var receptor = document.getElementById("receptorField");
     if (emisor.value && dte.value && folio.value) {
         estado = Form.check_rut(emisor);
         if (estado !== true) {
@@ -425,7 +426,7 @@ function dte_recibido_check() {
         }
         $.ajax({
             type: "GET",
-            url: _url+'/api/dte/dte_recibidos/info/'+emisor.value+'/'+dte.value+'/'+folio.value,
+            url: _url+'/api/dte/dte_recibidos/info/'+emisor.value+'/'+dte.value+'/'+folio.value+'/'+receptor.value,
             dataType: "json",
             success: function (documento) {
                 document.getElementById("fechaField").value = documento.fecha;
