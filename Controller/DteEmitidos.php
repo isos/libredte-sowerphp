@@ -652,10 +652,11 @@ class Controller_DteEmitidos extends \Controller_App
     /**
      * Acción de la API que permite consultar el estado del envío del DTE al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-06-13
+     * @version 2016-07-02
      */
-    public function _api_estado_GET($dte, $folio, $avanzado = false, $contribuyente = null)
+    public function _api_estado_GET($dte, $folio, $emisor)
     {
+        extract($this->Api->getQuery(['avanzado'=>false]));
         if ($this->Auth->User) {
             $User = $this->Auth->User;
         } else {
@@ -664,12 +665,8 @@ class Controller_DteEmitidos extends \Controller_App
                 $this->Api->send($User, 401);
             }
         }
-        $Emisor = $this->getContribuyente();
-        if (!$Emisor) {
-            if (!$contribuyente)
-                $this->Api->send('Debe indicar el emisor', 500);
-            $Emisor = new Model_Contribuyente($contribuyente);
-            if (!$Emisor->exists())
+        $Emisor = new Model_Contribuyente($emisor);
+        if (!$Emisor->exists()) {
                 $this->Api->send('Emisor no existe', 404);
         }
         if (!$Emisor->usuarioAutorizado($User, '/dte/dte_emitidos/xml')) {
