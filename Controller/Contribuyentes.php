@@ -125,7 +125,7 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método que permite registrar un nuevo contribuyente y asociarlo a un usuario
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-08
+     * @version 2016-07-04
      */
     public function registrar()
     {
@@ -154,13 +154,12 @@ class Controller_Contribuyentes extends \Controller_App
                     \sowerphp\core\Model_Datasource_Session::message(
                         'Ya tiene asociada la empresa a su usuario'
                     );
-                    $this->redirect('/dte/contribuyentes/seleccionar');
                 } else {
                     \sowerphp\core\Model_Datasource_Session::message(
                         'La empresa ya está registrada a nombre del usuario '.$Contribuyente->getUsuario()->nombre.' ('.$Contribuyente->getUsuario()->email.'). Si cree que esto es un error o bien puede ser alguien suplantando la identidad de su empresa por favor <a href="'.$this->request->base.'/contacto" target="_blank">contáctenos</a>.', 'error'
                     );
-                    return;
                 }
+                $this->redirect('/dte/contribuyentes/seleccionar');
             }
             // rellenar campos de la empresa
             $this->prepararDatosContribuyente($Contribuyente);
