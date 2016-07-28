@@ -124,7 +124,7 @@
 <?php if (!$libro_compras) : ?>
                 <a class="btn btn-danger btn-lg btn-block" href="dte_compras" role="button" title="Ir al libro de compras">
                     <i class="fa fa-exclamation-circle"></i>
-                    Está pendiente el envio del libro de compas <?=$periodo_anterior?>
+                    Está pendiente el envio del libro de compras <?=$periodo_anterior?>
                 </a>
                 <br />
 <?php endif; ?>
