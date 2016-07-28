@@ -140,7 +140,7 @@ class Model_DteTmp extends \Model_App
     /**
      * Método que genera el XML de EnvioDTE a partir de los datos ya
      * normalizados de un DTE temporal
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-02-13
      */
     public function getEnvioDte($folio = 0, \sasco\LibreDTE\Sii\Folios $Folios = null, \sasco\LibreDTE\FirmaElectronica $Firma = null, $RutReceptor = null)
@@ -170,7 +170,7 @@ class Model_DteTmp extends \Model_App
 
     /**
      * Método que entrega el objeto de receptor
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-22
      */
     public function getReceptor()
@@ -180,22 +180,32 @@ class Model_DteTmp extends \Model_App
 
     /**
      * Método que entrega el objeto del tipo de dte
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2015-09-22
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-01
      */
     public function getDte()
     {
-        return (new \website\Dte\Admin\Model_DteTipos())->get($this->dte);
+        return (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->get($this->dte);
     }
 
     /**
      * Método que entrega el objeto del emisor
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-01-02
      */
     public function getEmisor()
     {
         return (new \website\Dte\Model_Contribuyentes())->get($this->emisor);
+    }
+
+    /**
+     * Método que entrega el folio del documento temporal
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-13
+     */
+    public function getFolio()
+    {
+        return $this->dte.'-'.strtoupper(substr($this->codigo, 0, 7));
     }
 
 }

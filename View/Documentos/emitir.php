@@ -1,7 +1,7 @@
 <h1>Emitir DTE de <?=$Emisor->razon_social?> (<?=$Emisor->getRUT()?>)</h1>
 <?php if (isset($DteEmitido)) : ?>
 <script type="text/javascript">
-    $(function() { DTE.calcular() });
+    $(function() { DTE.calcular(); });
 </script>
 <?php
 endif;
@@ -10,8 +10,10 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
 ?>
     <!-- DATOS DEL DOCUMENTO -->
     <div class="row">
-        <div class="form-group col-md-8"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte, 'value'=>33, 'attr'=>'onblur="DTE.setTipo(this.value)"'])?></div>
-        <div class="form-group col-md-4"><?=$f->input(['type' => 'date', 'name' => 'FchEmis', 'placeholder'=>'Fecha emisión DTE', 'popover'=>'Día en que se emite el documento', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name'=>'TpoDoc', 'type'=>'select', 'options'=> $tipos_dte_autorizados, 'value'=>$dte_defecto, 'attr'=>'onblur="DTE.setTipo(this.value)"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'date', 'name' => 'FchEmis', 'placeholder'=>'Fecha emisión DTE', 'popover'=>'Día en que se emite el documento', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['name'=>'FmaPago', 'type'=>'select', 'options'=>[''=>'Sin forma de pago', 1=>'Contado', 2=>'Crédito', 3=>'Sin costo (entrega gratuita)'], 'value'=>1, 'attr'=>'onblur="DTE.setFormaPago(this.value)"'])?></div>
+        <div class="form-group col-md-3"><?=$f->input(['type' => 'date', 'name' => 'FchVenc', 'placeholder'=>'Fecha de vencimiento', 'popover'=>'Día máximo a pagar o día en que se pagó el documento (si es pago anticipado)', 'value'=>date('Y-m-d'), 'check' => 'notempty date'])?></div>
     </div>
     <!-- DATOS DEL EMISOR -->
     <div class="row">
@@ -23,9 +25,18 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     <p>(*) modificar los datos del emisor (giro, actividad económica y/o dirección) sólo afectará a la emisión de este documento, no se guardarán estos cambios.</p>
     <!-- DATOS DEL RECEPTOR -->
     <div class="row">
-        <div class="form-group col-md-3"><?=$f->input(['name' => 'RUTRecep', 'placeholder' => 'RUT del receptor', 'check' => 'notempty rut', 'attr' => 'maxlength="12" '.(isset($DteReceptor)?'readonly="readonly"':'onblur="Receptor.setDatos(\'emitir_dte\')"'), 'value'=>(isset($DteReceptor)?$DteReceptor['RUTRecep']:'')])?></div>
+        <div class="form-group col-md-3">
+<?php if (!isset($DteReceptor)) : ?>
+            <div class="input-group">
+                <div class="input-group-addon"><a href="#" title="Buscar RUT del receptor [B]" data-toggle="modal" data-target=".modal-buscar-receptor" accesskey="B">buscar</a></div>
+                <input type="text" name="RUTRecep" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" onblur="Receptor.setDatos('emitir_dte')" />
+            </div>
+<?php else: ?>
+            <input type="text" name="RUTRecep" id="RUTRecepField" class="check notempty rut form-control" placeholder="RUT del receptor" maxlength="12" readonly="readonly" value="<?=$DteReceptor['RUTRecep']?>" />
+<?php endif; ?>
+        </div>
         <div class="form-group col-md-5"><?=$f->input(['name' => 'RznSocRecep', 'placeholder' => 'Razón social del receptor', 'check' => 'notempty', 'attr' => 'maxlength="100"', 'value'=>(isset($DteReceptor['RznSocRecep'])?$DteReceptor['RznSocRecep']:'')])?></div>
-        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?$DteReceptor['GiroRecep']:'')])?></div>
+        <div class="form-group col-md-4"><?=$f->input(['name' => 'GiroRecep', 'placeholder' => 'Giro del receptor', 'check' => 'notempty', 'attr' => 'maxlength="40"', 'value'=>(isset($DteReceptor['GiroRecep'])?substr($DteReceptor['GiroRecep'],0,40):'')])?></div>
     </div>
     <div class="row">
         <div class="form-group col-md-3"><?=$f->input([ 'name' => 'DirRecep', 'placeholder' => 'Dirección del receptor', 'check' => 'notempty', 'attr' => 'maxlength="70"', 'value'=>(isset($DteReceptor['DirRecep'])?$DteReceptor['DirRecep']:'')])?></div>
@@ -54,24 +65,34 @@ echo $f->begin(['id'=>'emitir_dte', 'focus'=>'RUTRecepField', 'action'=>$_base.'
     <div class="row">
         <div class="form-group col-md-12">
 <?php
+$titles = ['Código', 'Nombre', 'Detalle', 'Exento', 'Cant.', 'Unidad', 'P. Unitario', 'Desc.', '% / $'];
+if ($Emisor->config_extra_impuestos_adicionales) {
+   $titles[] = 'A / R';
+}
+$titles[] = 'Subtotal';
+$inputs = [
+    ['name'=>'VlrCodigo', 'attr'=>'maxlength="35" style="text-align:center;width:5em" onblur="DTE.setItem('.$Emisor->rut.', this)" autocomplete="off"', 'class'=>'typeahead'],
+    ['name'=>'NmbItem', 'attr'=>'maxlength="80"'],
+    ['name'=>'DscItem', 'attr'=>'maxlength="1000"'],
+    ['name'=>'IndExe', 'type'=>'select', 'options'=>['no', 'si'], 'attr'=>'style="width:5em" onblur="DTE.calcular()"'],
+    ['name'=>'QtyItem', 'value'=>1, 'attr'=>'maxlength="19" style="text-align:center;width:4em" onblur="DTE.calcular()"'],
+    ['name'=>'UnmdItem', 'attr'=>'maxlength="4" style="width:5em"'],
+    ['name'=>'PrcItem', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"'],
+    ['name'=>'ValorDR', 'value'=>0, 'attr'=>'maxlength="12" style="text-align:center;width:5em" onblur="DTE.calcular()"'],
+    ['name'=>'TpoValor', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'attr'=>'style="width:5em" onblur="DTE.calcular()"'],
+];
+if ($Emisor->config_extra_impuestos_adicionales) {
+    $inputs[] = ['name'=>'CodImpAdic', 'type'=>'select', 'options'=>[''=>'Sin impuesto adicional ni retención'] + $impuesto_adicionales, 'attr'=>'style="width:5em" onblur="DTE.calcular()"'];
+}
+$inputs[] = ['name'=>'subtotal', 'value'=>0, 'attr'=>'readonly="readonly" style="text-align:center;width:7em"'];
 $input_detalle = [
     'type'=>'js',
     'id'=>'detalle',
     'label'=>'Detalle',
-    'titles'=>['Código', 'Item', 'Detalle', 'Exento', 'Cant.', 'Unidad', 'P. Unitario', 'Desc.', '% / $', 'Subtotal'],
-    'inputs'=>[
-        ['name'=>'VlrCodigo', 'attr'=>'maxlength="35" style="text-align:center;width:5em" onblur="DTE.setItem('.$Emisor->rut.', this)"'],
-        ['name'=>'NmbItem', 'attr'=>'maxlength="80"'],
-        ['name'=>'DscItem', 'attr'=>'maxlength="1000"'],
-        ['name'=>'IndExe', 'type'=>'select', 'options'=>['no', 'si'], 'attr'=>'style="width:5em" onblur="DTE.calcular()"'],
-        ['name'=>'QtyItem', 'value'=>1, 'attr'=>'maxlength="19" style="text-align:center;width:4em" onblur="DTE.calcular()"'],
-        ['name'=>'UnmdItem', 'attr'=>'maxlength="4" style="width:5em"'],
-        ['name'=>'PrcItem', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"'],
-        ['name'=>'ValorDR', 'value'=>0, 'attr'=>'maxlength="12" style="text-align:center;width:5em" onblur="DTE.calcular()"'],
-        ['name'=>'TpoValor', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'attr'=>'style="width:5em" onblur="DTE.calcular()"'],
-        ['name'=>'subtotal', 'value'=>0, 'attr'=>'readonly="readonly" style="text-align:center;width:7em"']
-    ],
+    'titles'=>$titles,
+    'inputs'=>$inputs,
     'accesskey' => 'D',
+    'callback' => 'item_codigo_typeahead',
 ];
 if (isset($DteEmitido)) {
     $Detalle = $DteEmitido->getDatos()['Detalle'];
@@ -101,6 +122,25 @@ echo $f->input($input_detalle);
 ?>
         </div>
     </div>
+<?php if ($Emisor->config_extra_impuestos_adicionales) : ?>
+    <!-- REFERENCIAS DEL DOCUMENTO -->
+    <div class="row">
+        <div class="form-group col-md-12">
+<?php
+$impuestos = [['Código', 'Impuesto', 'Tipo', 'Tasa']];
+foreach($ImpuestoAdicionales as $IA) {
+    $impuestos[] = [
+        $IA->codigo,
+        $IA->nombre,
+        ($IA->tipo == 'R' ? 'Retención' : 'Adicional / Anticipo').$f->input(['type'=>'hidden', 'name'=>'impuesto_adicional_tipo_'.$IA->codigo, 'value'=>$IA->tipo]),
+        $f->input(['name'=>'impuesto_adicional_tasa_'.$IA->codigo, 'value'=>$IA->tasa, 'attr'=>'style="width:5em;text-align:center" onblur="DTE.calcular()"', 'check'=>'notempty']),
+    ];
+}
+new \sowerphp\general\View_Helper_Table($impuestos);
+?>
+        </div>
+    </div>
+<?php endif; ?>
     <!-- REFERENCIAS DEL DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-12">
@@ -110,9 +150,9 @@ echo $f->input($input_detalle);
     'label'=>'Referencias',
     'titles'=>['Fecha DTE ref.', 'DTE referenciado', 'Folio DTE ref.', 'Código ref.', 'Razón referencia'],
     'inputs'=>[
-        ['name'=>'FchRef', 'type'=>'date', 'check'=>'date'],
-        ['name'=>'TpoDocRef', 'type'=>'select', 'options'=>[''=>'Tipo de documento referenciado'] + $tipos_dte, 'attr'=>'onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
-        ['name'=>'FolioRef', 'check'=>'integer', 'attr'=>'maxlength="18" onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
+        ['name'=>'FchRef', 'type'=>'date', 'check'=>'notempty date'],
+        ['name'=>'TpoDocRef', 'type'=>'select', 'options'=>[''=>'Tipo de documento referenciado'] + $tipos_dte, 'attr'=>'onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"', 'check'=>'notempty'],
+        ['name'=>'FolioRef', 'check'=>'notempty integer', 'attr'=>'maxlength="18" onblur="DTE.setFechaReferencia('.$Emisor->rut.', this)"'],
         ['name'=>'CodRef', 'type'=>'select', 'options'=>[''=>''] + $tipos_referencia],
         ['name'=>'RazonRef', 'attr'=>'maxlength="90"'],
     ],
@@ -121,6 +161,8 @@ echo $f->input($input_detalle);
         'FchRef' => $DteEmitido->fecha,
         'TpoDocRef' => $DteEmitido->dte,
         'FolioRef' => $DteEmitido->folio,
+        'CodRef' => $referencia_codigo,
+        'RazonRef' => $referencia_razon,
     ]] : [],
 ])?>
         </div>
@@ -128,37 +170,133 @@ echo $f->input($input_detalle);
     <!-- RESUMEN DE LOS MONTOS DEL DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-12">
-            <?php
-            if (isset($DteEmitido) and isset($DteEmitido->getDatos()['DscRcgGlobal'])) {
-                $DscRcgGlobal = $DteEmitido->getDatos()['DscRcgGlobal'];
-                if (!isset($DscRcgGlobal[0]))
-                    $DscRcgGlobal = [$DscRcgGlobal];
-                $ValorDR_global = $DscRcgGlobal[0]['ValorDR'];
-                $TpoValor_global = $DscRcgGlobal[0]['TpoValor'];
-            } else {
-                $ValorDR_global = 0;
-                $TpoValor_global = '%';
-            }
-            new \sowerphp\general\View_Helper_Table([
-                ['Desc. glogal', '% / $', 'Neto', 'Exento', 'Tasa IVA', 'IVA', 'Total'],
-                [
-                    $f->input(['name'=>'ValorDR_global', 'placeholder'=>'Descuento global', 'value'=>$ValorDR_global, 'check'=>'notempty integer', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"', 'popover'=>'Descuento global que se aplica a todos los items del DTE']),
-                    $f->input(['name'=>'TpoValor_global', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'value'=>$TpoValor_global, 'attr'=>'style="width:5em" onblur="DTE.calcular()"']),
-                    $f->input(['name'=>'neto', 'value'=>0, 'attr'=>'readonly="readonly"']),
-                    $f->input(['name'=>'exento', 'value'=>0, 'attr'=>'readonly="readonly"']),
-                    $f->input(['name'=>'tasa', 'label'=>'Tasa IVA', 'value'=>$tasa, 'check'=>'notempty integer', 'attr'=>'readonly="readonly"']),
-                    $f->input(['name'=>'iva', 'value'=>0, 'attr'=>'readonly="readonly"']),
-                    $f->input(['name'=>'total', 'value'=>0, 'attr'=>'readonly="readonly"']),
-                ]
-            ]); ?>
+<?php
+if (isset($DteEmitido) and isset($DteEmitido->getDatos()['DscRcgGlobal'])) {
+    $DscRcgGlobal = $DteEmitido->getDatos()['DscRcgGlobal'];
+    if (!isset($DscRcgGlobal[0]))
+        $DscRcgGlobal = [$DscRcgGlobal];
+    $ValorDR_global = $DscRcgGlobal[0]['ValorDR'];
+    $TpoValor_global = $DscRcgGlobal[0]['TpoValor'];
+} else {
+    $ValorDR_global = 0;
+    $TpoValor_global = '%';
+}
+$titles = ['Neto', 'Exento', 'Tasa IVA', 'IVA', 'Total'];
+if (!$Emisor->config_extra_impuestos_adicionales) {
+    array_unshift($titles, '% / $');
+    array_unshift($titles, 'Desc. glogal');
+}
+$totales = [
+    $f->input(['name'=>'neto', 'value'=>0, 'attr'=>'readonly="readonly"']),
+    $f->input(['name'=>'exento', 'value'=>0, 'attr'=>'readonly="readonly"']),
+    $f->input(['name'=>'tasa', 'label'=>'Tasa IVA', 'value'=>$tasa, 'check'=>'notempty integer', 'attr'=>'readonly="readonly"']),
+    $f->input(['name'=>'iva', 'value'=>0, 'attr'=>'readonly="readonly"']),
+    $f->input(['name'=>'total', 'value'=>0, 'attr'=>'readonly="readonly"']),
+];
+if (!$Emisor->config_extra_impuestos_adicionales) {
+    array_unshift($totales, $f->input(['name'=>'TpoValor_global', 'type'=>'select', 'options'=>['%'=>'%','$'=>'$'], 'value'=>$TpoValor_global, 'attr'=>'style="width:5em" onblur="DTE.calcular()"']));
+    array_unshift($totales, $f->input(['name'=>'ValorDR_global', 'placeholder'=>'Descuento global', 'value'=>$ValorDR_global, 'check'=>'notempty integer', 'attr'=>'maxlength="12" style="text-align:center;width:7em" onblur="DTE.calcular()"', 'popover'=>'Descuento global que se aplica a todos los items del DTE']));
+}
+new \sowerphp\general\View_Helper_Table([$titles, $totales]);
+?>
+        </div>
+    </div>
+    <!-- TÉRMINOS DEL PAGO -->
+    <div class="row" id="terminosPago">
+        <div class="form-group col-md-12">
+            <?=$f->input(['name'=>'TermPagoGlosa', 'placeholder'=>'Glosa que describe las condiciones del pago del DTE (opcional)', 'attr'=>'maxlength="100"'])?>
+        </div>
+    </div>
+    <!-- DATOS DE PAGOS EN CASO QUE SEA VENTA A CRÉDITO -->
+    <div class="row" id="datosPagos" style="display:none">
+        <div class="form-group col-md-12">
+<?=$f->input([
+    'type'=>'js',
+    'id'=>'pagos',
+    'label'=>'Pagos',
+    'titles'=>['Fecha pago programado', 'Monto', 'Glosa'],
+    'inputs'=>[
+        ['name'=>'FchPago', 'type'=>'date', 'check'=>'notempty date'],
+        ['name'=>'MntPago', 'check'=>'notempty integer', 'attr'=>'maxlength="18"'],
+        ['name'=>'GlosaPagos', 'attr'=>'maxlength="40"'],
+    ],
+    'accesskey' => 'P',
+    'values' => [],
+])?>
         </div>
     </div>
     <!-- BOTÓN PARA GENERAR DOCUMENTO -->
     <div class="row">
         <div class="form-group col-md-offset-4 col-md-4">
             <button type="submit" name="submit" class="btn btn-primary" style="width:100%">
-                Generar documento temporal y previsualización
+                Generar documento
             </button>
         </div>
     </div>
 </form>
+
+<script type="text/javascript">
+var emision_observaciones = <?=json_encode($Emisor->config_emision_observaciones)?>;
+var codigos = <?=json_encode($codigos)?>;
+var codigo_typeahead = [
+    {
+        hint: false,
+        highlight: true,
+        minLength: 1
+    },
+    {
+        name: 'codigos',
+        source: substring_matcher(codigos),
+        limit: 20
+    }
+];
+function item_codigo_typeahead(tr) {
+    $(tr.childNodes[0].childNodes[0].childNodes[0]).typeahead(codigo_typeahead[0], codigo_typeahead[1]);
+}
+$(function() {
+    $('.typeahead').typeahead(codigo_typeahead[0], codigo_typeahead[1]);
+    DTE.setTipo(document.getElementById("TpoDocField").value);
+});
+</script>
+
+<div class="modal fade modal-buscar-receptor" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Buscar receptor</h4>
+            </div>
+        <div class="modal-body">
+<?php
+$clientes = $Emisor->getClientes();
+foreach($clientes as &$c) {
+    $c['rut'] = '<a href="#" onclick="$(\'.modal-buscar-receptor\').modal(\'hide\'); document.getElementById(\'RUTRecepField\').value=this.innerText; Receptor.setDatos(\'emitir_dte\')">'.num($c['rut']).'-'.$c['dv'].'</a>';
+    if (!empty($c['comuna']))
+        $c['direccion'] .= ', '.$c['comuna'];
+    if (!empty($c['telefono']) or !empty($c['email'])) {
+        if (!empty($c['direccion']))
+            $c['direccion'] .= '<br/>';
+        $contacto = [];
+        if (!empty($c['telefono']))
+            $contacto[] = $c['telefono'];
+        if (!empty($c['email']))
+            $contacto[] = '<a href="mailto:'.$c['email'].'">'.$c['email'].'</a>';
+        $c['direccion'] .= '<span>'.implode(' / ', $contacto).'</span>';
+    }
+    unset($c['dv'], $c['telefono'], $c['email'], $c['comuna']);
+}
+array_unshift($clientes, ['RUT', 'Razón social', 'Contacto']);
+$t = new \sowerphp\general\View_Helper_Table();
+$t->setID('clientes');
+echo $t->generate($clientes);
+?>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+        </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" type="text/css" href="<?=$_base?>/css/jquery.dataTables.css" />
+<script type="text/javascript" src="<?=$_base?>/js/jquery.dataTables.js"></script>
+<script type="text/javascript"> $(document).ready(function(){ dataTable("#clientes", [{"sWidth":120}, null, null]); }); </script>

@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Clase para mapear la tabla contribuyente de la base de datos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-02-14
+ * @version 2016-05-28
  */
 class Model_Contribuyente extends \Model_App
 {
@@ -191,52 +191,54 @@ class Model_Contribuyente extends \Model_App
         'api_auth_pass',
     ]; ///< columnas de la configuración que se deben encriptar para guardar en la base de datos
 
+    public static $defaultConfig = [
+        'extra_otras_actividades' => [],
+    ]; ///< valores por defecto para columnas de la configuración en caso que no estén especificadas
+
     public $contribuyente; ///< Copia de razon_social
     private $config = null; ///< Caché para configuraciones
 
     /**
      * Constructor del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-31
+     * @version 2016-03-27
      */
     public function __construct($rut = null)
     {
-        if (!is_numeric($rut))
+        if (!is_numeric($rut) and strpos($rut, '-'))
             $rut = explode('-', str_replace('.', '', $rut))[0];
-        if (is_numeric($rut)) {
-            parent::__construct($rut);
-            if (!$this->exists()) {
-                $this->dv = \sowerphp\app\Utility_Rut::dv($this->rut);
-                $response = \sowerphp\core\Network_Http_Socket::get(
-                    'https://sasco.cl/api/servicios/enlinea/sii/actividad_economica/'.$this->rut.'/'.$this->dv
-                );
-                if ($response['status']['code']==200) {
-                    $info = json_decode($response['body'], true);
-                    $this->razon_social = substr($info['razon_social'], 0, 100);
-                    if (!empty($info['actividades'][0]['codigo']))
-                        $this->actividad_economica = $info['actividades'][0]['codigo'];
-                    if (!empty($info['actividades'][0]['glosa']))
-                        $this->giro = substr($info['actividades'][0]['glosa'], 0, 80);
-                    try {
-                        $this->save();
-                    } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-                    }
+        parent::__construct(+$rut);
+        if ($this->rut and !$this->exists()) {
+            $this->dv = \sowerphp\app\Utility_Rut::dv($this->rut);
+            $response = \sowerphp\core\Network_Http_Socket::get(
+                'https://sasco.cl/api/servicios/enlinea/sii/actividad_economica/'.$this->rut.'/'.$this->dv
+            );
+            if ($response['status']['code']==200) {
+                $info = json_decode($response['body'], true);
+                $this->razon_social = substr($info['razon_social'], 0, 100);
+                if (!empty($info['actividades'][0]['codigo']))
+                    $this->actividad_economica = $info['actividades'][0]['codigo'];
+                if (!empty($info['actividades'][0]['glosa']))
+                    $this->giro = substr($info['actividades'][0]['glosa'], 0, 80);
+                try {
+                    $this->save();
+                } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
                 }
             }
-            $this->contribuyente = &$this->razon_social;
-            $this->getConfig();
         }
+        $this->contribuyente = &$this->razon_social;
+        $this->getConfig();
     }
 
     /**
      * Método que entrega las configuraciones y parámetros extras para el
      * contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-29
+     * @version 2016-03-27
      */
     public function getConfig()
     {
-        if ($this->config===false)
+        if ($this->config===false or !$this->rut)
             return null;
         if ($this->config===null) {
             $config = $this->db->getAssociativeArray('
@@ -268,7 +270,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método mágico para obtener configuraciones del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-01-31
      */
     public function __get($name)
     {
@@ -278,7 +280,7 @@ class Model_Contribuyente extends \Model_App
             $c = substr($key, 0, strpos($key, '_'));
             $v = substr($key, strpos($key, '_')+1);
             if (!isset($this->config[$c][$v]))
-                return null;
+                return isset(self::$defaultConfig[$c.'_'.$v]) ? self::$defaultConfig[$c.'_'.$v] : null;
             $this->$name = $this->config[$c][$v];
             return $this->$name;
         } else {
@@ -291,7 +293,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método mágico asignar una configuración del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-29
+     * @version 2016-02-04
      */
     public function __set($name, $value)
     {
@@ -299,8 +301,8 @@ class Model_Contribuyente extends \Model_App
             $key = str_replace('config_', '', $name);
             $c = substr($key, 0, strpos($key, '_'));
             $v = substr($key, strpos($key, '_')+1);
-            $value = ($value===false or $value===0) ? '0' : ((!is_array($value) and !is_object($value)) ? (string)$value : $value);
-            $this->config[$c][$v] = isset($value[0]) ? $value : null;
+            $value = ($value===false or $value===0) ? '0' : ((!is_array($value) and !is_object($value)) ? (string)$value : ((is_array($value) and empty($value))?null:$value));
+            $this->config[$c][$v] = (!is_string($value) or isset($value[0])) ? $value : null;
             $this->$name = $this->config[$c][$v];
         } else {
             throw new \Exception(
@@ -312,7 +314,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método para setear los atributos del contribuyente
      * @param array Arreglo con los datos que se deben asignar
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-01-29
      */
     public function set($array)
@@ -320,7 +322,7 @@ class Model_Contribuyente extends \Model_App
         parent::set($array);
         foreach($array as $name => $value) {
             if (strpos($name, 'config_')===0) {
-                $this->$name = $value;
+                $this->__set($name, $value);
             }
         }
     }
@@ -330,10 +332,11 @@ class Model_Contribuyente extends \Model_App
      * configuración y parámetros adicionales
      * @param registrado Se usa para indicar que el contribuyente que se esta guardando es uno registrado por un usuario (se validan otros datos)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-30
+     * @version 2016-06-13
      */
     public function save($registrado = false)
     {
+        // si es contribuyente registrado se hacen algunas verificaciones
         if ($registrado) {
             // verificar campos mínimos
             foreach (['razon_social', 'giro', 'actividad_economica', 'direccion', 'comuna'] as $attr) {
@@ -351,13 +354,20 @@ class Model_Contribuyente extends \Model_App
             // si se pasó un logo se guarda
             if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
                 if (\sowerphp\general\Utility_File::mimetype($_FILES['logo']['tmp_name'])!='image/png') {
-                    throw new \Exception('Formato del logo debe ser PNG', 'error');
+                    throw new \Exception('Formato del logo debe ser PNG');
                 }
                 $config = \sowerphp\core\Configure::read('dte.logos');
                 \sowerphp\general\Utility_Image::resizeOnFile($_FILES['logo']['tmp_name'], $config['width'], $config['height']);
                 move_uploaded_file($_FILES['logo']['tmp_name'], $config['dir'].'/'.$this->rut.'.png');
             }
         }
+        // corregir datos
+        $this->dv = strtoupper($this->dv);
+        $this->razon_social = substr($this->razon_social, 0, 100);
+        $this->giro = substr($this->giro, 0, 80);
+        $this->telefono = substr($this->telefono, 0, 20);
+        $this->email = substr($this->email, 0, 80);
+        $this->direccion = substr($this->direccion, 0, 70);
         // guardar contribuyente
         if (!parent::save())
             return false;
@@ -376,11 +386,28 @@ class Model_Contribuyente extends \Model_App
                         $valor = Utility_Data::encrypt($valor);
                     }
                     $Config->valor = $valor;
-                    $Config->save();
+                    if ($valor!==null)
+                        $Config->save();
+                    else
+                        $Config->delete();
                 }
             }
         }
         return true;
+    }
+
+    /**
+     * Método que envía un correo electrónico al contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function notificar($asunto, $mensaje)
+    {
+        $email = new \sowerphp\core\Network_Email();
+        $email->to($this->getUsuario()->email);
+        $email->subject($this->getRUT().' '.$asunto);
+        $msg = $mensaje."\n\n".'-- '."\n".\sowerphp\core\Configure::read('page.body.title');
+        return $email->send($msg) === true ? true : false;
     }
 
     /**
@@ -402,6 +429,28 @@ class Model_Contribuyente extends \Model_App
     public function getAmbiente()
     {
         return $this->config_ambiente_en_certificacion ? 'certificación' : 'producción';
+    }
+
+    /**
+     * Método que entrega las actividades económicas del contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-01-31
+     */
+    public function getListActividades()
+    {
+        $actividades = array_merge([$this->actividad_economica], $this->config_extra_otras_actividades);
+        $where = [];
+        $vars = [];
+        foreach ($actividades as $key => $a) {
+            $where[] = ':a'.$key;
+            $vars[':a'.$key] = $a;
+        }
+        return $this->db->getAssociativeArray('
+            SELECT codigo, actividad_economica
+            FROM actividad_economica
+            WHERE codigo IN ('.implode(',', $where).')
+            ORDER BY actividad_economica
+        ', $vars);
     }
 
     /**
@@ -465,35 +514,41 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que determina si el usuario está o no autorizado a trabajar con el
      * contribuyente
-     * @param usuario ID del usuario que se quiere saber si está autorizado
+     * @param Usuario Objeto \sowerphp\app\Sistema\Usuarios\Model_Usuario con el usuario a verificar
+     * @param permisos Permisos que se desean verificar que tenga el usuario
      * @return =true si está autorizado
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-05
+     * @version 2016-05-12
      */
-    public function usuarioAutorizado($usuario, $permisos = [])
+    public function usuarioAutorizado(\sowerphp\app\Sistema\Usuarios\Model_Usuario $Usuario, $permisos = [])
     {
         // si es el administrador de la empresa se le autoriza
-        if ($usuario == $this->usuario)
+        if ($Usuario->id == $this->usuario)
             return true;
-        // si la aplicación sólo tiene configurada una empresa se le autoriza.
-        // para verificar que tenga acceso a cierta funcionalidad se usarán los
+        // normalizar permisos
+        if (!is_array($permisos))
+            $permisos = [$permisos];
+        // si la aplicación sólo tiene configurada una empresa se verifican los
         // permisos normales (basados en grupos) de sowerphp
-        if (\sowerphp\core\Configure::read('dte.empresa'))
-            return true;
+        if (\sowerphp\core\Configure::read('dte.empresa')) {
+            foreach ($permisos as $permiso) {
+                if ($Usuario->auth($permiso))
+                    return true;
+            }
+            return false;
+        }
         // se busca si el usuario es parte de los que pueden trabajar con el
         // contribuyente, se valida el permiso en particular que se esté
         // pidiendo y el permiso 'todos' (es como validar a sysadmin en Auth)
-        if (!is_array($permisos))
-            $permisos = [$permisos];
         if (!in_array('todos', $permisos))
             $permisos[] = 'todos';
-        $vars = [':rut'=>$this->rut, ':usuario'=>$usuario];
+        $vars = [':rut'=>$this->rut, ':usuario'=>$Usuario->id];
         $permisos_bind = [];
         foreach ($permisos as $i => $permiso) {
             $permisos_bind[] = ':permiso'.$i;
             $vars[':permiso'.$i] = $permiso;
         }
-        return (bool)$this->db->getValue('
+        $autorizado = (bool)$this->db->getValue('
             SELECT COUNT(*)
             FROM contribuyente_usuario
             WHERE
@@ -501,6 +556,15 @@ class Model_Contribuyente extends \Model_App
                 AND usuario = :usuario
                 AND permiso IN ('.implode(', ', $permisos_bind).')
         ', $vars);
+        if ($autorizado) {
+            return true;
+        }
+        // ver si el usuario es del grupo de soporte
+        if ($this->config_app_soporte and $Usuario->inGroup(['soporte'])) {
+            return true;
+        }
+        // si no se logró determinar el permiso no se autoriza
+        return false;
     }
 
     /**
@@ -600,7 +664,7 @@ class Model_Contribuyente extends \Model_App
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-22
      */
-    private function getCaf($dte, $folio)
+    public function getCaf($dte, $folio)
     {
         $caf = $this->db->getValue('
             SELECT xml
@@ -655,25 +719,23 @@ class Model_Contribuyente extends \Model_App
      * @param user ID del usuario que desea obtener la firma
      * @return \sasco\LibreDTE\FirmaElectronica
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-05-12
      */
     public function getFirma($user = null)
     {
-        if (!$user)
-            $user = $this->usuario;
-        // buscar firma del usuario que está haciendo la solicitud
-        $datos = $this->db->getRow('
-            SELECT archivo, contrasenia
-            FROM firma_electronica
-            WHERE usuario = :usuario
-        ', [':usuario'=>$user]);
         // buscar firma del usuario administrador de la empresa
-        if (empty($datos) and $user!=$this->usuario) {
+        $datos = $this->db->getRow('
+            SELECT f.archivo, f.contrasenia
+            FROM firma_electronica AS f, contribuyente AS c
+            WHERE f.usuario = c.usuario AND c.rut = :rut
+        ', [':rut'=>$this->rut]);
+        // buscar firma del usuario que está haciendo la solicitud
+        if (empty($datos) and $user and $user!=$this->usuario) {
             $datos = $this->db->getRow('
-                SELECT f.archivo, f.contrasenia
-                FROM firma_electronica AS f, contribuyente AS c
-                WHERE f.usuario = c.usuario AND c.rut = :rut
-            ', [':rut'=>$this->rut]);
+                SELECT archivo, contrasenia
+                FROM firma_electronica
+                WHERE usuario = :usuario
+            ', [':usuario'=>$user]);
         }
         if (empty($datos))
             return false;
@@ -696,7 +758,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el listado de documentos emitidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-03
+     * @version 2016-06-01
      */
     public function getDocumentosEmitidos($filtros = [])
     {
@@ -704,10 +766,38 @@ class Model_Contribuyente extends \Model_App
         $where = ['d.emisor = :rut', 'd.certificacion = :certificacion'];
         $vars = [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion];
         foreach (['dte', 'folio', 'receptor', 'fecha', 'total', 'usuario'] as $c) {
-            if (isset($filtros[$c])) {
+            if (!empty($filtros[$c])) {
                 $where[] = 'd.'.$c.' = :'.$c;
                 $vars[':'.$c] = $filtros[$c];
             }
+        }
+        // si se debe hacer búsqueda dentro de los XML
+        if (!empty($filtros['xml'])) {
+            $i = 1;
+            foreach ($filtros['xml'] as $nodo => $valor) {
+                $nodo = preg_replace('/[^A-Za-z\/]/', '', $nodo);
+                $nodo = '/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:'.str_replace('/', '/n:', $nodo).'/text()';
+                $where[] = 'BTRIM(XPATH(\''.$nodo.'\', CONVERT_FROM(decode(d.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\') ILIKE :xml'.$i;
+                $vars[':xml'.$i] = '%'.$valor.'%';
+                $i++;
+            }
+        }
+        // otros filtros
+        if (!empty($filtros['fecha_desde'])) {
+            $where[] = 'd.fecha >= :fecha_desde';
+            $vars[':fecha_desde'] = $filtros['fecha_desde'];
+        }
+        if (!empty($filtros['fecha_hasta'])) {
+            $where[] = 'd.fecha <= :fecha_hasta';
+            $vars[':fecha_hasta'] = $filtros['fecha_hasta'];
+        }
+        if (!empty($filtros['total_desde'])) {
+            $where[] = 'd.total >= :total_desde';
+            $vars[':total_desde'] = $filtros['total_desde'];
+        }
+        if (!empty($filtros['total_hasta'])) {
+            $where[] = 'd.total <= :total_hasta';
+            $vars[':total_hasta'] = $filtros['total_hasta'];
         }
         // armar consulta
         $query = '
@@ -719,7 +809,7 @@ class Model_Contribuyente extends \Model_App
                 contribuyente AS r,
                 usuario AS u
             WHERE d.dte = t.codigo AND d.receptor = r.rut AND d.usuario = u.id AND '.implode(' AND ', $where).'
-            ORDER BY d.fecha DESC, t.tipo, r.razon_social
+            ORDER BY d.fecha DESC, t.tipo, d.folio DESC
         ';
         // armar límite consulta
         if (isset($filtros['limit'])) {
@@ -905,7 +995,7 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las ventas por períodos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-11-03
+     * @version 2016-03-08
      */
     public function getResumenVentasPeriodos()
     {
@@ -914,7 +1004,7 @@ class Model_Contribuyente extends \Model_App
             (
                 SELECT '.$periodo.' AS periodo, COUNT(*) AS emitidos, v.documentos AS enviados, v.track_id, v.revision_estado
                 FROM dte_tipo AS t, dte_emitido AS e LEFT JOIN dte_venta AS v ON e.emisor = v.emisor AND e.certificacion = v.certificacion AND '.$periodo.' = v.periodo
-                WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion
+                WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND e.dte != 46
                 GROUP BY '.$periodo.', enviados, v.track_id, v.revision_estado
             ) UNION (
                 SELECT periodo, documentos AS emitidos, documentos AS enviados, track_id, revision_estado
@@ -928,23 +1018,58 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las ventas de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-25
+     * @version 2016-03-08
      */
     public function getVentas($periodo)
     {
         $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(e.fecha, \'YYYYmm\')' : 'DATE_FORMAT(e.fecha, "%Y%m")';
-        return $this->db->getTable('
-            SELECT e.dte, e.folio, e.tasa, e.fecha, e.sucursal_sii, '.$this->db->concat('r.rut', '-', 'r.dv').' AS rut, r.razon_social, e.exento, e.neto, e.iva, \'\' AS impuesto_codigo, \'\' AS impuesto_tasa, \'\' AS impuesto_monto, e.total
-            FROM dte_tipo AS t, dte_emitido AS e, contribuyente AS r
-            WHERE t.codigo = e.dte AND t.venta = true AND e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
-            ORDER BY e.fecha, e.dte, e.folio
-        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+        // si el contribuyente no tiene impuestos adicionales se entregan los datos de la tabla de emitidos
+        if (!$this->config_extra_impuestos_adicionales) {
+            return $this->db->getTable('
+                SELECT e.dte, e.folio, e.tasa, e.fecha, e.sucursal_sii, '.$this->db->concat('r.rut', '-', 'r.dv').' AS rut, r.razon_social, e.exento, e.neto, e.iva, \'\' AS impuesto_codigo, \'\' AS impuesto_tasa, \'\' AS impuesto_monto, e.total
+                FROM dte_tipo AS t, dte_emitido AS e, contribuyente AS r
+                WHERE t.codigo = e.dte AND t.venta = true AND e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo  AND e.dte != 46
+                ORDER BY e.fecha, e.dte, e.folio
+            ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+        }
+        // si el contribuyente tiene impuestos adicionales se buscan en los XML de los DTE
+        else {
+            if ($this->db->config['type']=='PostgreSQL') {
+                $impuesto_codigo = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TipoImp/text()\', CONVERT_FROM(decode(e.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+                $impuesto_tasa = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TasaImp/text()\', CONVERT_FROM(decode(e.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+                $impuesto_monto = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:MontoImp/text()\', CONVERT_FROM(decode(e.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+            } else {
+                $impuesto_codigo = '\'\'';
+                $impuesto_tasa = '\'\'';
+                $impuesto_monto = '\'\'';
+            }
+            return $this->db->getTable('
+                SELECT
+                    e.dte,
+                    e.folio,
+                    e.tasa,
+                    e.fecha,
+                    e.sucursal_sii,
+                    '.$this->db->concat('r.rut', '-', 'r.dv').' AS rut,
+                    r.razon_social,
+                    e.exento,
+                    e.neto,
+                    e.iva,
+                    '.$impuesto_codigo.' AS impuesto_codigo,
+                    '.$impuesto_tasa.' AS impuesto_tasa,
+                    '.$impuesto_monto.' AS impuesto_monto,
+                    e.total
+                FROM dte_tipo AS t, dte_emitido AS e, contribuyente AS r
+                WHERE t.codigo = e.dte AND t.venta = true AND e.receptor = r.rut AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND e.dte != 46
+                ORDER BY e.fecha, e.dte, e.folio
+            ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+        }
     }
 
     /**
      * Método que entrega el resumen de las ventas diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-07
+     * @version 2016-03-08
      */
     public function getVentasDiarias($periodo)
     {
@@ -953,7 +1078,7 @@ class Model_Contribuyente extends \Model_App
         return $this->db->getAssociativeArray('
             SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
             FROM dte_tipo AS t, dte_emitido AS e
-            WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+            WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND e.dte != 46
             GROUP BY e.fecha
             ORDER BY e.fecha
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
@@ -963,7 +1088,7 @@ class Model_Contribuyente extends \Model_App
      * Método que entrega el resumen de ventas por tipo de un período
      * @return Arreglo asociativo con las ventas
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-26
+     * @version 2016-03-08
      */
     public function getVentasPorTipo($periodo)
     {
@@ -971,7 +1096,7 @@ class Model_Contribuyente extends \Model_App
         return $this->db->getAssociativeArray('
             SELECT t.tipo, COUNT(*) AS ventas
             FROM dte_tipo AS t, dte_emitido AS e
-            WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+            WHERE t.codigo = e.dte AND t.venta = true AND e.emisor = :rut AND e.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND e.dte != 46
             GROUP BY t.tipo
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
     }
@@ -1063,21 +1188,37 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega la tabla con los casos de intercambio del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-06-18
      */
-    public function getIntercambios()
+    public function getIntercambios($soloPendientes = true)
     {
+        if ($this->db->config['type']=='PostgreSQL') {
+            $documentos = 'BTRIM(XPATH(\'/n:*/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:TipoDTE/text()|/n:*/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:IdDoc/n:Folio/text()\', CONVERT_FROM(decode(i.archivo_xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\') AS documentos';
+        } else {
+            $documentos = 'i.documentos';
+        }
+        $select = $soloPendientes ? '' : ', i.estado, u.usuario';
+        $where = $soloPendientes ? ' AND i.estado IS NULL' : '';
         $intercambios = $this->db->getTable('
-            SELECT i.codigo, i.fecha_hora_email, i.de, i.emisor, e.razon_social, i.documentos, i.estado, u.usuario
+            SELECT i.codigo, i.emisor, e.razon_social, i.fecha_hora_firma, i.fecha_hora_email, '.$documentos.$select.'
             FROM dte_intercambio AS i LEFT JOIN contribuyente AS e ON i.emisor = e.rut LEFT JOIN usuario AS u ON i.usuario = u.id
-            WHERE i.receptor = :receptor AND i.certificacion = :certificacion
-            ORDER BY i.fecha_hora_email DESC
+            WHERE i.receptor = :receptor AND i.certificacion = :certificacion '.$where.'
+            ORDER BY i.fecha_hora_firma DESC
         ', [':receptor'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
         foreach ($intercambios as &$i) {
             if (!empty($i['razon_social']))
                 $i['emisor']= $i['razon_social'];
             if (isset($i['estado']))
                 $i['estado'] = \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'][$i['estado']];
+            $nuevo_dte = true;
+            $n_letras = strlen($i['documentos']);
+            for ($j=0; $j<$n_letras; $j++) {
+                if ($i['documentos'][$j]==',') {
+                    $nuevo_dte = !$nuevo_dte;
+                    if ($nuevo_dte)
+                        $i['documentos'][$j] = '|';
+                }
+            }
             unset($i['razon_social']);
         }
         return $intercambios;
@@ -1138,11 +1279,75 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras por períodos
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-11-03
+     * @version 2016-05-28
      */
     public function getResumenComprasPeriodos()
     {
-        $periodo = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        if ($this->db->config['type']!='PostgreSQL')
+            return $this->getResumenComprasPeriodosMySQL();
+        $periodo = 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER';
+        return $this->db->getTable('
+            (
+                SELECT
+                    CASE WHEN r.periodo IS NOT NULL THEN
+                        r.periodo
+                    ELSE
+                        CASE WHEN f.periodo IS NOT NULL THEN
+                            f.periodo
+                        ELSE
+                            NULL
+                        END
+                    END AS periodo,
+                    CASE WHEN r.recibidos IS NOT NULL AND f.facturas_compra IS NOT NULL THEN
+                        r.recibidos + f.facturas_compra
+                    ELSE
+                        CASE WHEN r.recibidos IS NOT NULL THEN
+                            r.recibidos
+                        ELSE
+                            f.facturas_compra
+                        END
+                    END AS recibidos,
+                    c.documentos AS enviados,
+                    c.track_id,
+                    c.revision_estado
+                FROM
+                    (
+                        SELECT
+                            CASE WHEN r.periodo IS NOT NULL THEN
+                                r.periodo
+                            ELSE
+                                '.$periodo.'
+                            END AS periodo,
+                            COUNT(*) AS recibidos
+                        FROM dte_tipo AS t, dte_recibido AS r
+                        WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion
+                        GROUP BY '.$periodo.', r.periodo
+                    ) AS r
+                    FULL JOIN (
+                        SELECT '.$periodo.' AS periodo, COUNT(*) AS facturas_compra
+                        FROM dte_emitido AS r
+                        WHERE r.emisor = :rut AND r.certificacion = :certificacion AND r.dte = 46
+                        GROUP BY '.$periodo.'
+                    ) AS f ON r.periodo = f.periodo
+                    LEFT JOIN dte_compra AS c ON c.receptor = :rut AND c.certificacion = :certificacion AND c.periodo IN (r.periodo, f.periodo)
+            ) UNION (
+                SELECT periodo, documentos AS recibidos, documentos AS enviados, track_id, revision_estado
+                FROM dte_compra
+                WHERE receptor = :rut AND certificacion = :certificacion
+            )
+            ORDER BY periodo DESC
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
+     * Método que entrega el resumen de las compras por períodos
+     * @warning Versión del método para MySQL, no soporta facturas de compra
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    private function getResumenComprasPeriodosMySQL()
+    {
+        $periodo = 'DATE_FORMAT(r.fecha, "%Y%m")';
         return $this->db->getTable('
             (
                 SELECT '.$periodo.' AS periodo, COUNT(*) AS recibidos, c.documentos AS enviados, c.track_id, c.revision_estado
@@ -1161,53 +1366,100 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-29
+     * @version 2016-05-28
      */
     public function getCompras($periodo)
     {
-        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        if ($this->db->config['type']=='PostgreSQL') {
+            $impuesto_codigo = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TipoImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+            $impuesto_tasa = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:TasaImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+            $impuesto_monto = 'BTRIM(XPATH(\'/n:EnvioDTE/n:SetDTE/n:DTE/n:Documento/n:Encabezado/n:Totales/n:ImptoReten/n:MontoImp/text()\', CONVERT_FROM(decode(r.xml, \'base64\'), \'ISO8859-1\')::XML, \'{{n,http://www.sii.cl/SiiDte}}\')::TEXT, \'{}\')';
+        } else {
+            $impuesto_codigo = '\'\'';
+            $impuesto_tasa = '\'\'';
+            $impuesto_monto = '\'\'';
+        }
         $compras = $this->db->getTable('
-            SELECT
-                r.dte,
-                r.folio,
-                '.$this->db->concat('e.rut', '-', 'e.dv').' AS rut,
-                r.tasa,
-                e.razon_social,
-                r.impuesto_tipo,
-                r.fecha,
-                r.anulado,
-                r.exento,
-                r.neto,
-                r.iva,
-                r.iva_no_recuperable,
-                NULL AS iva_no_recuperable_monto,
-                NULL AS iva_uso_comun_monto,
-                r.iva_uso_comun,
-                r.impuesto_adicional,
-                r.impuesto_adicional_tasa,
-                NULL AS impuesto_adicional_monto,
-                r.total,
-                r.impuesto_sin_credito,
-                r.monto_activo_fijo,
-                r.monto_iva_activo_fijo,
-                r.iva_no_retenido,
-                r.sucursal_sii
-            FROM dte_tipo AS t, dte_recibido AS r, contribuyente AS e
-            WHERE t.codigo = r.dte AND t.compra = true AND r.emisor = e.rut AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
-            ORDER BY r.fecha, r.dte, r.folio
+            (
+                SELECT
+                    r.dte,
+                    r.folio,
+                    '.$this->db->concat('e.rut', '-', 'e.dv').' AS rut,
+                    r.tasa,
+                    e.razon_social,
+                    r.impuesto_tipo,
+                    r.fecha,
+                    r.anulado,
+                    r.exento,
+                    r.neto,
+                    r.iva,
+                    r.iva_no_recuperable,
+                    NULL AS iva_no_recuperable_monto,
+                    NULL AS iva_uso_comun_monto,
+                    r.iva_uso_comun,
+                    r.impuesto_adicional'.($this->db->config['type']=='PostgreSQL'?'::TEXT':'').',
+                    r.impuesto_adicional_tasa'.($this->db->config['type']=='PostgreSQL'?'::TEXT':'').',
+                    \'\' AS impuesto_adicional_monto,
+                    r.total,
+                    r.impuesto_sin_credito,
+                    r.monto_activo_fijo,
+                    r.monto_iva_activo_fijo,
+                    r.iva_no_retenido,
+                    r.sucursal_sii
+                FROM dte_tipo AS t, dte_recibido AS r, contribuyente AS e
+                WHERE
+                    t.codigo = r.dte
+                    AND t.compra = true
+                    AND r.emisor = e.rut
+                    AND r.receptor = :rut
+                    AND r.certificacion = :certificacion
+                    AND ((r.periodo IS NULL AND '.$periodo_col.' = :periodo) OR (r.periodo IS NOT NULL AND r.periodo = :periodo))
+            ) UNION (
+                SELECT
+                    r.dte,
+                    r.folio,
+                    '.$this->db->concat('e.rut', '-', 'e.dv').' AS rut,
+                    r.tasa,
+                    e.razon_social,
+                    NULL AS impuesto_tipo,
+                    r.fecha,
+                    NULL AS anulado,
+                    r.exento,
+                    r.neto,
+                    r.iva,
+                    NULL AS iva_no_recuperable,
+                    NULL AS iva_no_recuperable_monto,
+                    NULL AS iva_uso_comun_monto,
+                    NULL AS iva_uso_comun,
+                    '.$impuesto_codigo.' AS impuesto_adicional,
+                    '.$impuesto_tasa.' AS impuesto_adicional_tasa,
+                    '.$impuesto_monto.' AS impuesto_adicional_monto,
+                    r.total,
+                    NULL impuesto_sin_credito,
+                    NULL monto_activo_fijo,
+                    NULL monto_iva_activo_fijo,
+                    NULL iva_no_retenido,
+                    NULL sucursal_sii
+                FROM dte_emitido AS r, contribuyente AS e
+                WHERE r.receptor = e.rut AND r.emisor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND r.dte = 46
+            )
+            ORDER BY fecha, dte, folio
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
         foreach ($compras as &$c) {
             // asignar IVA no recuperable
-            if (!empty($c['iva_no_recuperable'])) {
-                $c['iva_no_recuperable_monto'] = round((int)$c['neto']*($c['tasa']/100));
+            if ($c['iva_no_recuperable']) {
+                if (!$c['iva_no_recuperable_monto']) {
+                    $c['iva_no_recuperable_monto'] = round((int)$c['neto']*($c['tasa']/100));
+                }
                 $c['iva'] = 0;
             }
             // asignar IVA de uso comun
-            if (!empty($c['iva_uso_comun'])) {
+            if ($c['iva_uso_comun'] and !$c['iva_uso_comun_monto']) {
                 $c['iva_uso_comun_monto'] = round((int)$c['neto']*($c['tasa']/100));
             }
             // asignar monto de impuesto adicionl
-            if (!empty($c['impuesto_adicional'])) {
+            if ($c['impuesto_adicional'] and !$c['impuesto_adicional_monto']) {
                 $c['impuesto_adicional_monto'] = round((int)$c['neto']*($c['impuesto_adicional_tasa']/100));
             }
         }
@@ -1217,11 +1469,61 @@ class Model_Contribuyente extends \Model_App
     /**
      * Método que entrega el resumen de las compras diarias de un período
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-07
+     * @version 2016-05-28
      */
     public function getComprasDiarias($periodo)
     {
-        $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
+        if ($this->db->config['type']!='PostgreSQL')
+            return $this->getComprasDiariasMySQL($periodo);
+        $periodo_col = 'TO_CHAR(r.fecha, \'YYYYmm\')';
+        $dia_col = 'TO_CHAR(r.fecha, \'DD\')::INTEGER';
+        return $this->db->getAssociativeArray('
+            SELECT
+                CASE WHEN r.dia IS NOT NULL THEN
+                    r.dia
+                ELSE
+                    CASE WHEN f.dia IS NOT NULL THEN
+                        f.dia
+                    ELSE
+                        NULL
+                    END
+                END AS dia,
+                CASE WHEN r.documentos IS NOT NULL AND f.documentos IS NOT NULL THEN
+                    r.documentos + f.documentos
+                ELSE
+                    CASE WHEN r.documentos IS NOT NULL THEN
+                        r.documentos
+                    ELSE
+                        f.documentos
+                    END
+                END AS documentos
+            FROM
+                (
+                    SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
+                    FROM dte_tipo AS t, dte_recibido AS r
+                    WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+                    GROUP BY r.fecha
+                ) AS r
+                FULL JOIN
+                (
+                    SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
+                    FROM dte_emitido AS r
+                    WHERE r.emisor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo AND r.dte = 46
+                    GROUP BY r.fecha
+                ) AS f ON r.dia = f.dia
+            ORDER BY dia
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+    }
+
+    /**
+     * Método que entrega el resumen de las compras diarias de un período
+     * @warning Versión del método para MySQL, no soporta facturas de compra
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-05-28
+     */
+    private function getComprasDiariasMySQL($periodo)
+    {
+        $periodo_col = 'DATE_FORMAT(r.fecha, "%Y%m")';
         $dia_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'DD\')::INTEGER' : 'DATE_FORMAT(r.fecha, "%e")';
         return $this->db->getAssociativeArray('
             SELECT '.$dia_col.' AS dia, COUNT(*) AS documentos
@@ -1233,20 +1535,238 @@ class Model_Contribuyente extends \Model_App
     }
 
     /**
-     * Método que entrega el resumen de comras por tipo de un período
+     * Método que entrega el resumen de compras por tipo de un período
      * @return Arreglo asociativo con las compras
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-03-08
      */
     public function getComprasPorTipo($periodo)
     {
         $periodo_col = $this->db->config['type']=='PostgreSQL' ? 'TO_CHAR(r.fecha, \'YYYYmm\')' : 'DATE_FORMAT(r.fecha, "%Y%m")';
         return $this->db->getAssociativeArray('
-            SELECT t.tipo, COUNT(*) AS compras
-            FROM dte_tipo AS t, dte_recibido AS r
-            WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
-            GROUP BY t.tipo
+            (
+                SELECT t.tipo, COUNT(*) AS compras
+                FROM dte_tipo AS t, dte_recibido AS r
+                WHERE t.codigo = r.dte AND t.compra = true AND r.receptor = :rut AND r.certificacion = :certificacion AND '.$periodo_col.' = :periodo
+                GROUP BY t.tipo
+            ) UNION (
+                SELECT t.tipo, COUNT(*) AS facturas_compra
+                FROM dte_tipo AS t, dte_emitido AS r
+                WHERE t.codigo = r.dte AND r.emisor = :rut AND r.certificacion = :certificacion AND r.dte = 46 AND '.$periodo_col.' = :periodo
+                GROUP BY t.tipo
+            )
         ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion, ':periodo'=>$periodo]);
+    }
+
+    /**
+     * Método para actualizar la bandeja de intercambio. Guarda los DTEs
+     * recibidos por intercambio y guarda los acuses de recibos de DTEs
+     * enviados por otros contribuyentes
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-05
+     */
+    public function actualizarBandejaIntercambio()
+    {
+        $Imap = $this->getEmailImap();
+        if (!$Imap) {
+            throw new \sowerphp\core\Exception(
+                'No fue posible conectar mediante IMAP a '.$this->config_email_intercambio_imap.', verificar mailbox, usuario y/o contraseña de correo de intercambio:<br/>'.implode('<br/>', imap_errors()), 500
+            );
+        }
+        // obtener mensajes sin leer
+        $uids = $Imap->search();
+        if (!$uids) {
+            throw new \sowerphp\core\Exception('No hay documentos nuevos que procesar', 204);
+        }
+        // procesar cada mensaje sin leer
+        $n_EnvioDTE = $n_acuse = $n_EnvioRecibos = $n_RecepcionEnvio = $n_ResultadoDTE = 0;
+        foreach ($uids as &$uid) {
+            $m = $Imap->getMessage($uid, ['subtype'=>['PLAIN', 'HTML', 'XML'], 'extension'=>['xml']]);
+            if ($m and isset($m['attachments'][0])) {
+                $datos_email = [
+                    'fecha_hora_email' => date('Y-m-d H:i:s', strtotime($m['header']->date)),
+                    'asunto' => substr($m['header']->subject, 0, 100),
+                    'de' => substr($m['header']->from[0]->mailbox.'@'.$m['header']->from[0]->host, 0, 80),
+                    'mensaje' => $m['body']['plain'] ? base64_encode($m['body']['plain']) : null,
+                    'mensaje_html' => $m['body']['html'] ? base64_encode($m['body']['html']) : null,
+                ];
+                if (isset($m['header']->reply_to[0])) {
+                    $datos_email['responder_a'] = substr($m['header']->reply_to[0]->mailbox.'@'.$m['header']->reply_to[0]->host, 0, 80);
+                }
+                $acuseContado = false;
+                $procesado = false;
+                foreach ($m['attachments'] as $file) {
+                    if ($this->actualizarBandejaIntercambio_procesar_EnvioDTE($this->rut, $datos_email, $file)) {
+                        $n_EnvioDTE++;
+                        $procesado = true;
+                    }
+                    else if ($this->actualizarBandejaIntercambio_procesar_EnvioRecibos($this, $datos_email, $file)) {
+                        $n_EnvioRecibos++;
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                        $procesado = true;
+                    }
+                    else if ($this->actualizarBandejaIntercambio_procesar_RecepcionEnvio($this, $datos_email, $file)) {
+                        $n_RecepcionEnvio++;
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                        $procesado = true;
+                    }
+                    else if ($this->actualizarBandejaIntercambio_procesar_ResultadoDTE($this, $datos_email, $file)) {
+                        $n_ResultadoDTE++;
+                        if (!$acuseContado) {
+                            $acuseContado = true;
+                            $n_acuse++;
+                        }
+                        $procesado = true;
+                    }
+                }
+                // marcar email como leído si fue procesado
+                if ($procesado)
+                    $Imap->setSeen($uid);
+            }
+        }
+        $n_uids = count($uids);
+        $omitidos = $n_uids - $n_EnvioDTE - $n_acuse;
+        return compact('n_uids', 'omitidos', 'n_EnvioDTE', 'n_EnvioRecibos', 'n_RecepcionEnvio', 'n_ResultadoDTE');
+    }
+
+    /**
+     * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
+     * @param receptor RUT del receptor sin puntos ni dígito verificador
+     * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
+     * @param file Arreglo con los índices: name, data, size y type
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-29
+     */
+    private function actualizarBandejaIntercambio_procesar_EnvioDTE($receptor, array $datos_email, array $file)
+    {
+        // preparar datos
+        $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
+        if (!$EnvioDte->loadXML($file['data']) or !$EnvioDte->getID())
+            return null;
+        $caratula = $EnvioDte->getCaratula();
+        if (((int)(bool)!$caratula['NroResol'])!=$this->config_ambiente_en_certificacion)
+            return false;
+        if (!isset($caratula['SubTotDTE'][0]))
+            $caratula['SubTotDTE'] = [$caratula['SubTotDTE']];
+        $documentos = 0;
+        foreach($caratula['SubTotDTE'] as $SubTotDTE) {
+            $documentos += $SubTotDTE['NroDTE'];
+        }
+        $datos_enviodte = [
+            'certificacion' => (int)(bool)!$caratula['NroResol'],
+            'emisor' => substr($caratula['RutEmisor'], 0, -2),
+            'fecha_hora_firma' => date('Y-m-d H:i:s', strtotime($caratula['TmstFirmaEnv'])),
+            'documentos' => $documentos,
+            'archivo' => $file['name'],
+            'archivo_xml' => base64_encode($file['data']),
+        ];
+        $datos_enviodte['archivo_md5'] = md5($datos_enviodte['archivo_xml']);
+        // guardar envío de intercambio
+        $DteIntercambio = new Model_DteIntercambio();
+        $DteIntercambio->set($datos_email + $datos_enviodte);
+        $DteIntercambio->receptor = $receptor;
+        return $DteIntercambio->save();
+    }
+
+    /**
+     * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
+     * @param Emisor Objeto del emisor del documento que se espera
+     * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
+     * @param file Arreglo con los índices: name, data, size y type
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    private function actualizarBandejaIntercambio_procesar_EnvioRecibos($Emisor, array $datos_email, array $file)
+    {
+        return (new Model_DteIntercambioRecibo())->saveXML($Emisor, $file['data']);
+    }
+
+    /**
+     * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
+     * @param Emisor Objeto del emisor del documento que se espera
+     * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
+     * @param file Arreglo con los índices: name, data, size y type
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    private function actualizarBandejaIntercambio_procesar_RecepcionEnvio($Emisor, array $datos_email, array $file)
+    {
+        return (new Model_DteIntercambioRecepcion())->saveXML($Emisor, $file['data']);
+    }
+
+    /**
+     * Método que procesa el archivo EnvioDTE recibido desde un contribuyente
+     * @param Emisor Objeto del emisor del documento que se espera
+     * @param datos_email Arreglo con los índices: fecha_hora_email, asunto, de, mensaje, mensaje_html
+     * @param file Arreglo con los índices: name, data, size y type
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2015-12-23
+     */
+    private function actualizarBandejaIntercambio_procesar_ResultadoDTE($Emisor, array $datos_email, array $file)
+    {
+        return (new Model_DteIntercambioResultado())->saveXML($Emisor, $file['data']);
+    }
+
+    /**
+     * Método que entrega el listado de documentos electrónicos que han sido
+     * generados pero no se han enviado al SII
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function getDteEmitidosSinEnviar()
+    {
+        return $this->db->getTable('
+            SELECT dte, folio
+            FROM dte_emitido
+            WHERE
+                emisor = :rut
+                AND certificacion = :certificacion
+                AND dte NOT IN (39, 41)
+                AND track_id IS NULL
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
+     * Método que entrega el listado de documentos electrónicos que han sido
+     * generados y enviados al SII pero aun no se ha actualizado su estado
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function getDteEmitidosSinEstado()
+    {
+        return $this->db->getTable('
+            SELECT dte, folio
+            FROM dte_emitido
+            WHERE
+                emisor = :rut
+                AND certificacion = :certificacion
+                AND dte NOT IN (39, 41)
+                AND track_id IS NOT NULL
+                AND revision_estado IS NULL
+        ', [':rut'=>$this->rut, ':certificacion'=>(int)$this->config_ambiente_en_certificacion]);
+    }
+
+    /**
+     * Método que entrega el listado de clientes del contribuyente
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-18
+     */
+    public function getClientes()
+    {
+        return $this->db->getTable('
+            SELECT c.rut, c.dv, c.razon_social, c.telefono, c.email, c.direccion, co.comuna
+            FROM
+                contribuyente AS c
+                LEFT JOIN comuna AS co ON co.codigo = c.comuna
+            WHERE c.rut IN (SELECT receptor FROM dte_emitido WHERE emisor = :emisor)
+            ORDER BY c.razon_social
+        ', [':emisor'=>$this->rut]);
     }
 
 }

@@ -43,11 +43,34 @@ class Controller_Contribuyentes extends \Controller_App
     ];
 
     /**
+     * Método que permite entrar a las opciones de cualquier empresa para dar
+     * soporte, se debe estar en el grupo soporte para que la acción funcione
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-12
+     */
+    public function soporte()
+    {
+        // si el usuario no está en el grupo soporte error
+        if (!$this->Auth->User->inGroup(['soporte'])) {
+            \sowerphp\core\Model_Datasource_Session::message('No está autorizado a prestar soporte a otros contribuyentes', 'error');
+            $this->redirect('/dte/contribuyentes/seleccionar');
+        }
+        // verificar datos de formulario
+        if (empty($_POST['rut']) or empty($_POST['accion'])) {
+            \sowerphp\core\Model_Datasource_Session::message('Debe indicar RUT de empresa y acción a realizar', 'error');
+            $this->redirect('/dte/contribuyentes/seleccionar');
+        }
+        // rederigir
+        $rut = \sowerphp\app\Utility_Rut::normalizar($_POST['rut']);
+        $this->redirect('/dte/contribuyentes/'.$_POST['accion'].'/'.$rut);
+    }
+
+    /**
      * Método que selecciona la empresa con la que se trabajará en el módulo DTE
      * @param rut Si se pasa un RUT se tratará de seleccionar
      * @param url URL a la que redirigir después de seleccionar el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-25
+     * @version 2016-06-17
      */
     public function seleccionar($rut = null, $url = null)
     {
@@ -55,16 +78,17 @@ class Controller_Contribuyentes extends \Controller_App
         // si se está pidiendo una empresa en particular se tratará de usar
         if ($rut) {
             $Emisor = new Model_Contribuyente($rut);
-            if (!$Emisor->exists()) {
-                \sowerphp\core\Model_Datasource_Session::message('Empresa solicitada no existe', 'error');
-                $this->redirect($this->request->request);
+            if (!$Emisor->usuario) {
+                \sowerphp\core\Model_Datasource_Session::message('Empresa solicitada no está registrada', 'error');
+                $this->redirect('/dte/contribuyentes/seleccionar');
             }
-            if (!$Emisor->usuarioAutorizado($this->Auth->User->id)) {
+            if (!$Emisor->usuarioAutorizado($this->Auth->User)) {
                 \sowerphp\core\Model_Datasource_Session::message('No está autorizado a operar con la empresa solicitada', 'error');
                 $this->redirect('/dte/contribuyentes/seleccionar');
             }
-            if (!$url)
+            if (!$url) {
                 \sowerphp\core\Model_Datasource_Session::message('Desde ahora estará operando con '.$Emisor->razon_social);
+            }
         }
         // si no se indicó una empresa por su rut se tratará de usar la que
         // esté configurada (si existe) o bien se mostrará listado de las
@@ -93,23 +117,30 @@ class Controller_Contribuyentes extends \Controller_App
         // asignar variables para la vista
         $this->set([
             'empresas' => (new Model_Contribuyentes())->getByUsuario($this->Auth->User->id),
+            'registrar_empresa' => $this->Auth->check('/dte/contribuyentes/registrar'),
+            'soporte' => $this->Auth->User->inGroup(['soporte']),
         ]);
     }
 
     /**
      * Método que permite registrar un nuevo contribuyente y asociarlo a un usuario
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-07-04
      */
     public function registrar()
     {
         // asignar variables para la vista
+        $ImpuestosAdicionales = new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales();
+        $impuestos_adicionales = $ImpuestosAdicionales->getListConTasa();
+        $impuestos_adicionales_tasa = $ImpuestosAdicionales->getTasas();
         $this->set([
-            '_header_extra' => ['js'=>['/dte/js/dte.js']],
+            '_header_extra' => ['js'=>['/dte/js/dte.js', '/dte/js/contribuyente.js']],
             'actividades_economicas' => (new \website\Sistema\General\Model_ActividadEconomicas())->getList(),
             'comunas' => (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getList(),
+            'impuestos_adicionales' => $impuestos_adicionales,
+            'impuestos_adicionales_tasa' => $impuestos_adicionales_tasa,
             'titulo' => 'Registrar nueva empresa',
-            'descripcion' => 'Aquí podrá registrar una nueva empresa para la cual usted será el usuario administrador de la misma.',
+            'descripcion' => 'Aquí podrá registrar una nueva empresa para la cual usted será el usuario administrador de la misma. Deberá completar los datos obligatorios de las pestañas "Datos empresa", "Ambientes" e "Emails". Las otras dos pestañas son opcionales.',
             'form_id' => 'registrarContribuyente',
             'boton' => 'Registrar empresa',
         ]);
@@ -123,15 +154,15 @@ class Controller_Contribuyentes extends \Controller_App
                     \sowerphp\core\Model_Datasource_Session::message(
                         'Ya tiene asociada la empresa a su usuario'
                     );
-                    $this->redirect('/dte/contribuyentes/seleccionar');
                 } else {
                     \sowerphp\core\Model_Datasource_Session::message(
                         'La empresa ya está registrada a nombre del usuario '.$Contribuyente->getUsuario()->nombre.' ('.$Contribuyente->getUsuario()->email.'). Si cree que esto es un error o bien puede ser alguien suplantando la identidad de su empresa por favor <a href="'.$this->request->base.'/contacto" target="_blank">contáctenos</a>.', 'error'
                     );
-                    return;
                 }
+                $this->redirect('/dte/contribuyentes/seleccionar');
             }
             // rellenar campos de la empresa
+            $this->prepararDatosContribuyente($Contribuyente);
             $Contribuyente->set($_POST);
             $Contribuyente->rut = $rut;
             $Contribuyente->dv = $dv;
@@ -143,7 +174,7 @@ class Controller_Contribuyentes extends \Controller_App
                 // guardar los DTE por defecto que la empresa podrá usar
                 $dtes = \sowerphp\core\Configure::read('dte.dtes');
                 foreach ($dtes as $dte) {
-                    $ContribuyenteDte = new \website\Dte\Admin\Model_ContribuyenteDte(
+                    $ContribuyenteDte = new \website\Dte\Admin\Mantenedores\Model_ContribuyenteDte(
                         $Contribuyente->rut, $dte
                     );
                     try {
@@ -165,7 +196,7 @@ class Controller_Contribuyentes extends \Controller_App
     /**
      * Método que permite modificar contribuyente previamente registrado
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-27
+     * @version 2016-06-15
      */
     public function modificar($rut)
     {
@@ -176,23 +207,31 @@ class Controller_Contribuyentes extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message('No se encontró la empresa solicitada', 'error');
             $this->redirect('/dte/contribuyentes/seleccionar');
         }
-        // verificar que el usuario sea el administrador
-        if ($Contribuyente->usuario!=$this->Auth->User->id) {
+        // verificar que el usuario sea el administrador o de soporte autorizado
+        if ($Contribuyente->usuario!=$this->Auth->User->id and (!$Contribuyente->config_app_soporte or !$this->Auth->User->inGroup(['soporte']))) {
             \sowerphp\core\Model_Datasource_Session::message('Usted no es el administrador de la empresa solicitada', 'error');
             $this->redirect('/dte/contribuyentes/seleccionar');
         }
         // asignar variables para editar
+        $ImpuestosAdicionales = new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales();
+        $impuestos_adicionales = $ImpuestosAdicionales->getListConTasa();
+        $impuestos_adicionales_tasa = $ImpuestosAdicionales->getTasas();
         $this->set([
+            '_header_extra' => ['js'=>['/dte/js/contribuyente.js']],
             'Contribuyente' => $Contribuyente,
             'actividades_economicas' => (new \website\Sistema\General\Model_ActividadEconomicas())->getList(),
             'comunas' => (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getList(),
+            'impuestos_adicionales' => $impuestos_adicionales,
+            'impuestos_adicionales_tasa' => $impuestos_adicionales_tasa,
             'titulo' => 'Modificar empresa '.$Contribuyente->razon_social,
             'descripcion' => 'Aquí podrá modificar los datos de la empresa '.$Contribuyente->razon_social.' RUT '.num($Contribuyente->rut).'-'.$Contribuyente->dv.', para la cual usted es el usuario administrador.',
             'form_id' => 'modificarContribuyente',
             'boton' => 'Modificar empresa',
+            'tipos_dte' => $Contribuyente->getDocumentosAutorizados(),
         ]);
         // editar contribuyente
         if (isset($_POST['submit'])) {
+            $this->prepararDatosContribuyente($Contribuyente);
             $Contribuyente->set($_POST);
             $Contribuyente->modificado = date('Y-m-d H:i:s');
             try {
@@ -209,9 +248,58 @@ class Controller_Contribuyentes extends \Controller_App
     }
 
     /**
+     * Método que prepara los datos de configuraciones del contribuyente para
+     * ser guardados
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-15
+     */
+    private function prepararDatosContribuyente(&$Contribuyente)
+    {
+        // crear arreglo de impuestos adicionales
+        if (!empty($_POST['config_extra_impuestos_adicionales_codigo'])) {
+            $_POST['config_extra_impuestos_adicionales'] = [];
+            $n_codigos = count($_POST['config_extra_impuestos_adicionales_codigo']);
+            for ($i=0; $i<$n_codigos; $i++) {
+                if (!empty($_POST['config_extra_impuestos_adicionales_codigo'][$i]) and !empty($_POST['config_extra_impuestos_adicionales_tasa'][$i])) {
+                    $_POST['config_extra_impuestos_adicionales'][] = [
+                        'codigo' => (int)$_POST['config_extra_impuestos_adicionales_codigo'][$i],
+                        'tasa' => $_POST['config_extra_impuestos_adicionales_tasa'][$i],
+                    ];
+                }
+            }
+            unset($_POST['config_extra_impuestos_adicionales_codigo']);
+            unset($_POST['config_extra_impuestos_adicionales_tasa']);
+        } else {
+            $_POST['config_extra_impuestos_adicionales'] = null;
+        }
+        // crear arreglo con observaciones
+        if (!empty($_POST['config_emision_observaciones_dte'])) {
+            $_POST['config_emision_observaciones'] = [];
+            $n_codigos = count($_POST['config_emision_observaciones_dte']);
+            for ($i=0; $i<$n_codigos; $i++) {
+                if (!empty($_POST['config_emision_observaciones_dte'][$i]) and !empty($_POST['config_emision_observaciones_glosa'][$i])) {
+                    $dte = (int)$_POST['config_emision_observaciones_dte'][$i];
+                    $glosa = $_POST['config_emision_observaciones_glosa'][$i];
+                    $_POST['config_emision_observaciones'][$dte] = $glosa;
+                }
+            }
+            unset($_POST['config_emision_observaciones_dte']);
+            unset($_POST['config_emision_observaciones_glosa']);
+        } else {
+            $_POST['config_emision_observaciones'] = null;
+        }
+        // poner valores por defecto
+        foreach (Model_Contribuyente::$defaultConfig as $key => $value) {
+            if (!isset($_POST['config_'.$key])) {
+                $Contribuyente->{'config_'.$key} = $value;
+            }
+        }
+    }
+
+    /**
      * Método que permite editar los usuarios autorizados de un contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-20
+     * @version 2016-03-12
      */
     public function usuarios($rut)
     {
@@ -222,8 +310,8 @@ class Controller_Contribuyentes extends \Controller_App
             \sowerphp\core\Model_Datasource_Session::message('No se encontró la empresa solicitada', 'error');
             $this->redirect('/dte/contribuyentes/seleccionar');
         }
-        // verificar que el usuario sea el administrador
-        if ($Contribuyente->usuario!=$this->Auth->User->id) {
+        // verificar que el usuario sea el administrador o sea soporte autorizado
+        if ($Contribuyente->usuario!=$this->Auth->User->id and (!$Contribuyente->config_app_soporte or !$this->Auth->User->inGroup(['soporte']))) {
             \sowerphp\core\Model_Datasource_Session::message('Usted no es el administrador de la empresa solicitada', 'error');
             $this->redirect('/dte/contribuyentes/seleccionar');
         }
@@ -276,6 +364,52 @@ class Controller_Contribuyentes extends \Controller_App
     }
 
     /**
+     * Método que permite transferir una empresa a un nuevo usuario administrador
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-03-22
+     */
+    public function transferir($rut)
+    {
+        if (empty($_POST['usuario'])) {
+            \sowerphp\core\Model_Datasource_Session::message('Debe especificar el nuevo usuario administrador', 'error');
+            $this->redirect('/dte/contribuyentes/usuarios/'.$rut);
+        }
+        // crear objeto del contribuyente
+        try {
+            $Contribuyente = new Model_Contribuyente($rut);
+        } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
+            \sowerphp\core\Model_Datasource_Session::message('No se encontró la empresa solicitada', 'error');
+            $this->redirect('/dte/contribuyentes/seleccionar');
+        }
+        // verificar que el usuario sea el administrador
+        if ($Contribuyente->usuario!=$this->Auth->User->id) {
+            \sowerphp\core\Model_Datasource_Session::message('Usted no es el administrador de la empresa solicitada', 'error');
+            $this->redirect('/dte/contribuyentes/seleccionar');
+        }
+        // transferir al nuevo usuario administrador
+        $Usuario = new \sowerphp\app\Sistema\Usuarios\Model_Usuario($_POST['usuario']);
+        if (!$Usuario->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message('Usuario '.$_POST['usuario'].' no existe', 'error');
+            $this->redirect('/dte/contribuyentes/usuarios/'.$rut);
+        }
+        if ($Contribuyente->usuario == $Usuario->id) {
+            \sowerphp\core\Model_Datasource_Session::message('El usuario administrador ya es '.$_POST['usuario'], 'warning');
+            $this->redirect('/dte/contribuyentes/usuarios/'.$rut);
+        }
+        $Contribuyente->usuario = $Usuario->id;
+        if ($Contribuyente->save()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Se actualizó el usuario administrador a '.$_POST['usuario'], 'ok'
+            );
+        } else {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible cambiar el administrador de la empresa', 'error'
+            );
+        }
+        $this->redirect('/dte/contribuyentes/seleccionar');
+    }
+
+    /**
      * Acción que entrega el logo del contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2015-09-29
@@ -320,6 +454,10 @@ class Controller_Contribuyentes extends \Controller_App
             $this->Api->send('Contribuyente solicitado no existe', 404);
         $Contribuyente->config_ambiente_produccion_fecha;
         $Contribuyente->config_ambiente_produccion_numero;
+        $Contribuyente->config_email_intercambio_user;
+        $Contribuyente->config_extra_representante_rut;
+        $Contribuyente->config_extra_contador_rut;
+        $Contribuyente->config_extra_web;
         $this->Api->send($Contribuyente, 200, JSON_PRETTY_PRINT);
     }
 

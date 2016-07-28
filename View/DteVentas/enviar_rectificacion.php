@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_ventas/ver/<?=$periodo?>" title="Volver a la IEV del período <?=$periodo?>" class="pull-right"><span class="btn btn-default">Volver a la IEV <?=$periodo?></span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_ventas/ver/<?=$periodo?>" title="Volver a la IEV del período <?=$periodo?>">
+            Volver a la IEV <?=$periodo?>
+        </a>
+    </li>
+</ul>
 
 <h1>Rectificación IEV para el período <?=$periodo?></h1>
 <?php

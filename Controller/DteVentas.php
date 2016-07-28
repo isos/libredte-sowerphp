@@ -27,9 +27,9 @@ namespace website\Dte;
 /**
  * Controlador de ventas
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-12-25
+ * @version 2016-06-14
  */
-class Controller_DteVentas extends Controller_Libros
+class Controller_DteVentas extends Controller_Base_Libros
 {
 
     protected $config = [

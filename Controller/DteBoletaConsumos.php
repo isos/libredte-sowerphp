@@ -212,4 +212,33 @@ class Controller_DteBoletaConsumos extends \Controller_Maintainer
         $this->redirect('/dte/dte_boleta_consumos/listar'.$filterListar);
     }
 
+    /**
+     * Acción que actualiza el estado del envío del reporte de consumo de folios
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-02-14
+     */
+    public function solicitar_revision($dia)
+    {
+        $filterListar = !empty($_GET['listar']) ? base64_decode($_GET['listar']) : '';
+        $Emisor = $this->getContribuyente();
+        // obtener reporte enviado
+        $DteBoletaConsumo = new Model_DteBoletaConsumo($Emisor->rut, $dia, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteBoletaConsumo->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No existe el reporte de consumo de folios solicitado', 'error'
+            );
+            $this->redirect('/dte/dte_boleta_consumos/listar'.$filterListar);
+        }
+        try {
+            $DteBoletaConsumo->solicitarRevision($this->Auth->User->id);
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Se solicitó revisión del consumo de folios', 'ok'
+            );
+        } catch (\Exception $e) {
+            \sowerphp\core\Model_Datasource_Session::message($e->getMessage, 'error');
+        }
+        // redireccionar
+        $this->redirect('/dte/dte_boleta_consumos/listar'.$filterListar);
+    }
+
 }

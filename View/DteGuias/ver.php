@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_guias" title="Volver a libro de guías de despacho" class="pull-right"><span class="btn btn-default">Volver a libro guías</span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_guias" title="Volver a libro de guías de despacho" class="pull-right">
+            Volver a libro guías
+        </a>
+    </li>
+</ul>
 
 <h1>Libro de guías de despacho período <?=$Libro->periodo?></h1>
 <p>Esta es la página del libro de guías de despacho del período <?=$Libro->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>

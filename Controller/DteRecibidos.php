@@ -27,7 +27,7 @@ namespace website\Dte;
 /**
  * Controlador de dte recibidos
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2015-09-27
+ * @version 2016-06-12
  */
 class Controller_DteRecibidos extends \Controller_App
 {
@@ -35,7 +35,7 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite mostrar los documentos recibidos por el contribuyente
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-04
+     * @version 2016-05-25
      */
     public function listar($pagina = 1)
     {
@@ -53,6 +53,14 @@ class Controller_DteRecibidos extends \Controller_App
         $searchUrl = isset($_GET['search'])?('?search='.$_GET['search']):'';
         try {
             $documentos_total = $Emisor->countDocumentosRecibidos($filtros);
+            if (!empty($pagina)) {
+                $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
+                $filtros['offset'] = ($pagina-1)*$filtros['limit'];
+                $paginas = ceil($documentos_total/$filtros['limit']);
+                if ($pagina != 1 && $pagina > $paginas) {
+                    $this->redirect('/dte/'.$this->request->params['controller'].'/listar'.$searchUrl);
+                }
+            } else $paginas = 1;
             $documentos = $Emisor->getDocumentosRecibidos($filtros);
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
             \sowerphp\core\Model_Datasource_Session::message(
@@ -61,14 +69,6 @@ class Controller_DteRecibidos extends \Controller_App
             $documentos_total = 0;
             $documentos = [];
         }
-        if (!empty($pagina)) {
-            $filtros['limit'] = \sowerphp\core\Configure::read('app.registers_per_page');
-            $filtros['offset'] = ($pagina-1)*$filtros['limit'];
-            $paginas = ceil($documentos_total/$filtros['limit']);
-            if ($pagina != 1 && $pagina > $paginas) {
-                $this->redirect('/dte/'.$this->request->params['controller'].'/listar'.$searchUrl);
-            }
-        } else $paginas = 1;
         $this->set([
             'Emisor' => $Emisor,
             'documentos' => $documentos,
@@ -76,7 +76,7 @@ class Controller_DteRecibidos extends \Controller_App
             'paginas' => $paginas,
             'pagina' => $pagina,
             'search' => $filtros,
-            'tipos_dte' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
+            'tipos_dte' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
             'usuarios' => $Emisor->getListUsuarios(),
             'searchUrl' => $searchUrl,
         ]);
@@ -85,27 +85,31 @@ class Controller_DteRecibidos extends \Controller_App
     /**
      * Acción que permite agregar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-27
+     * @version 2016-06-15
      */
     public function agregar()
     {
         $Emisor = $this->getContribuyente();
         // asignar variables para la vista
         $this->set([
+            '_header_extra' => ['js'=>['/dte/js/dte.js']],
             'Emisor' => $Emisor,
-            'tipos_documentos' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
-            'iva_no_recuperables' => (new \website\Dte\Admin\Model_IvaNoRecuperables())->getList(),
-            'impuesto_adicionales' => (new \website\Dte\Admin\Model_ImpuestoAdicionales())->getList(),
+            'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
+            'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
+            'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
+            'iva_tasa' => \sasco\LibreDTE\Sii::getIVA(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
             $this->save();
+        $this->autoRender = false;
+        $this->render('DteRecibidos/agregar_modificar');
     }
 
     /**
      * Acción que permite editar un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-08
+     * @version 2016-06-03
      */
     public function modificar($emisor, $dte, $folio)
     {
@@ -118,29 +122,27 @@ class Controller_DteRecibidos extends \Controller_App
             );
             $this->redirect('/dte/dte_recibidos/listar');
         }
-        if ($DteRecibido->intercambio) {
-            \sowerphp\core\Model_Datasource_Session::message(
-                'DTE recibido no puede ser modificado ya que fue recibido a través de un intercambio', 'error'
-            );
-            $this->redirect('/dte/dte_recibidos/listar');
-        }
         // agregar variables para la vista
         $this->set([
+            '_header_extra' => ['js'=>['/dte/js/dte.js']],
             'Emisor' => $Emisor,
             'DteRecibido' => $DteRecibido,
-            'tipos_documentos' => (new \website\Dte\Admin\Model_DteTipos())->getList(true),
-            'iva_no_recuperables' => (new \website\Dte\Admin\Model_IvaNoRecuperables())->getList(),
-            'impuesto_adicionales' => (new \website\Dte\Admin\Model_ImpuestoAdicionales())->getList(),
+            'tipos_documentos' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
+            'iva_no_recuperables' => (new \website\Dte\Admin\Mantenedores\Model_IvaNoRecuperables())->getList(),
+            'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getList(),
+            'iva_tasa' => \sasco\LibreDTE\Sii::getIVA(),
         ]);
         // procesar formulario si se pasó
         if (isset($_POST['submit']))
             $this->save();
+        $this->autoRender = false;
+        $this->render('DteRecibidos/agregar_modificar');
     }
 
     /**
      * Método que agrega o modifica un DTE recibido
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-28
+     * @version 2016-06-17
      */
     private function save()
     {
@@ -158,16 +160,20 @@ class Controller_DteRecibidos extends \Controller_App
         list($emisor, $dv) = explode('-', str_replace('.', '', $_POST['emisor']));
         $DteRecibido = new Model_DteRecibido($emisor, $_POST['dte'], (int)$_POST['folio'], (int)$Emisor->config_ambiente_en_certificacion);
         $DteRecibido->receptor = $Emisor->rut;
-        $DteRecibido->tasa = (int)$_POST['tasa'];
+        $DteRecibido->tasa = !empty($_POST['neto']) ? (int)$_POST['tasa'] : 0;
         $DteRecibido->fecha = $_POST['fecha'];
         $DteRecibido->exento = !empty($_POST['exento']) ? $_POST['exento'] : null;
         $DteRecibido->neto = !empty($_POST['neto']) ? $_POST['neto'] : null;
-        $DteRecibido->iva = round((int)$DteRecibido->neto * ($DteRecibido->tasa/100));
+        $DteRecibido->iva = !empty($_POST['iva']) ? $_POST['iva'] : round((int)$DteRecibido->neto * ($DteRecibido->tasa/100));
         $DteRecibido->total = (int)$DteRecibido->exento + (int)$DteRecibido->neto + $DteRecibido->iva;
         $DteRecibido->usuario = $this->Auth->User->id;
         // iva uso común, no recuperable e impuesto adicional
         $DteRecibido->iva_uso_comun = !empty($_POST['iva_uso_comun']) ? $_POST['iva_uso_comun'] : null;
-        $DteRecibido->iva_no_recuperable = !empty($_POST['iva_no_recuperable']) ? $_POST['iva_no_recuperable'] : null;
+        if ($DteRecibido->iva) {
+            $DteRecibido->iva_no_recuperable = !empty($_POST['iva_no_recuperable']) ? $_POST['iva_no_recuperable'] : null;
+        } else {
+            $DteRecibido->iva_no_recuperable = null;
+        }
         if (!empty($_POST['impuesto_adicional']) and !empty($_POST['impuesto_adicional_tasa'])) {
             $DteRecibido->impuesto_adicional = $_POST['impuesto_adicional'];
             $DteRecibido->impuesto_adicional_tasa = $_POST['impuesto_adicional_tasa'];
@@ -181,6 +187,7 @@ class Controller_DteRecibidos extends \Controller_App
         $DteRecibido->monto_activo_fijo = !empty($_POST['monto_activo_fijo']) ? $_POST['monto_activo_fijo'] : null;
         $DteRecibido->monto_iva_activo_fijo = !empty($_POST['monto_iva_activo_fijo']) ? $_POST['monto_iva_activo_fijo'] : null;
         $DteRecibido->iva_no_retenido = !empty($_POST['iva_no_retenido']) ? $_POST['iva_no_retenido'] : null;
+        $DteRecibido->periodo = !empty($_POST['periodo']) ? $_POST['periodo'] : null;
         // si el DTE es de producción y es electrónico entonces se consultará su
         // estado antes de poder guardar, esto evitará agregar documentos que no
         // han sido recibidos en el SII o sus datos son incorrectos
@@ -200,7 +207,7 @@ class Controller_DteRecibidos extends \Controller_App
                     'No se pudo obtener el estado del DTE.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 'error'
                 );
                 return;
-            } else if (is_string($estado)) {
+            } else if (in_array($estado['ESTADO'], ['DNK', 'FAU', 'FNA', 'EMP'])) {
                 \sowerphp\core\Model_Datasource_Session::message(
                     'Estado DTE: '.$estado, 'error'
                 );
@@ -219,6 +226,63 @@ class Controller_DteRecibidos extends \Controller_App
                 'No fue posible guardar el DTE: '.$e->getMessage(), 'error'
             );
         }
+    }
+
+    /**
+     * Acción que permite eliminar un DTE recibido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-11
+     */
+    public function eliminar($emisor, $dte, $folio)
+    {
+        $Emisor = $this->getContribuyente();
+        $DteRecibido = new Model_DteRecibido($emisor, $dte, $folio, (int)$Emisor->config_ambiente_en_certificacion);
+        if (!$DteRecibido->exists()) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible eliminar, el DTE recibido solicitado no existe', 'warning'
+            );
+        } else {
+            $DteRecibido->delete();
+            \sowerphp\core\Model_Datasource_Session::message(
+                'Se eliminó el DTE T'.$DteRecibido->dte.'F'.$DteRecibido->folio.' recibido de '.\sowerphp\app\Utility_Rut::addDV($DteRecibido->emisor), 'ok'
+            );
+        }
+        $this->redirect('/dte/dte_recibidos/listar');
+    }
+
+    /**
+     * Acción de la API que permite obtener la información de un documento recibido
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-07-03
+     */
+    public function _api_info_GET($emisor, $dte, $folio, $receptor)
+    {
+        if ($this->Auth->User) {
+            $User = $this->Auth->User;
+        } else {
+            $User = $this->Api->getAuthUser();
+            if (is_string($User)) {
+                $this->Api->send($User, 401);
+            }
+        }
+        $Receptor = new Model_Contribuyente($receptor);
+        if (!$Receptor->exists()) {
+            $this->Api->send('Receptor no existe', 404);
+        }
+        if (!$Receptor->usuarioAutorizado($User, '/dte/dte_emitidos/ver')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
+        }
+        if (strpos($emisor, '-')) {
+            $emisor = \sowerphp\app\Utility_Rut::normalizar($emisor);
+        }
+        $DteRecibido = new Model_DteRecibido((int)$emisor, (int)$dte, (int)$folio, (int)$Receptor->config_ambiente_en_certificacion);
+        if (!$DteRecibido->exists()) {
+            $this->Api->send('No existe el documento recibido solicitado T'.$dte.'F'.$folio, 404);
+        }
+        if ($DteRecibido->receptor!=$Receptor->rut) {
+            $this->Api->send('RUT del receptor no corresponde al DTE T'.$dte.'F'.$folio, 400);
+        }
+        $this->Api->send($DteRecibido, 200, JSON_PRETTY_PRINT);
     }
 
 }

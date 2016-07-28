@@ -27,17 +27,24 @@ namespace website\Dte\Admin;
 /**
  * Modelo para generar respaldo de datos de un contribuyente
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-01-29
+ * @version 2016-06-04
  */
 class Model_Respaldo
 {
 
     private $tablas = [
+        'cobranza' => [
+            'rut' => 'emisor',
+        ],
         'contribuyente' => [
             'rut' => 'rut',
         ],
         'contribuyente_config' => [
             'rut' => 'contribuyente',
+        ],
+        'dte_boleta_consumo' => [
+            'rut' => 'emisor',
+            'archivos' => ['xml'],
         ],
         'dte_caf' => [
             'rut' => 'emisor',
@@ -93,6 +100,21 @@ class Model_Respaldo
         'dte_venta' => [
             'rut' => 'emisor',
             'archivos' => ['xml'],
+        ],
+        'item' => [
+            'rut' => 'contribuyente',
+        ],
+        'item_clasificacion' => [
+            'rut' => 'contribuyente',
+        ],
+        'lce_asiento' => [
+            'rut' => 'contribuyente',
+        ],
+        'lce_asiento_detalle' => [
+            'rut' => 'contribuyente',
+        ],
+        'lce_cuenta' => [
+            'rut' => 'contribuyente',
         ],
     ]; ///< Información de las tabla que se exportarán
 

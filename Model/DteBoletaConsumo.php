@@ -31,7 +31,7 @@ namespace website\Dte;
  * @author SowerPHP Code Generator
  * @version 2016-02-14 05:05:56
  */
-class Model_DteBoletaConsumo extends \Model_App
+class Model_DteBoletaConsumo extends Model_Base_Envio
 {
 
     // Datos para la conexión a la base de datos
@@ -236,16 +236,6 @@ class Model_DteBoletaConsumo extends \Model_App
             'SecEnvio' => $this->secuencia + 1,
         ]);
         return $ConsumoFolio;
-    }
-
-    /**
-     * Método que entrega el emisor del consumo de folios
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-14
-     */
-    public function getEmisor()
-    {
-        return (new Model_Contribuyentes())->get($this->emisor);
     }
 
 }

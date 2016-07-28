@@ -1,4 +1,22 @@
-<a href="<?=$_base?>/dte/dte_intercambios" title="Volver a la bandeja de intercambio entre contribuyentes" class="pull-right"><span class="btn btn-default">Volver a bandeja intercambio</span></a>
+<ul class="nav nav-pills pull-right">
+<?php if ($DteIntercambio->codigo!=1): ?>
+    <li>
+        <a href="<?=$_base?>/dte/dte_intercambios/ver/<?=($DteIntercambio->codigo-1)?>" title="Ver intercambio N° <?=($DteIntercambio->codigo-1)?>">
+            Anterior
+        </a>
+    </li>
+<?php endif; ?>
+    <li>
+        <a href="<?=$_base?>/dte/dte_intercambios/ver/<?=($DteIntercambio->codigo+1)?>" title="Ver intercambio N° <?=($DteIntercambio->codigo+1)?>">
+            Siguiente
+        </a>
+    </li>
+    <li>
+        <a href="<?=$_base?>/dte/dte_intercambios/listar" title="Volver a la bandeja de intercambio entre contribuyentes">
+            Volver a bandeja intercambio
+        </a>
+    </li>
+</ul>
 
 <h1>Intercambio N° <?=$DteIntercambio->codigo?></h1>
 <p>Esta es la página del intercambio N° <?=$DteIntercambio->codigo?> de la empresa <?=$Emisor->razon_social?>.</p>
@@ -14,8 +32,8 @@ $(function() {
 
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Email recibido</a></li>
-        <li role="presentation"><a href="#documentos" aria-controls="documentos" role="tab" data-toggle="tab">Documentos</a></li>
+        <li role="presentation" class="active"><a href="#email" aria-controls="email" role="tab" data-toggle="tab">Email recibido y PDF</a></li>
+        <li role="presentation"><a href="#documentos" aria-controls="documentos" role="tab" data-toggle="tab">Recepción y acuse de recibo</a></li>
     </ul>
     <div class="tab-content">
 
@@ -33,7 +51,7 @@ new \sowerphp\general\View_Helper_Table([
 ?>
 
 <p><strong>Asunto</strong>: <?=$DteIntercambio->asunto?></p>
-<p><?=str_replace("\n", '</p><p>', strip_tags(base64_decode($DteIntercambio->mensaje)))?></p>
+<p><?=str_replace("\n", '<br/>', strip_tags(base64_decode($DteIntercambio->mensaje)))?></p>
 <?php if ($DteIntercambio->mensaje_html) : ?>
 <a class="btn btn-default btn-lg btn-block" href="javascript:__.popup('<?=$_base?>/dte/dte_intercambios/html/<?=$DteIntercambio->codigo?>', 800, 600)" role="button">
     <span class="fa fa-html5" style="font-size:24px"></span>
@@ -72,6 +90,9 @@ new \sowerphp\general\View_Helper_Table([
 <?php
 $f = new \sowerphp\general\View_Helper_Form();
 echo $f->begin(['action'=>$_base.'/dte/dte_intercambios/responder/'.$DteIntercambio->codigo, 'onsubmit'=>'Form.check() && Form.checkSend()']);
+$f->setColsLabel(3);
+echo '<div class="row">',"\n";
+echo '<div class="col-md-6">',"\n";
 echo $f->input([
     'name' => 'NmbContacto',
     'label' => 'Contacto',
@@ -81,7 +102,7 @@ echo $f->input([
 ]);
 echo $f->input([
     'name' => 'MailContacto',
-    'label' => 'Email contacto',
+    'label' => 'Correo',
     'value' => substr($_Auth->User->email, 0, 80),
     'attr' => 'maxlength="80"',
     'check' => 'notempty email',
@@ -94,37 +115,57 @@ echo $f->input([
     'attr' => 'maxlength="80"',
     'help' => 'Lugar donde se recibieron los productos o prestaron los servicios',
 ]);
+echo '</div>',"\n";
+echo '<div class="col-md-6">',"\n";
 echo $f->input([
     'name' => 'responder_a',
-    'label' => 'Responder a',
+    'label' => 'Enviar a',
     'value' => $DteIntercambio->de,
     'check' => 'notempty email',
 ]);
-$estado = $EnvioDte->getEstadoValidacion(['RutReceptor'=>$Emisor->rut.'-'.$Emisor->dv]);
+$estado_enviodte = $EnvioDte->getEstadoValidacion(['RutReceptor'=>$Emisor->rut.'-'.$Emisor->dv]);
 echo $f->input([
     'type' => 'select',
     'name' => 'EstadoRecepEnv',
-    'label' => 'Estado envío',
+    'label' => 'Estado',
     'options' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'],
-    'value' => $estado,
+    'value' => $estado_enviodte,
     'check' => 'notempty',
     'attr' => 'onchange="document.getElementById(\'RecepEnvGlosaField\').value=this.selectedOptions[0].textContent"'
 ]);
 echo $f->input([
     'name' => 'RecepEnvGlosa',
-    'label' => 'Glosa estado envío',
-    'value' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'][$estado],
+    'label' => 'Glosa',
+    'value' => \sasco\LibreDTE\Sii\RespuestaEnvio::$estados['envio'][$estado_enviodte],
     'check' => 'notempty',
+    'attr' => 'maxlength="256"',
+    'help' => 'Detalles del estado del envío (sobre todo si se está rechazando)',
 ]);
+echo '</div>',"\n";
+echo '</div>',"\n";
 
 // Recepción de envío
 $RecepcionDTE = [];
 foreach ($Documentos as $Dte) {
-    $estado_sii = !isset($DteIntercambio->estado) ? $Dte->getEstado($Firma) : ['GLOSA'=>''];
-    $estado = $Dte->getEstadoValidacion([
-        'RUTEmisor' => $DteIntercambio->getEmisor()->rut.'-'.$DteIntercambio->getEmisor()->dv,
-        'RUTRecep'=>$Emisor->rut.'-'.$Emisor->dv
-    ]);
+    $DteRecibido = new \website\Dte\Model_DteRecibido(substr($Dte->getEmisor(), 0, -2), $Dte->getTipo(), $Dte->getFolio(), (int)$Dte->getCertificacion());
+    // si el enviodte no está recibido no se reciben los documentos
+    if ($estado_enviodte) {
+        $estado_sii = '';
+        $estado = 99;
+    }
+    // si ya está recibido el documento se marca con estado repetido
+    else if ($DteRecibido->exists()) {
+        $estado_sii = '';
+        $estado = 4;
+    }
+    // si no está recibido se trata de determinar su estado
+    else {
+        $estado_sii = !isset($DteIntercambio->estado) ? $Dte->getEstado($Firma) : ['GLOSA'=>''];
+        $estado = $Dte->getEstadoValidacion([
+            'RUTEmisor' => $DteIntercambio->getEmisor()->rut.'-'.$DteIntercambio->getEmisor()->dv,
+            'RUTRecep'=>$Emisor->rut.'-'.$Emisor->dv
+        ]);
+    }
     $RecepcionDTE[] = [
         'TipoDTE' => $Dte->getTipo(),
         'Folio' => $Dte->getFolio(),
@@ -138,11 +179,12 @@ foreach ($Documentos as $Dte) {
         'acuse' => (int)(bool)!$estado,
     ];
 }
+$f->setStyle(false);
 echo $f->input([
     'type' => 'js',
     'id' => 'documentos',
     'label' => 'Documentos',
-    'titles' => ['Documento', 'Folio', 'Total', 'Estado SII', 'Estado', 'Glosa', 'Acuse'],
+    'titles' => ['DTE', 'Folio', 'Total', 'Estado SII', 'Estado', 'Glosa', 'Acuse'],
     'inputs' => [
         ['name'=>'TipoDTE', 'attr'=>'readonly="readonly" size="3"'],
         ['name'=>'Folio', 'attr'=>'readonly="readonly" size="10"'],
@@ -156,10 +198,16 @@ echo $f->input([
         ['name'=>'acuse', 'type'=>'select', 'options'=>[1=>'Si', 0=>'No'], 'attr'=>'style="width:5em"'],
     ],
     'values' => $RecepcionDTE,
-    'help' => 'Si el estado es diferente a "DTE Recibido OK" entonces el documento será rechazado (no hay aceptado con reparos). Aquellos documentos con acuse de recibo serán agregados a los documentos recibidos de '.$Emisor->razon_social
 ]);
-
-echo $f->end('Generar y enviar respuesta del intercambio');
+echo '<p>Si el estado es diferente a "DTE Recibido OK" entonces el documento será rechazado (no hay aceptado con reparos). Aquellos documentos con acuse de recibo serán agregados a los documentos recibidos de ',$Emisor->razon_social,'</p>',"\n";
+echo '<div class="text-center">';
+echo $f->input([
+    'type' => 'submit',
+    'name' => 'submit',
+    'value' => 'Generar y enviar respuesta del intercambio',
+]);
+echo '</div>';
+echo $f->end(false);
 ?>
 </div>
 <!-- FIN DOCUMENTOS -->

@@ -31,7 +31,7 @@ namespace website\Dte;
  * @author SowerPHP Code Generator
  * @version 2015-09-25 21:47:15
  */
-class Model_DteVenta extends Model_Libro
+class Model_DteVenta extends Model_Base_Libro
 {
 
     // Datos para la conexión a la base de datos
@@ -164,16 +164,6 @@ class Model_DteVenta extends Model_Libro
         'impuesto_monto' => 'MntImp',
         'total' => 'MntTotal'
     ]; ///< Columnas del detalle del libro de ventas
-
-    /**
-     * Método que entrega el objeto del emisor del libro
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-12
-     */
-    public function getEmisor()
-    {
-        return (new Model_Contribuyentes())->get($this->emisor);
-    }
 
     /**
      * Método que entrega el resumen real (de los detalles registrados) del

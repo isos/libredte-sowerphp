@@ -70,7 +70,7 @@ class Controller_Documentos extends \Controller_App
         // verificar que se hayan pasado los índices básicos
         foreach (['emisor', 'dte', 'folio', 'fecha', 'total'] as $key) {
             if (!isset($this->Api->data[$key]))
-                $this->Api->send('Falta índice/variable '.$key.' por POST', 500);
+                $this->Api->send('Falta índice/variable '.$key.' por POST', 400);
         }
         // verificar si el emisor existe
         $Emisor = new Model_Contribuyente($this->Api->data['emisor']);
@@ -84,7 +84,7 @@ class Controller_Documentos extends \Controller_App
         }
         // verificar que coincida fecha de emisión y monto total del DTE
         if ($DteEmitido->fecha!=$this->Api->data['fecha'] or $DteEmitido->total!=$this->Api->data['total']) {
-            $this->Api->send('DTE existe, pero fecha y/o monto no coinciden con los registrados', 501);
+            $this->Api->send('DTE existe, pero fecha y/o monto no coinciden con los registrados', 409);
         }
         // enviar DteEmitido
         return $DteEmitido;
@@ -99,7 +99,7 @@ class Controller_Documentos extends \Controller_App
     {
         // asignar variables para el formulario
         $this->set([
-            'dtes' => (new \website\Dte\Admin\Model_DteTipos())->getList(),
+            'dtes' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(),
             'dte' => isset($_POST['dte']) ? $_POST['dte'] : $dte,
         ]);
         // si se solicitó un documento se busca
@@ -160,7 +160,7 @@ class Controller_Documentos extends \Controller_App
      * enviado al SII. Luego se debe usar la función generar de la API para
      * generar el DTE final y enviarlo al SII.
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-03-19
+     * @version 2016-06-27
      */
     public function _api_emitir_POST()
     {
@@ -169,26 +169,42 @@ class Controller_Documentos extends \Controller_App
         if (is_string($User)) {
             $this->Api->send($User, 401);
         }
+        // definir formato de los datos que se están usando como entrada
+        // y si es diferente a JSON se busca un parser para poder cargar los
+        // datos a un arreglo de PHP (formato JSON)
+        $formato = !empty($_GET['formato'])?$_GET['formato']:'json';
+        if ($formato!='json') {
+            $parser = \sowerphp\core\Utility_Inflector::camelize($formato);
+            $class = '\sasco\LibreDTE\Sii\Dte\Formatos\\'.$parser;
+            if (!class_exists($class)) {
+                $this->Api->send('Formato '.$formato.' no es válido como entrada para datos del DTE', 400);
+            }
+            try {
+                $this->Api->data = (new $class())->toArray(base64_decode($this->Api->data));
+            } catch (\Exception $e) {
+                $this->Api->send($e->getMessage(), 500);
+            }
+        }
         // verificar datos del DTE pasados
         if (!is_array($this->Api->data)) {
-            $this->Api->send('Debe enviar el DTE como un arreglo', 500);
+            $this->Api->send('Debe enviar el DTE como un objeto JSON', 400);
         }
         // buscar emisor del DTE y verificar que usuario tenga permisos para
         // trabajar con el emisor
         if (!isset($this->Api->data['Encabezado']['Emisor']['RUTEmisor'])) {
-            $this->Api->send('Debe especificar RUTEmisor', 500);
+            $this->Api->send('Debe especificar RUTEmisor en el objeto JSON', 404);
         }
         $Emisor = new Model_Contribuyente($this->Api->data['Encabezado']['Emisor']['RUTEmisor']);
         if (!$Emisor->usuario) {
-            $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
+            $this->Api->send('Contribuyente no está registrado en la aplicación', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/emitir')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        if (!$Emisor->usuarioAutorizado($User, '/dte/documentos/emitir')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         // guardar datos del receptor
         $Receptor = $this->guardarReceptor($this->Api->data['Encabezado']['Receptor']);
         if (!$Receptor) {
-            $this->Api->send('No fue posible guardar al receptor', 500);
+            $this->Api->send('No fue posible guardar los datos del receptor', 507);
         }
         // construir arreglo con datos del DTE
         $default = [
@@ -216,7 +232,7 @@ class Controller_Documentos extends \Controller_App
             $dte['Encabezado']['IdDoc']['TipoDTE'], $dte['Detalle']
         );
         if (!$Emisor->documentoAutorizado($dte['Encabezado']['IdDoc']['TipoDTE'])) {
-            $this->Api->send('No está autorizado a emitir el tipo de documento '.$dte['Encabezado']['IdDoc']['TipoDTE'], 401);
+            $this->Api->send('No está autorizado a emitir el tipo de documento '.$dte['Encabezado']['IdDoc']['TipoDTE'], 403);
         }
         // crear objeto Dte y documento temporal
         $Dte = new \sasco\LibreDTE\Sii\Dte($dte, isset($_GET['normalizar'])?(bool)$_GET['normalizar']:true);
@@ -230,24 +246,27 @@ class Controller_Documentos extends \Controller_App
         $DteTmp->fecha = $resumen['FchDoc'];
         $DteTmp->total = $resumen['MntTotal'];
         try {
-            $DteTmp->save();
-            return [
-                'emisor' => $DteTmp->emisor,
-                'receptor' => $DteTmp->receptor,
-                'dte' => $DteTmp->dte,
-                'codigo' => $DteTmp->codigo,
-            ];
+            if ($DteTmp->save()) {
+                return [
+                    'emisor' => $DteTmp->emisor,
+                    'receptor' => $DteTmp->receptor,
+                    'dte' => $DteTmp->dte,
+                    'codigo' => $DteTmp->codigo,
+                ];
+            } else {
+                $this->Api->send('No fue posible guardar el DTE temporal', 507);
+            }
         } catch (\sowerphp\core\Exception_Model_Datasource_Database $e) {
-            $this->Api->send('No fue posible guardar el DTE temporal: '.$e->getMessage(), 500);
+            $this->Api->send('No fue posible guardar el DTE temporal: '.$e->getMessage(), 507);
         }
     }
 
     /**
      * Acción para mostrar página de emisión de DTE
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-01-02
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-30
      */
-    public function emitir($referencia_dte = null, $referencia_folio = null)
+    public function emitir($referencia_dte = null, $referencia_folio = null, $dte_defecto = null, $referencia_codigo = '', $referencia_razon = '')
     {
         $Emisor = $this->getContribuyente();
         if ($referencia_dte and $referencia_folio) {
@@ -263,6 +282,12 @@ class Controller_Documentos extends \Controller_App
             $Comunas = new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas();
             $DteEmisor['CmnaOrigen'] = $Comunas->getComunaByName($DteEmisor['CmnaOrigen']);
             $DteReceptor['CmnaRecep'] = $Comunas->getComunaByName($DteReceptor['CmnaRecep']);
+            if (empty($DteReceptor['GiroRecep'])) {
+                $DteReceptor['GiroRecep'] = $DteEmitido->getReceptor()->giro;
+            }
+            if (empty($DteReceptor['CorreoRecep'])) {
+                $DteReceptor['CorreoRecep'] = $DteEmitido->getReceptor()->email;
+            }
             $this->set([
                 'DteEmitido' => $DteEmitido,
                 'DteEmisor' => $DteEmisor,
@@ -270,22 +295,28 @@ class Controller_Documentos extends \Controller_App
             ]);
         }
         $this->set([
-            '_header_extra' => ['js'=>['/dte/js/dte.js'], 'css'=>['/dte/css/dte.css']],
+            '_header_extra' => ['js'=>['/dte/js/dte.js', '/js/typeahead.bundle.min.js', '/js/js.js'], 'css'=>['/dte/css/dte.css', '/css/typeahead.css']],
             'Emisor' => $Emisor,
-            'actividades_economicas' => (new \website\Sistema\General\Model_ActividadEconomicas())->getList(),
+            'actividades_economicas' => $Emisor->getListActividades(),
             'comunas' => (new \sowerphp\app\Sistema\General\DivisionGeopolitica\Model_Comunas())->getList(),
             'tasa' => \sasco\LibreDTE\Sii::getIVA(),
-            'tipos_dte' => $Emisor->getDocumentosAutorizados(),
-            'tipos_referencia' => (new \website\Dte\Admin\Model_DteReferenciaTipos())->getList(),
+            'tipos_dte_autorizados' => $Emisor->getDocumentosAutorizados(),
+            'tipos_dte' => (new \website\Dte\Admin\Mantenedores\Model_DteTipos())->getList(true),
+            'tipos_referencia' => (new \website\Dte\Admin\Mantenedores\Model_DteReferenciaTipos())->getList(),
             'IndTraslado' => $this->IndTraslado,
-
+            'codigos' => (new \website\Dte\Admin\Model_Itemes())->getCodigos($Emisor->rut),
+            'impuesto_adicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getListContribuyente($Emisor->config_extra_impuestos_adicionales),
+            'ImpuestoAdicionales' => (new \website\Dte\Admin\Mantenedores\Model_ImpuestoAdicionales())->getObjectsContribuyente($Emisor->config_extra_impuestos_adicionales),
+            'dte_defecto' => $dte_defecto ? $dte_defecto : $Emisor->config_emision_dte_defecto,
+            'referencia_codigo' => (int)$referencia_codigo,
+            'referencia_razon' => substr(urldecode($referencia_razon), 0, 90),
         ]);
     }
 
     /**
      * Acción para generar y mostrar previsualización de emisión de DTE
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
-     * @version 2016-02-13
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
+     * @version 2016-06-24
      */
     public function previsualizacion()
     {
@@ -348,6 +379,10 @@ class Controller_Documentos extends \Controller_App
                     'TipoDTE' => $_POST['TpoDoc'],
                     'Folio' => 0, // en previsualización no se asigna folio
                     'FchEmis' => $_POST['FchEmis'],
+                    'FmaPago' => !empty($_POST['FmaPago']) ? $_POST['FmaPago'] : false,
+                    'FchCancel' => $_POST['FchVenc'] < $_POST['FchEmis'] ? $_POST['FchVenc'] : false,
+                    'TermPagoGlosa' => !empty($_POST['TermPagoGlosa']) ? $_POST['TermPagoGlosa'] : false,
+                    'FchVenc' => $_POST['FchVenc'] > $_POST['FchEmis'] ? $_POST['FchVenc'] : false,
                 ],
                 'Emisor' => [
                     'RUTEmisor' => $Emisor->rut.'-'.$Emisor->dv,
@@ -370,6 +405,29 @@ class Controller_Documentos extends \Controller_App
                 ],
             ],
         ];
+        // agregar pagos programados si es venta a crédito
+        if ($_POST['FmaPago']==2) {
+            $dte['Encabezado']['IdDoc']['MntPagos'] = [];
+            // si no hay pagos explícitos se copia la fecha de vencimiento y el
+            // monto total se determinará en el proceso de normalización
+            if (empty($_POST['FchPago'])) {
+                $dte['Encabezado']['IdDoc']['MntPagos'][] = [
+                    'FchPago' => $_POST['FchVenc'],
+                    'GlosaPagos' => 'Fecha de pago igual al vencimiento',
+                ];
+            }
+            // hay montos a pagar programados de forma explícita
+            else {
+                $n_pagos = count($_POST['FchPago']);
+                for ($i=0; $i<$n_pagos; $i++) {
+                    $dte['Encabezado']['IdDoc']['MntPagos'][] = [
+                        'FchPago' => $_POST['FchPago'][$i],
+                        'MntPago' => $_POST['MntPago'][$i],
+                        'GlosaPagos' => !empty($_POST['GlosaPagos'][$i]) ? $_POST['GlosaPagos'][$i] : false,
+                    ];
+                }
+            }
+        }
         // agregar datos de traslado si es guía de despacho
         if ($dte['Encabezado']['IdDoc']['TipoDTE']==52) {
             $dte['Encabezado']['IdDoc']['IndTraslado'] = $_POST['IndTraslado'];
@@ -395,21 +453,43 @@ class Controller_Documentos extends \Controller_App
             $detalle = [];
             // código del item
             if (!empty($_POST['VlrCodigo'][$i])) {
+                if (!empty($_POST['TpoCodigo'][$i])) {
+                    $TpoCodigo = $_POST['TpoCodigo'][$i];
+                } else {
+                    $Item = (new \website\Dte\Admin\Model_Itemes())->get($Emisor->rut, $_POST['VlrCodigo'][$i]);
+                    $TpoCodigo = $Item->codigo_tipo ? $Item->codigo_tipo : 'INT1';
+                }
                 $detalle['CdgItem'] = [
-                    'TpoCodigo' => !empty($_POST['TpoCodigo'][$i]) ? $_POST['TpoCodigo'][$i] : 'INT1',
+                    'TpoCodigo' => $TpoCodigo,
                     'VlrCodigo' => $_POST['VlrCodigo'][$i],
                 ];
             }
             // otros datos
-            $datos = ['IndExe', 'NmbItem', 'DscItem', 'QtyItem', 'UnmdItem', 'PrcItem'];
+            $datos = ['IndExe', 'NmbItem', 'DscItem', 'QtyItem', 'UnmdItem', 'PrcItem', 'CodImpAdic'];
             foreach ($datos as $d) {
-                if (!empty($_POST[$d][$i])) {
-                    $detalle[$d] = $_POST[$d][$i];
+                if (isset($_POST[$d][$i])) {
+                    $valor = trim($_POST[$d][$i]);
+                    if (!empty($valor)) {
+                        $detalle[$d] = $valor;
+                    }
                 }
             }
-            // si es boleta y el item no es exento se le agrega el IVA al precio
+            // si es boleta se y el item no es exento se le agrega el IVA al precio y el impuesto adicional si existe
             if ($dte['Encabezado']['IdDoc']['TipoDTE']==39 and (!isset($detalle['IndExe']) or !$detalle['IndExe'])) {
-                $detalle['PrcItem'] += round($detalle['PrcItem'] * (\sasco\LibreDTE\Sii::getIVA()/100));
+                // IVA
+                $iva = round($detalle['PrcItem'] * (\sasco\LibreDTE\Sii::getIVA()/100));
+                // impuesto adicional TODO: no se permiten impuestos adicionales en boletas por el momento
+                if (!empty($detalle['CodImpAdic'])) {
+                    \sowerphp\core\Model_Datasource_Session::message(
+                        'No es posible generar una boleta que tenga impuestos adicionales', 'error'
+                    );
+                    $this->redirect('/dte/documentos/emitir');
+                    //$tasa = $_POST['impuesto_adicional_tasa_'.$detalle['CodImpAdic']];
+                    //$adicional = round($detalle['PrcItem'] * ($_POST['impuesto_adicional_tasa_'.$detalle['CodImpAdic']]/100));
+                    //unset($detalle['CodImpAdic']);
+                } else $adicional = 0;
+                // agregar al precio
+                $detalle['PrcItem'] += $iva + $adicional;
             }
             // descuento
             if (!empty($_POST['ValorDR'][$i]) and !empty($_POST['TpoValor'][$i])) {
@@ -424,6 +504,30 @@ class Controller_Documentos extends \Controller_App
             if (empty($detalle['IndExe'])) $n_itemAfecto++;
             else $n_itemExento++;
         }
+        // si hay impuestos adicionales se copian los datos a totales para que se
+        // calculen los montos
+        $CodImpAdic = [];
+        foreach ($dte['Detalle'] as $d) {
+            if (!empty($d['CodImpAdic']) and !in_array($d['CodImpAdic'], $CodImpAdic)) {
+                $CodImpAdic[] = $d['CodImpAdic'];
+            }
+        }
+        $ImptoReten = [];
+        foreach ($CodImpAdic as $codigo) {
+            if (!empty($_POST['impuesto_adicional_tasa_'.$codigo])) {
+                $ImptoReten[] = [
+                    'TipoImp' => $codigo,
+                    'TasaImp' => $_POST['impuesto_adicional_tasa_'.$codigo],
+                ];
+            }
+        }
+        if ($ImptoReten) {
+            $dte['Encabezado']['Totales']['ImptoReten'] = $ImptoReten;
+        }
+        // si la empresa es constructora se marca para obtener el cŕedito del 65%
+        /*if ($Emisor->config_extra_constructora and in_array($dte['Encabezado']['IdDoc']['TipoDTE'], [33, 52, 56, 61])) {
+            $dte['Encabezado']['Totales']['CredEC'] = true;
+        }*/
         // agregar descuento globales
         if (!empty($_POST['ValorDR_global']) and !empty($_POST['TpoValor_global'])) {
             $dte['DscRcgGlobal'] = [];
@@ -465,24 +569,37 @@ class Controller_Documentos extends \Controller_App
             );
             $this->redirect('/dte/documentos/emitir');
         }
-        $DteTmp = new Model_DteTmp(
-            $response['body']['emisor'],
-            $response['body']['receptor'],
-            $response['body']['dte'],
-            $response['body']['codigo']
-        );
-        $Dte = new \sasco\LibreDTE\Sii\Dte($dte);
-        $this->set([
-            'resumen' => $Dte->getResumen(),
-            'DteTmp' => $DteTmp,
-        ]);
+        if (empty($response['body']['emisor']) or empty($response['body']['receptor']) or empty($response['body']['dte']) or empty($response['body']['codigo'])) {
+            \sowerphp\core\Model_Datasource_Session::message(
+                'No fue posible generar el documento de previsualización', 'error'
+            );
+            $this->redirect('/dte/documentos/emitir');
+        }
+        // enviar DTE automáticaente sin previsualizar
+        if ($Emisor->config_sii_envio_automatico) {
+            $this->redirect('/dte/documentos/generar/'.$response['body']['receptor'].'/'.$response['body']['dte'].'/'.$response['body']['codigo']);
+        }
+        // mostrar previsualización y botón para envío manual
+        else {
+            $DteTmp = new Model_DteTmp(
+                (int)$response['body']['emisor'],
+                (int)$response['body']['receptor'],
+                (int)$response['body']['dte'],
+                $response['body']['codigo']
+            );
+            $Dte = new \sasco\LibreDTE\Sii\Dte($dte);
+            $this->set([
+                'resumen' => $Dte->getResumen(),
+                'DteTmp' => $DteTmp,
+            ]);
+        }
     }
 
     /**
      * Función de la API que permite emitir un DTE a partir de un documento
      * temporal, asignando folio, firmando y enviando al SII
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-02-13
+     * @version 2016-07-03
      */
     public function _api_generar_POST()
     {
@@ -493,27 +610,27 @@ class Controller_Documentos extends \Controller_App
         }
         // verificar datos del DTE pasados
         if (!is_array($this->Api->data)) {
-            $this->Api->send('Debe enviar los datos del DTE temporal como arreglo', 500);
+            $this->Api->send('Debe enviar los datos del DTE temporal como objeto', 400);
         }
         // buscar datos mínimos
         foreach (['emisor', 'receptor', 'dte', 'codigo'] as $col) {
             if (!isset($this->Api->data[$col])) {
-                $this->Api->send('Debe especificar: '.$col, 500);
+                $this->Api->send('Debe especificar: '.$col, 404);
             }
         }
         // crear emisor y verificar permisos
         $Emisor = new Model_Contribuyente($this->Api->data['emisor']);
         if (!$Emisor->usuario) {
-            $this->Api->send('Contribuyente no está registrado en la aplicación', 500);
+            $this->Api->send('Contribuyente no está registrado en la aplicación', 404);
         }
-        if (!$Emisor->usuarioAutorizado($User->id) or !$User->auth('/dte/generar')) {
-            $this->Api->send('No está autorizado a operar con la empresa solicitada', 401);
+        if (!$Emisor->usuarioAutorizado($User, '/dte/documentos/generar')) {
+            $this->Api->send('No está autorizado a operar con la empresa solicitada', 403);
         }
         // obtener DTE temporal
         $DteTmp = new Model_DteTmp(
-            $this->Api->data['emisor'],
-            $this->Api->data['receptor'],
-            $this->Api->data['dte'],
+            (int)$this->Api->data['emisor'],
+            (int)$this->Api->data['receptor'],
+            (int)$this->Api->data['dte'],
             $this->Api->data['codigo']
         );
         if (!$DteTmp->exists()) {
@@ -522,12 +639,12 @@ class Controller_Documentos extends \Controller_App
         // obtener firma electrónica
         $Firma = $Emisor->getFirma($User->id);
         if (!$Firma) {
-            $this->Api->send('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 500);
+            $this->Api->send('No hay firma electrónica asociada a la empresa (o bien no se pudo cargar), debe agregar su firma antes de generar DTE', 506);
         }
         // solicitar folio
         $FolioInfo = $Emisor->getFolio($DteTmp->dte);
         if (!$FolioInfo) {
-            $this->Api->send('No fue posible obtener un folio para el DTE de tipo '.$DteTmp->dte, 500);
+            $this->Api->send('No fue posible obtener un folio para el DTE de tipo '.$DteTmp->dte, 508);
         }
         // si quedan pocos folios y se debe alertar al usuario admnistrador de la empresa se hace
         if ($FolioInfo->DteFolio->disponibles<=$FolioInfo->DteFolio->alerta and !$FolioInfo->DteFolio->alertado) {
@@ -541,13 +658,13 @@ class Controller_Documentos extends \Controller_App
         $EnvioDte = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma);
         $xml = $EnvioDte->generar();
         if (!$xml) {
-            $this->Api->send('No fue posible generar el XML del EnvioDTE. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
+            $this->Api->send('No fue posible generar el XML del EnvioDTE. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 510);
         }
         // guardar DTE
         $r = $EnvioDte->getDocumentos()[0]->getResumen();
         $DteEmitido = new Model_DteEmitido($Emisor->rut, $r['TpoDoc'], $r['NroDoc'], (int)$Emisor->config_ambiente_en_certificacion);
         if ($DteEmitido->exists()) {
-            $this->Api->send('Ya existe un DTE del tipo '.$r['TpoDoc'].' y folio '.$r['NroDoc'].' emitido', 500);
+            $this->Api->send('Ya existe un DTE del tipo '.$r['TpoDoc'].' y folio '.$r['NroDoc'].' emitido', 409);
         }
         $cols = ['tasa'=>'TasaImp', 'fecha'=>'FchDoc', 'receptor'=>'RUTDoc', 'exento'=>'MntExe', 'neto'=>'MntNeto', 'iva'=>'MntIVA', 'total'=>'MntTotal'];
         foreach ($cols as $attr => $col) {
@@ -560,7 +677,7 @@ class Controller_Documentos extends \Controller_App
         $DteEmitido->save();
         // guardar referencias si existen
         $datos = json_decode($DteTmp->datos, true);
-        if (isset($datos['Referencia'])) {
+        if (!empty($datos['Referencia'])) {
             foreach ($datos['Referencia'] as $referencia) {
                 $DteReferencia = new Model_DteReferencia();
                 $DteReferencia->emisor = $DteEmitido->emisor;
@@ -574,20 +691,25 @@ class Controller_Documentos extends \Controller_App
                 $DteReferencia->save();
             }
         }
-        // obtener EnvioDTE para el SII y enviar si no es boleta
-        if (!in_array($DteEmitido->dte, [39, 41])) {
-            $EnvioDteSII = $DteTmp->getEnvioDte($FolioInfo->folio, $FolioInfo->Caf, $Firma, '60803000-K');
-            if (!$EnvioDteSII->generar()) {
-                $DteEmitido->delete();
-                $this->Api->send('No fue posible generar el XML del EnvioDTE para enviar al SII. Folio '.$FolioInfo->folio.' quedará sin usar.<br/>'.implode('<br/>', \sasco\LibreDTE\Log::readAll()), 500);
+        // guardar pagos programados si existen
+        $MntPagos = $DteEmitido->getPagosProgramados();
+        if (!empty($MntPagos)) {
+            foreach ($MntPagos as $pago) {
+                $Cobranza = new \website\Dte\Cobranzas\Model_Cobranza();
+                $Cobranza->emisor = $DteEmitido->emisor;
+                $Cobranza->dte = $DteEmitido->dte;
+                $Cobranza->folio = $DteEmitido->folio;
+                $Cobranza->certificacion = $DteEmitido->certificacion;
+                $Cobranza->fecha = $pago['FchPago'];
+                $Cobranza->monto = $pago['MntPago'];
+                $Cobranza->glosa = !empty($pago['GlosaPagos']) ? $pago['GlosaPagos'] : null;
+                $Cobranza->save();
             }
-            if (!defined('_LibreDTE_CERTIFICACION_') and $Emisor->config_ambiente_en_certificacion) {
-                define('_LibreDTE_CERTIFICACION_', true);
-            }
-            $DteEmitido->track_id = $EnvioDteSII->enviar();
-            if ($DteEmitido->track_id) {
-                $DteEmitido->save();
-            }
+        }
+        // enviar al SII
+        try {
+            $DteEmitido->enviar($User->id);
+        } catch (\Exception $e) {
         }
         // eliminar DTE temporal
         $DteTmp->delete();
@@ -598,7 +720,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Método que genera la el XML del DTE temporal con Folio y Firma y lo envía
      * al SII
-     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]delaf.cl)
+     * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
      * @version 2016-02-14
      */
     public function generar($receptor, $dte, $codigo)
@@ -638,7 +760,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el XML de los DTEs solicitados
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-28
+     * @version 2016-04-05
      */
     public function _api_generar_xml_POST()
     {
@@ -650,7 +772,7 @@ class Controller_Documentos extends \Controller_App
         // verificar que se hayan pasado los índices básicos
         foreach (['Emisor', 'Receptor', 'documentos', 'folios', 'firma'] as $key) {
             if (!isset($this->Api->data[$key]))
-                $this->Api->send('Falta índice/variable '.$key.' por POST', 500);
+                $this->Api->send('Falta índice/variable '.$key.' por POST', 400);
         }
         // recuperar folios y definir ambiente
         $folios = [];
@@ -672,7 +794,7 @@ class Controller_Documentos extends \Controller_App
                 'pass'=>$this->Api->data['firma']['pass']
             ]);
         } catch (\Exception $e) {
-            $this->Api->send('No fue posible abrir la firma digital, quizás contraseña incorrecta', 500);
+            $this->Api->send('No fue posible abrir la firma digital, quizás contraseña incorrecta', 506);
         }
         // normalizar dte?
         $normalizar_dte = isset($this->Api->data['normalizar_dte']) ? $this->Api->data['normalizar_dte'] : true;
@@ -681,14 +803,18 @@ class Controller_Documentos extends \Controller_App
         foreach ($this->Api->data['documentos'] as $d) {
             // crear documento
             $d['Encabezado']['Emisor'] = $this->Api->data['Emisor'];
-            $d['Encabezado']['Receptor'] = $this->Api->data['Receptor'];
+            if (empty($d['Encabezado']['Receptor'])) {
+                $d['Encabezado']['Receptor'] = $this->Api->data['Receptor'];
+            } else {
+                $d['Encabezado']['Receptor'] = \sasco\LibreDTE\Arreglo::mergeRecursiveDistinct($this->Api->data['Receptor'], $d['Encabezado']['Receptor']);
+            }
             $DTE = new \sasco\LibreDTE\Sii\Dte($d, $normalizar_dte);
             // timbrar, firmar y validar el documento
             if (!isset($folios[$DTE->getTipo()])) {
-                return $this->Api->send('Falta el CAF para el tipo de DTE '.$DTE->getTipo(), 500);
+                return $this->Api->send('Falta el CAF para el tipo de DTE '.$DTE->getTipo(), 508);
             }
             if (!$DTE->timbrar($folios[$DTE->getTipo()]) or !$DTE->firmar($Firma) or !$DTE->schemaValidate()) {
-                return $this->Api->send(implode("\n", \sasco\LibreDTE\Log::readAll()), 500);
+                return $this->Api->send(implode("\n", \sasco\LibreDTE\Log::readAll()), 508);
             }
             // agregar el DTE al listado
             $Documentos[] = $DTE;
@@ -710,7 +836,7 @@ class Controller_Documentos extends \Controller_App
             $xml = $EnvioDte->generar();
             // validar schema del DTE
             if (!$EnvioDte->schemaValidate()) {
-                return $this->Api->send(implode("\n", \sasco\LibreDTE\Log::readAll()), 500);
+                return $this->Api->send(implode("\n", \sasco\LibreDTE\Log::readAll()), 505);
             }
             $dir = sys_get_temp_dir().'/EnvioDTE_'.$this->Api->data['Emisor']['RUTEmisor'].'_'.$this->Api->data['Receptor']['RUTRecep'].'_'.date('U').'.xml';
             file_put_contents($dir, $xml);
@@ -722,7 +848,7 @@ class Controller_Documentos extends \Controller_App
             if (is_dir($dir))
                 \sasco\LibreDTE\File::rmdir($dir);
             if (!mkdir($dir))
-                $this->Api->send('No fue posible crear directorio temporal para DTEs', 500);
+                $this->Api->send('No fue posible crear directorio temporal para DTEs', 507);
             // procesar cada DTEs e ir agregándolo al directorio que se comprimirá
             foreach ($Documentos as $DTE) {
                 // guardar XML
@@ -739,7 +865,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que genera el PDF de los DTEs contenidos en un EnvioDTE
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2016-01-15
+     * @version 2016-06-21
      */
     public function _api_generar_pdf_POST()
     {
@@ -750,7 +876,7 @@ class Controller_Documentos extends \Controller_App
         }
         // si hubo problemas al subir el archivo error
         if (!isset($this->Api->data['xml']) and (!isset($_FILES['xml']) or $_FILES['xml']['error'])) {
-            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 500);
+            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 400);
         }
         // recuperar contenido del archivo xml
         if (isset($this->Api->data['xml'])) {
@@ -758,14 +884,8 @@ class Controller_Documentos extends \Controller_App
         } else {
             $xml = file_get_contents($_FILES['xml']['tmp_name']);
         }
-        // recuperar contenido del logo (si existe)
-        if (isset($this->Api->data['logo'])) {
-            $logo = base64_decode($this->Api->data['logo']);
-        } else if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
-            $logo = file_get_contents($_FILES['logo']['tmp_name']);
-        }
         // crear flag cedible
-        $cedible = !empty($this->Api->data['cedible']) ? $this->Api->data['cedible'] : false;
+        $cedible = !empty($this->Api->data['cedible']) ? (int)$this->Api->data['cedible'] : 0;
         // crear flag papel continuo
         $papelContinuo = !empty($this->Api->data['papelContinuo']) ? $this->Api->data['papelContinuo'] : false;
         // crear opción para web de verificación
@@ -774,37 +894,66 @@ class Controller_Documentos extends \Controller_App
         set_time_limit(0);
         // Cargar EnvioDTE y extraer arreglo con datos de carátula y DTEs
         $EnvioDte = new \sasco\LibreDTE\Sii\EnvioDte();
-        $EnvioDte->loadXML($xml);
+        if (!$EnvioDte->loadXML($xml)) {
+            $this->Api->send('Hubo algún problema al recibir el archivo XML con el EnvioDTE', 400);
+        }
         $Caratula = $EnvioDte->getCaratula();
         $Documentos = $EnvioDte->getDocumentos();
+        // recuperar contenido del logo (si existe)
+        if (isset($this->Api->data['logo'])) {
+            $logo = base64_decode($this->Api->data['logo']);
+        } else if (isset($_FILES['logo']) and !$_FILES['logo']['error']) {
+            $logo = file_get_contents($_FILES['logo']['tmp_name']);
+        } else {
+            $logo_file = \sowerphp\core\Configure::read('dte.logos.dir').'/'.substr($Caratula['RutEmisor'], 0, -2).'.png';
+            if (is_readable($logo_file)) {
+                $logo = file_get_contents($logo_file);
+            }
+        }
         // directorio temporal para guardar los PDF
         $dir = sys_get_temp_dir().'/dte_'.$Caratula['RutEmisor'].'_'.$Caratula['RutReceptor'].'_'.str_replace(['-', ':', 'T'], '', $Caratula['TmstFirmaEnv']);
         if (is_dir($dir))
             \sasco\LibreDTE\File::rmdir($dir);
         if (!mkdir($dir))
-            $this->Api->send('No fue posible crear directorio temporal para DTEs', 500);
+            $this->Api->send('No fue posible crear directorio temporal para DTEs', 507);
         // procesar cada DTEs e ir agregándolo al PDF
         foreach ($Documentos as $DTE) {
             if (!$DTE->getDatos())
                 $this->Api->send('No se pudieron obtener los datos de un DTE', 500);
             // generar PDF
             $pdf = new \sasco\LibreDTE\Sii\PDF\Dte($papelContinuo);
-            $pdf->setFooterText();
+            $pdf->setFooterText(\sowerphp\core\Configure::read('dte.pdf.footer'));
             if (isset($logo))
                 $pdf->setLogo('@'.$logo);
             $pdf->setResolucion(['FchResol'=>$Caratula['FchResol'], 'NroResol'=>$Caratula['NroResol']]);
             if ($webVerificacion)
                 $pdf->setWebVerificacion($webVerificacion);
-            $pdf->agregar($DTE->getDatos(), $DTE->getTED());
-            if ($cedible and $DTE->esCedible()) {
-                $pdf->setCedible(true);
+            // si no tiene cedible o el cedible va en el mismo archivo
+            if ($cedible!=2) {
                 $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                if ($cedible and $DTE->esCedible()) {
+                    $pdf->setCedible(true);
+                    $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                }
+                $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
+                $pdf->Output($file, 'F');
             }
-            $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
-            $pdf->Output($file, 'F');
+            // si el cedible va en un archivo separado
+            else {
+                $pdf_cedible = clone $pdf;
+                $pdf->agregar($DTE->getDatos(), $DTE->getTED());
+                $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'.pdf';
+                $pdf->Output($file, 'F');
+                if ($DTE->esCedible()) {
+                    $pdf_cedible->setCedible(true);
+                    $pdf_cedible->agregar($DTE->getDatos(), $DTE->getTED());
+                    $file = $dir.'/dte_'.$Caratula['RutEmisor'].'_'.$DTE->getID().'_CEDIBLE.pdf';
+                    $pdf_cedible->Output($file, 'F');
+                }
+            }
         }
         // si solo es un archivo y se pidió no comprimir se entrega directamente
-        if (isset($this->Api->data['compress']) and !$this->Api->data['compress'] and !isset($Documentos[1])) {
+        if (empty($this->Api->data['compress']) and !isset($Documentos[1]) and $cedible!=2) {
             $this->response->sendFile($file, ['disposition'=>'attachement', 'exit'=>false]);
             \sowerphp\general\Utility_File::rmdir($dir);
             exit(0);
@@ -818,7 +967,7 @@ class Controller_Documentos extends \Controller_App
     /**
      * Recurso de la API que permite validar el TED (timbre electrónico)
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-09-19
+     * @version 2016-06-22
      */
     public function _api_verificar_ted_POST()
     {
@@ -829,15 +978,44 @@ class Controller_Documentos extends \Controller_App
         }
         // obtener TED
         $TED = base64_decode($this->Api->data);
-        if (strpos($TED, '<?xml')!==0)
+        $TED = mb_detect_encoding($TED, ['UTF-8', 'ISO-8859-1']) != 'ISO-8859-1' ? utf8_decode($TED) : $TED;
+        if (strpos($TED, '<?xml')!==0) {
             $TED = '<?xml version="1.0" encoding="ISO-8859-1"?>'."\n".$TED;
+        }
         // crear xml con el ted y obtener datos en arreglo
         $xml = new \sasco\LibreDTE\XML();
         $xml->loadXML($TED);
         $datos = $xml->toArray();
+        // verificar que el XML tenga los datos que se necesitan (por si fue mal
+        // enviado
+        $ok = true;
+        if (
+            !isset($datos['TED']['FRMT'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['RSAPK']['M'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['RSAPK']['E'])
+            or !isset($datos['TED']['DD']['RE'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['RE'])
+            or !isset($datos['TED']['DD']['TD'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['TD'])
+            or !isset($datos['TED']['DD']['F'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['RNG']['D'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['RNG']['H'])
+            or !isset($datos['TED']['DD']['CAF']['DA']['IDK'])
+            or !isset($datos['TED']['DD']['RR'])
+            or !isset($datos['TED']['DD']['FE'])
+            or !isset($datos['TED']['DD']['MNT'])
+        ) {
+            $ok = false;
+        }
+        if (!$ok) {
+            $this->Api->send('El XML del TED es incorrecto', 400);
+        }
         // verificar firma del ted
         $DD = $xml->getFlattened('/TED/DD');
         $FRMT = $datos['TED']['FRMT'];
+        if (is_array($FRMT) and isset($FRMT['@value'])) {
+            $FRMT = $FRMT['@value'];
+        }
         $pub_key = \sasco\LibreDTE\FirmaElectronica::getFromModulusExponent(
             $datos['TED']['DD']['CAF']['DA']['RSAPK']['M'],
             $datos['TED']['DD']['CAF']['DA']['RSAPK']['E']
@@ -854,6 +1032,10 @@ class Controller_Documentos extends \Controller_App
         }
         if ($datos['TED']['DD']['F']<$datos['TED']['DD']['CAF']['DA']['RNG']['D'] or $datos['TED']['DD']['F']>$datos['TED']['DD']['CAF']['DA']['RNG']['H']) {
             $this->Api->send('Folio del DTE del timbre fuera del rango del CAF', 500);
+        }
+        // si es boleta no se consulta su estado ya que no son envíadas al SII
+        if (in_array($datos['TED']['DD']['TD'], [39, 41])) {
+            return ['GLOSA_ERR'=>'Documento es boleta, no se envía al SII'];
         }
         // definir si se consultará en certificación o producción
         define('_LibreDTE_CERTIFICACION_', $datos['TED']['DD']['CAF']['DA']['IDK']==100);
@@ -909,7 +1091,7 @@ class Controller_Documentos extends \Controller_App
         exec('convert '.$archivo.' '.$pbm.' 2>&1', $output, $rc);
         unlink($archivo);
         if ($rc) {
-            $this->Api->send(implode("\n", $output), 500);
+            $this->Api->send(implode("\n", $output), 507);
         }
         $ted = exec(DIR_PROJECT.'/app/pdf417decode/pdf417decode '.$pbm.' && echo "" 2>&1', $output, $rc);
         unlink($pbm);

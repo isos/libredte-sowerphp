@@ -1,4 +1,10 @@
-<a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC" class="pull-right"><span class="btn btn-default">Volver a IEC</span></a>
+<ul class="nav nav-pills pull-right">
+    <li>
+        <a href="<?=$_base?>/dte/dte_compras" title="Volver a IEC">
+            Volver a IEC
+        </a>
+    </li>
+</ul>
 
 <h1>Libro de compras período <?=$Libro->periodo?></h1>
 <p>Esta es la página del libro de compras del período <?=$Libro->periodo?> de la empresa <?=$Emisor->razon_social?>.</p>

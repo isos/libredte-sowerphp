@@ -27,9 +27,9 @@ namespace website\Dte;
 /**
  * Controlador de compras
  * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
- * @version 2016-02-12
+ * @version 2016-06-14
  */
-class Controller_DteCompras extends Controller_Libros
+class Controller_DteCompras extends Controller_Base_Libros
 {
 
     protected $config = [
@@ -69,7 +69,7 @@ class Controller_DteCompras extends Controller_Libros
     /**
      * Acción que permite importar un libro desde un archivo CSV
      * @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-     * @version 2015-12-29
+     * @version 2016-02-01
      */
     public function importar()
     {

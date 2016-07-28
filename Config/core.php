@@ -46,7 +46,7 @@
         'desc' => 'Revisar documentos recibidos',
         'icon' => 'fa fa-sign-in',
     ],
-    '/dte_intercambios' => [
+    '/dte_intercambios/listar' => [
         'name' => 'Bandeja de intercambio',
         'desc' => 'Menú de intercambio de DTE entre contribuyentes',
         'icon' => 'fa fa-exchange',
@@ -75,6 +75,16 @@
         'name' => 'Consumo de folios',
         'desc' => 'Reporte de consumo de folios de boletas',
         'icon' => 'fa fa-archive',
+    ],
+    '/cobranzas' => [
+        'name' => 'Cobranzas',
+        'desc' => 'Generar o cobrar pagos programados',
+        'icon' => 'fa fa-dollar',
+    ],
+    '/informes' => [
+        'name' => 'Informes',
+        'desc' => 'Informes y reportes de la operación mensual',
+        'icon' => 'fa fa-file',
     ],
     '/admin' => [
         'name' => 'Administración',
